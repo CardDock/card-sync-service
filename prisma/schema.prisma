@@ -1,0 +1,85 @@
+// Configuración básica
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Entidad Principal: El "Corazón" de la carta
+model Card {
+  id          String  @id @default(uuid())
+  externalId  Int     @unique // ID de la API primaria (ej: YGOPRODeck)
+  name        String
+  type        String
+  description String  @map("desc")
+  atk         Int?
+  def         Int?
+  level       Int?
+  race        String?
+  attribute   String?
+  archetype   String?
+
+  // Relaciones
+  images CardImage[]
+  sets   CardSetRelation[]
+  prices CardPrice[]
+
+  // Metadatos de Sincronización
+  lastSyncedAt DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([name])
+  @@index([externalId])
+}
+
+// Gestión de Assets (Imágenes descargadas)
+model CardImage {
+  id          String @id @default(uuid())
+  externalUrl String // URL original de la API
+  localPath   String // Ruta en nuestro storage (S3/Local)
+  imageType   String // 'small', 'normal', 'cropped'
+
+  cardId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId])
+}
+
+// Relación con Sets/Expansions (Muchos a Muchos)
+model CardSet {
+  id              String @id @default(uuid())
+  setExternalCode String @unique // Ej: LOB-001
+  setName         String
+
+  cards CardSetRelation[]
+}
+
+model CardSetRelation {
+  id     String  @id @default(uuid())
+  cardId String
+  setId  String
+  rarity String?
+  price  Float? // Precio específico en este set
+
+  card Card    @relation(fields: [cardId], references: [id])
+  set  CardSet @relation(fields: [setId], references: [id])
+
+  @@unique([cardId, setId])
+}
+
+// Precios de múltiples fuentes (Escalabilidad de APIs)
+model CardPrice {
+  id        String   @id @default(uuid())
+  source    String // 'YGOPRODeck', 'CardMarket', 'eBay'
+  price     Decimal  @db.Decimal(10, 2)
+  currency  String   @default("USD")
+  updatedAt DateTime @default(now())
+
+  cardId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@index([cardId, source])
+}
