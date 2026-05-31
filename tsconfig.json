@@ -17,5 +17,9 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
+    "types": [
+      "node",
+      "jest"
+    ],
   }
 }
