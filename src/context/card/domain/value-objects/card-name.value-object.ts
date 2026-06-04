@@ -1,3 +1,5 @@
+import { CardDomainValidationError } from '../errors';
+
 export class CardName {
   private constructor(private readonly value: string) {}
 
@@ -11,15 +13,30 @@ export class CardName {
     return this.value;
   }
 
-  private static normalizeRequiredText(value: string, fieldName: string): string {
+  private static normalizeRequiredText(
+    value: string,
+    fieldName: string,
+  ): string {
     if (typeof value !== 'string') {
-      throw new Error(`Card ${fieldName} is required`);
+      throw new CardDomainValidationError({
+        field: fieldName,
+        value,
+        source: 'CardName.normalizeRequiredText',
+        rule: 'required-trimmed-string',
+        message: `Card ${fieldName} is required`,
+      });
     }
 
     const normalized = value.trim();
 
     if (normalized.length === 0) {
-      throw new Error(`Card ${fieldName} is required`);
+      throw new CardDomainValidationError({
+        field: fieldName,
+        value,
+        source: 'CardName.normalizeRequiredText',
+        rule: 'required-trimmed-string',
+        message: `Card ${fieldName} is required`,
+      });
     }
 
     return normalized;

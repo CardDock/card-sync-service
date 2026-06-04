@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import { CardDomainValidationError } from '../errors';
 
 export class CardId {
   private constructor(private readonly value: string) {}
@@ -11,7 +12,13 @@ export class CardId {
     const normalized = value.trim();
 
     if (normalized.length === 0) {
-      throw new Error('Card id is required');
+      throw new CardDomainValidationError({
+        field: 'id',
+        value,
+        source: 'CardId.create',
+        rule: 'required-trimmed-string',
+        message: 'Card id is required',
+      });
     }
 
     return new CardId(normalized);
