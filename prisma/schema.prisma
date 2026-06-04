@@ -1,97 +1,104 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["cards"]
 }
 
-// Entidad Principal: El "Corazón" de la carta
 model Card {
-  id          String  @id @default(uuid())
-  externalId  Int     @unique // ID de la API primaria (ej: YGOPRODeck)
-  name        String
-  type        String
-  description String  @map("desc")
-  atk         Int?
-  def         Int?
-  level       Int?
-  race        String?
-  attribute   String?
-  archetype   String?
-
-  // Relaciones
-  images CardImage[]
-  sets   CardSetRelation[]
-  prices CardPrice[]
-
-  // Metadatos de Sincronización
-  lastSyncedAt DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                    String       @id @default(uuid())
+  externalId            String       @unique @map("external_id") // ID de la API primaria (ej: YGOPRODeck)
+  name                  String
+  typeline              String[] // Soporte nativo en PostgreSQL y CockroachDB. Si usas MySQL o SQLite, cambia el tipo a Json.
+  type                  String
+  humanReadableCardType String       @map("human_readable_card_type")
+  frameType             FrameType    @map("frame_type")
+  desc                  String       @db.Text // Permite almacenar textos largos que superan el límite de VARCHAR estándar.
+  race                  Race
+  atk                   Int? // Opcional: nulo para cartas Mágicas, Trampas y monstruos Link.
+  def                   Int? // Opcional: nulo para cartas Mágicas, Trampas y monstruos Link.
+  level                 Int? // Opcional: nulo para Mágicas, Trampas y monstruos Link.
+  scale                 Int? // Opcional: nulo para cartas que no sean Pendulum.
+  linkval               Int? // Opcional: nulo para cartas que no sean Link.
+  linkmarkers           LinkMarker[] // Direcciones de las flechas Link (ej: ["Top", "Bottom-Left"])
+  attribute             Attribute? // Opcional: nulo para Mágicas y Trampas.
+  rawData               Json         @db.Json // Almacena los datos originales de la API para referencia futura.
 
   @@index([name])
-  @@index([externalId])
-  @@schema("cards")
+  @@map("cards")
 }
 
-// Gestión de Assets (Imágenes descargadas)
-model CardImage {
-  id          String @id @default(uuid())
-  externalUrl String // URL original de la API
-  localPath   String // Ruta en nuestro storage (S3/Local)
-  imageType   String // 'small', 'normal', 'cropped'
-
-  cardId String
-  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
-
-  @@index([cardId])
-  @@schema("cards")
+enum Attribute {
+  DARK
+  LIGHT
+  EARTH
+  WATER
+  FIRE
+  WIND
+  DIVINE
 }
 
-// Relación con Sets/Expansions (Muchos a Muchos)
-model CardSet {
-  id              String @id @default(uuid())
-  setExternalCode String @unique // Ej: LOB-001
-  setName         String
-
-  cards CardSetRelation[]
-
-  @@schema("cards")
+enum LinkMarker {
+  Top         @map("Top")
+  Bottom      @map("Bottom")
+  Left        @map("Left")
+  Right       @map("Right")
+  BottomLeft  @map("Bottom-Left")
+  BottomRight @map("Bottom-Right")
+  TopLeft     @map("Top-Left")
+  TopRight    @map("Top-Right")
 }
 
-model CardSetRelation {
-  id     String  @id @default(uuid())
-  cardId String
-  setId  String
-  rarity String?
-  price  Float? // Precio específico en este set
-
-  card Card    @relation(fields: [cardId], references: [id])
-  set  CardSet @relation(fields: [setId], references: [id])
-
-  @@unique([cardId, setId])
-  @@schema("cards")
+enum FrameType {
+  normal
+  effect
+  ritual
+  fusion
+  synchro
+  xyz
+  link
+  spell
+  trap
+  token
+  skill
 }
 
-// Precios de múltiples fuentes (Escalabilidad de APIs)
-model CardPrice {
-  id        String   @id @default(uuid())
-  source    String // 'YGOPRODeck', 'CardMarket', 'eBay'
-  price     Decimal  @db.Decimal(10, 2)
-  currency  String   @default("USD")
-  updatedAt DateTime @default(now())
+enum Race {
+  Aqua
+  Beast
+  BeastWarrior @map("Beast-Warrior")
+  Cyberse
+  Dinosaur
+  DivineBeast  @map("Divine-Beast")
+  Dragon
+  Fish
+  Fairy
+  Fiend
+  Illusion
+  Insect
+  Machine
+  Plant
+  Psychic
+  Pyro
+  Reptile
+  Rock
+  SeaSerpent   @map("Sea Serpent")
+  Spellcaster
+  Thunder
+  Warrior
+  WingedBeast  @map("Winged Beast")
+  Wyrm
+  Zombie
 
-  cardId String
-  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
-
-  @@index([cardId, source])
-  @@schema("cards")
+  // Magias / Trampas
+  Normal
+  Field
+  Equip
+  Continuous
+  QuickPlay  @map("Quick-Play")
+  Ritual
+  Counter
 }
