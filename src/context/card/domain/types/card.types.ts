@@ -1,46 +1,129 @@
-export interface CardCombatStatsPrimitives {
-  atk: number | null;
-  def: number | null;
-  level: number | null;
-}
+export type CardFrameType =
+  | 'normal'
+  | 'effect'
+  | 'ritual'
+  | 'fusion'
+  | 'synchro'
+  | 'xyz'
+  | 'link'
+  | 'spell'
+  | 'trap'
+  | 'token'
+  | 'skill';
 
-export interface CardClassificationPrimitives {
-  race: string | null;
-  attribute: string | null;
-  archetype: string | null;
-}
+export type CardRace =
+  | 'Aqua'
+  | 'Beast'
+  | 'BeastWarrior'
+  | 'Cyberse'
+  | 'Dinosaur'
+  | 'DivineBeast'
+  | 'Dragon'
+  | 'Fish'
+  | 'Fairy'
+  | 'Fiend'
+  | 'Illusion'
+  | 'Insect'
+  | 'Machine'
+  | 'Plant'
+  | 'Psychic'
+  | 'Pyro'
+  | 'Reptile'
+  | 'Rock'
+  | 'SeaSerpent'
+  | 'Spellcaster'
+  | 'Thunder'
+  | 'Warrior'
+  | 'WingedBeast'
+  | 'Wyrm'
+  | 'Zombie'
+  | 'Normal'
+  | 'Field'
+  | 'Equip'
+  | 'Continuous'
+  | 'QuickPlay'
+  | 'Ritual'
+  | 'Counter';
+
+export type CardAttribute =
+  | 'DARK'
+  | 'LIGHT'
+  | 'EARTH'
+  | 'WATER'
+  | 'FIRE'
+  | 'WIND'
+  | 'DIVINE';
+
+export type CardLinkMarker =
+  | 'Top'
+  | 'Bottom'
+  | 'Left'
+  | 'Right'
+  | 'BottomLeft'
+  | 'BottomRight'
+  | 'TopLeft'
+  | 'TopRight';
+
+export type JsonPrimitive = string | number | boolean | null;
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
+export type JsonObject = { [key: string]: JsonValue };
+export type JsonArray = JsonValue[];
 
 export interface CardPrimitives {
   id: string;
-  externalId: number;
+  externalId: string;
   name: string;
+  typeline: string[];
   type: string;
-  description: string;
-  combatStats: CardCombatStatsPrimitives;
-  classification: CardClassificationPrimitives;
-  lastSyncedAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  humanReadableCardType: string;
+  frameType: CardFrameType;
+  desc: string;
+  race: CardRace;
+  atk: number | null;
+  def: number | null;
+  level: number | null;
+  scale: number | null;
+  linkval: number | null;
+  linkmarkers: CardLinkMarker[];
+  attribute: CardAttribute | null;
+  rawData: JsonValue;
 }
 
 export interface CreateCardParams {
   id?: string;
-  externalId: number;
+  externalId: string;
   name: string;
+  typeline: string[];
   type: string;
-  description: string;
-  combatStats?: Partial<CardCombatStatsPrimitives>;
-  classification?: Partial<CardClassificationPrimitives>;
-  lastSyncedAt?: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
+  humanReadableCardType: string;
+  frameType: CardFrameType;
+  desc: string;
+  race: CardRace;
+  atk?: number | null;
+  def?: number | null;
+  level?: number | null;
+  scale?: number | null;
+  linkval?: number | null;
+  linkmarkers: CardLinkMarker[];
+  attribute?: CardAttribute | null;
+  rawData: JsonValue;
 }
 
 export interface SyncCardParams {
-  externalId: number;
+  externalId: string;
   name: string;
+  typeline: string[];
   type: string;
-  description: string;
-  combatStats?: Partial<CardCombatStatsPrimitives>;
-  classification?: Partial<CardClassificationPrimitives>;
+  humanReadableCardType: string;
+  frameType: CardFrameType;
+  desc: string;
+  race: CardRace;
+  atk?: number | null;
+  def?: number | null;
+  level?: number | null;
+  scale?: number | null;
+  linkval?: number | null;
+  linkmarkers: CardLinkMarker[];
+  attribute?: CardAttribute | null;
+  rawData: JsonValue;
 }
