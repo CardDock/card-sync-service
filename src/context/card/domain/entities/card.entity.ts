@@ -3,76 +3,116 @@ import {
   CreateCardParams,
   SyncCardParams,
 } from '../types/card.types';
-import { CardClassification } from '../value-objects/card-classification.value-object';
-import { CardCombatStats } from '../value-objects/card-combat-stats.value-object';
-import { CardCreatedAt } from '../value-objects/card-created-at.value-object';
+import { CardAttribute } from '../value-objects/card-attribute.value-object';
+import { CardAtk } from '../value-objects/card-atk.value-object';
 import { CardDescription } from '../value-objects/card-description.value-object';
+import { CardDef } from '../value-objects/card-def.value-object';
 import { CardExternalId } from '../value-objects/card-external-id.value-object';
+import { CardFrameType } from '../value-objects/card-frame-type.value-object';
+import { CardHumanReadableCardType } from '../value-objects/card-human-readable-card-type.value-object';
 import { CardId } from '../value-objects/card-id.value-object';
-import { CardLastSyncedAt } from '../value-objects/card-last-synced-at.value-object';
+import { CardLevel } from '../value-objects/card-level.value-object';
+import { CardLinkmarkers } from '../value-objects/card-linkmarkers.value-object';
+import { CardLinkval } from '../value-objects/card-linkval.value-object';
 import { CardName } from '../value-objects/card-name.value-object';
+import { CardRace } from '../value-objects/card-race.value-object';
+import { CardRawData } from '../value-objects/card-raw-data.value-object';
+import { CardScale } from '../value-objects/card-scale.value-object';
+import { CardTypeline } from '../value-objects/card-typeline.value-object';
 import { CardType } from '../value-objects/card-type.value-object';
-import { CardUpdatedAt } from '../value-objects/card-updated-at.value-object';
 
 export class Card {
   private constructor(private props: CardPrimitives) {}
 
   static create(params: CreateCardParams): Card {
-    const now = new Date();
     const id = CardId.create(params.id);
     const externalId = CardExternalId.create(params.externalId);
     const name = CardName.create(params.name);
     const type = CardType.create(params.type);
-    const description = CardDescription.create(params.description);
-    const combatStats = CardCombatStats.create(params.combatStats);
-    const classification = CardClassification.create(params.classification);
-    const lastSyncedAt = CardLastSyncedAt.create(params.lastSyncedAt ?? now);
-    const createdAt = CardCreatedAt.create(params.createdAt ?? now);
-    const updatedAt = CardUpdatedAt.create(params.updatedAt ?? now);
+    const humanReadableCardType = CardHumanReadableCardType.create(
+      params.humanReadableCardType,
+    );
+    const desc = CardDescription.create(params.desc);
+    const frameType = CardFrameType.create(params.frameType);
+    const race = CardRace.create(params.race);
+    const typeline = CardTypeline.create(params.typeline);
+    const atk = CardAtk.create(params.atk);
+    const def = CardDef.create(params.def);
+    const level = CardLevel.create(params.level);
+    const scale = CardScale.create(params.scale);
+    const linkval = CardLinkval.create(params.linkval);
+    const linkmarkers = CardLinkmarkers.create(params.linkmarkers);
+    const attribute = CardAttribute.create(params.attribute);
+    const rawData = CardRawData.create(params.rawData);
 
     return new Card({
       id: id.toPrimitives(),
       externalId: externalId.toPrimitives(),
       name: name.toPrimitives(),
+      typeline: typeline.toPrimitives(),
       type: type.toPrimitives(),
-      description: description.toPrimitives(),
-      combatStats: combatStats.toPrimitives(),
-      classification: classification.toPrimitives(),
-      lastSyncedAt: lastSyncedAt.toPrimitives(),
-      createdAt: createdAt.toPrimitives(),
-      updatedAt: updatedAt.toPrimitives(),
+      humanReadableCardType: humanReadableCardType.toPrimitives(),
+      frameType: frameType.toPrimitives(),
+      desc: desc.toPrimitives(),
+      race: race.toPrimitives(),
+      atk: atk.toPrimitives(),
+      def: def.toPrimitives(),
+      level: level.toPrimitives(),
+      scale: scale.toPrimitives(),
+      linkval: linkval.toPrimitives(),
+      linkmarkers: linkmarkers.toPrimitives(),
+      attribute: attribute.toPrimitives(),
+      rawData: rawData.toPrimitives(),
     });
   }
 
   syncFromSource(params: SyncCardParams): void {
-    const now = new Date();
     const externalId = CardExternalId.create(params.externalId);
     const name = CardName.create(params.name);
     const type = CardType.create(params.type);
-    const description = CardDescription.create(params.description);
-    const combatStats = CardCombatStats.create(params.combatStats);
-    const classification = CardClassification.create(params.classification);
-    const lastSyncedAt = CardLastSyncedAt.create(now);
-    const updatedAt = CardUpdatedAt.create(now);
+    const humanReadableCardType = CardHumanReadableCardType.create(
+      params.humanReadableCardType,
+    );
+    const desc = CardDescription.create(params.desc);
+    const frameType = CardFrameType.create(params.frameType);
+    const race = CardRace.create(params.race);
+    const typeline = CardTypeline.create(params.typeline);
+    const atk = CardAtk.create(params.atk);
+    const def = CardDef.create(params.def);
+    const level = CardLevel.create(params.level);
+    const scale = CardScale.create(params.scale);
+    const linkval = CardLinkval.create(params.linkval);
+    const linkmarkers = CardLinkmarkers.create(params.linkmarkers);
+    const attribute = CardAttribute.create(params.attribute);
+    const rawData = CardRawData.create(params.rawData);
 
     this.props = {
       ...this.props,
       externalId: externalId.toPrimitives(),
       name: name.toPrimitives(),
+      typeline: typeline.toPrimitives(),
       type: type.toPrimitives(),
-      description: description.toPrimitives(),
-      combatStats: combatStats.toPrimitives(),
-      classification: classification.toPrimitives(),
-      lastSyncedAt: lastSyncedAt.toPrimitives(),
-      updatedAt: updatedAt.toPrimitives(),
+      humanReadableCardType: humanReadableCardType.toPrimitives(),
+      frameType: frameType.toPrimitives(),
+      desc: desc.toPrimitives(),
+      race: race.toPrimitives(),
+      atk: atk.toPrimitives(),
+      def: def.toPrimitives(),
+      level: level.toPrimitives(),
+      scale: scale.toPrimitives(),
+      linkval: linkval.toPrimitives(),
+      linkmarkers: linkmarkers.toPrimitives(),
+      attribute: attribute.toPrimitives(),
+      rawData: rawData.toPrimitives(),
     };
   }
 
   toPrimitives(): CardPrimitives {
     return {
       ...this.props,
-      combatStats: { ...this.props.combatStats },
-      classification: { ...this.props.classification },
+      typeline: [...this.props.typeline],
+      linkmarkers: [...this.props.linkmarkers],
+      rawData: CardRawData.create(this.props.rawData).toPrimitives(),
     };
   }
 }
