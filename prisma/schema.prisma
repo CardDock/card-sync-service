@@ -11,7 +11,7 @@ datasource db {
 model Card {
   id                    String       @id @default(uuid())
   externalId            String       @unique @map("external_id") // ID de la API primaria (ej: YGOPRODeck)
-  name                  String
+  name                  String       @unique
   typeline              String[] // Soporte nativo en PostgreSQL y CockroachDB. Si usas MySQL o SQLite, cambia el tipo a Json.
   type                  String
   humanReadableCardType String       @map("human_readable_card_type")
@@ -26,6 +26,7 @@ model Card {
   linkmarkers           LinkMarker[] // Direcciones de las flechas Link (ej: ["Top", "Bottom-Left"])
   attribute             Attribute? // Opcional: nulo para Mágicas y Trampas.
   rawData               Json         @db.Json // Almacena los datos originales de la API para referencia futura.
+  artworks              Artwork[]
 
   @@index([name])
   @@map("cards")
@@ -101,4 +102,88 @@ enum Race {
   QuickPlay  @map("Quick-Play")
   Ritual
   Counter
+}
+
+// Cartas fisicas
+enum CardCondition {
+  MINT
+  NEAR_MINT
+  EXCELLENT
+  GOOD
+  LIGHT_PLAYED
+  PLAYED
+  POOR
+}
+
+enum CardLanguage {
+  EN // Inglés
+  ES // Español
+  FR // Francés
+  DE // Alemán
+  IT // Italiano
+  PT // Portugués
+  JP // Japonés
+}
+
+model CardSet {
+  id   String  @id @default(uuid())
+  name String  @unique // ej: "Maximum Crisis"
+  code String? // Código del set si aplica a nivel general
+
+  prints CardPrint[]
+
+  @@map("card_sets")
+}
+
+model Artwork {
+  id       String @id @default(uuid())
+  cardId   String @map("card_id")
+  imageUrl String @map("image_url") // URL de la imagen del arte
+
+  card          Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  cardPrints    CardPrint[]
+  physicalCards PhysicalCard[]
+
+  @@unique([cardId, imageUrl])
+  @@index([cardId])
+  @@map("artworks")
+}
+
+model CardPrint {
+  id         String @id @default(uuid())
+  artworkId  String @map("artwork_id")
+  cardSetId  String @map("card_set_id")
+
+  setCode    String  @unique @map("set_code") // ej: "MACR-EN081" (Es único para esta impresión exacta)
+  rarity     String // ej: "Secret Rare"
+  rarityCode String? @map("rarity_code") // ej: "(ScR)"
+  setPrice   Float?  @map("set_price") // Permite almacenar el valor individual "4.32" devuelto por la API
+
+  // Relaciones
+  artwork       Artwork        @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+  cardSet       CardSet        @relation(fields: [cardSetId], references: [id], onDelete: Cascade)
+  physicalCards PhysicalCard[]
+
+  @@index([artworkId])
+  @@index([cardSetId])
+  @@map("card_prints")
+}
+
+model PhysicalCard {
+  id          String  @id @default(uuid())
+  artworkId   String  @map("artwork_id")
+  cardPrintId String? @map("card_print_id")
+
+  // Atributos físicos del cartón
+  condition      CardCondition
+  language       CardLanguage
+  isFirstEdition Boolean       @default(false) @map("is_first_edition")
+
+  // Relaciones
+  artwork  Artwork   @relation(fields: [artworkId], references: [id], onDelete: Restrict)
+  cardPrint CardPrint? @relation(fields: [cardPrintId], references: [id], onDelete: Restrict)
+
+  @@index([artworkId])
+  @@index([cardPrintId])
+  @@map("physical_cards")
 }
