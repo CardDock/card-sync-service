@@ -3,61 +3,100 @@ import { FindOrSyncCardByExternalIdUseCase } from '../../../../../context/card/a
 import { CardQueryRepositoryPort } from '../../../../../context/card/domain/ports/card-query-repository.port';
 import { CardRepositoryPort } from '../../../../../context/card/domain/ports/card-repository.port';
 import { ExternalCardSourcePort } from '../../../../../context/card/domain/ports/external-card-source.port';
-import { SyncCardParams } from '../../../../../context/card/domain/types/card.types';
+import { CardRelatedDataRepositoryPort } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
+import { SyncCardWithRelatedData } from '../../../../../context/card/domain/types/sync-card-with-related.types';
 import {
   CardDomainProcessError,
   CardDomainValidationError,
 } from '../../../../../context/card/domain/errors';
+import { PostgresPoolProvider } from '../../../../../context/card/infrastructure/persistence/postgres-pool.provider';
 
 describe('FindOrSyncCardByExternalIdUseCase', () => {
   const buildSourceCard = (
-    overrides: Partial<SyncCardParams> = {},
-  ): SyncCardParams => ({
-    externalId: '46986414',
-    name: 'Dark Magician',
-    typeline: ['Spellcaster', 'Normal'],
-    type: 'Normal Monster',
-    humanReadableCardType: 'Normal Monster',
-    frameType: 'normal',
-    desc: 'The ultimate wizard in terms of attack and defense.',
-    race: 'Spellcaster',
-    atk: 2500,
-    def: 2100,
-    level: 7,
-    scale: null,
-    linkval: null,
-    linkmarkers: [],
-    attribute: 'DARK',
-    rawData: {
-      id: 46986414,
+    overrides: Partial<SyncCardWithRelatedData['card']> = {},
+  ): SyncCardWithRelatedData => ({
+    card: {
+      externalId: '46986414',
       name: 'Dark Magician',
-      card_images: [
-        { id: 46986414, image_url: 'https://example.com/image.png' },
-      ],
+      typeline: ['Spellcaster', 'Normal'],
+      type: 'Normal Monster',
+      humanReadableCardType: 'Normal Monster',
+      frameType: 'normal',
+      desc: 'The ultimate wizard in terms of attack and defense.',
+      race: 'Spellcaster',
+      atk: 2500,
+      def: 2100,
+      level: 7,
+      scale: null,
+      linkval: null,
+      linkmarkers: [],
+      attribute: 'DARK',
+      rawData: {
+        id: 46986414,
+        name: 'Dark Magician',
+      },
+      ...overrides,
     },
-    ...overrides,
+    cardSets: [
+      { name: 'Legend of Blue Eyes White Dragon', code: 'LOB' },
+    ],
+    artworks: [
+      { imageUrl: 'https://example.com/image.png' },
+    ],
+    cardPrints: [
+      {
+        setName: 'Legend of Blue Eyes White Dragon',
+        setCode: 'LOB-001',
+        rarity: 'Ultra Rare',
+        rarityCode: 'UR',
+        setPrice: 12.5,
+      },
+    ],
+  });
+
+  let cardQueryRepository: jest.Mocked<CardQueryRepositoryPort>;
+  let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
+  let cardRepository: jest.Mocked<CardRepositoryPort>;
+  let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
+  let postgresPoolProvider: jest.Mocked<PostgresPoolProvider>;
+
+  beforeEach(() => {
+    cardQueryRepository = {
+      findByExternalId: jest.fn(),
+      findByName: jest.fn(),
+    };
+    externalCardSource = {
+      findByExternalId: jest.fn(),
+      findByName: jest.fn(),
+    };
+    cardRepository = {
+      save: jest.fn(),
+    };
+    cardRelatedDataRepository = {
+      saveCardSets: jest.fn(),
+      saveArtwork: jest.fn(),
+      saveCardPrints: jest.fn(),
+      findFirstArtworkIdByCardExternalId: jest.fn(),
+    };
+    postgresPoolProvider = {
+      transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
+    } as unknown as jest.Mocked<PostgresPoolProvider>;
   });
 
   it('returns the existing card when it is already stored', async () => {
     const existingCard = Card.create({
       id: 'existing-id',
-      ...buildSourceCard(),
+      ...buildSourceCard().card,
     });
 
-    const cardQueryRepository: CardQueryRepositoryPort = {
-      findByExternalId: jest.fn().mockResolvedValue(existingCard),
-    };
-    const externalCardSource: ExternalCardSourcePort = {
-      findByExternalId: jest.fn(),
-    };
-    const cardRepository: CardRepositoryPort = {
-      save: jest.fn(),
-    };
+    cardQueryRepository.findByExternalId.mockResolvedValue(existingCard);
 
     const useCase = new FindOrSyncCardByExternalIdUseCase(
       cardQueryRepository,
       externalCardSource,
       cardRepository,
+      cardRelatedDataRepository,
+      postgresPoolProvider,
     );
 
     const result = await useCase.execute({ externalId: '46986414' });
@@ -65,25 +104,27 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     expect(result).toBe(existingCard);
     expect(externalCardSource.findByExternalId).not.toHaveBeenCalled();
     expect(cardRepository.save).not.toHaveBeenCalled();
+    expect(cardRelatedDataRepository.saveCardSets).not.toHaveBeenCalled();
+    expect(cardRelatedDataRepository.saveArtwork).not.toHaveBeenCalled();
+    expect(cardRelatedDataRepository.saveCardPrints).not.toHaveBeenCalled();
   });
 
   it('loads from the external source and saves it when it is missing locally', async () => {
     const sourceCard = buildSourceCard();
 
-    const cardQueryRepository: CardQueryRepositoryPort = {
-      findByExternalId: jest.fn().mockResolvedValue(null),
-    };
-    const externalCardSource: ExternalCardSourcePort = {
-      findByExternalId: jest.fn().mockResolvedValue(sourceCard),
-    };
-    const cardRepository: CardRepositoryPort = {
-      save: jest.fn().mockResolvedValue(undefined),
-    };
+    cardQueryRepository.findByExternalId.mockResolvedValue(null);
+    externalCardSource.findByExternalId.mockResolvedValue(sourceCard);
+    cardRelatedDataRepository.saveCardSets.mockResolvedValue(
+      new Map([['Legend of Blue Eyes White Dragon', 'set-id-1']]),
+    );
+    cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
 
     const useCase = new FindOrSyncCardByExternalIdUseCase(
       cardQueryRepository,
       externalCardSource,
       cardRepository,
+      cardRelatedDataRepository,
+      postgresPoolProvider,
     );
 
     const result = await useCase.execute({ externalId: '46986414' });
@@ -93,50 +134,48 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       name: 'Dark Magician',
       type: 'Normal Monster',
     });
+    expect(postgresPoolProvider.transaction).toHaveBeenCalledTimes(1);
     expect(cardRepository.save).toHaveBeenCalledTimes(1);
     expect(cardRepository.save).toHaveBeenCalledWith(expect.any(Card));
+
+    expect(cardRelatedDataRepository.saveCardSets).toHaveBeenCalledWith(
+      sourceCard.cardSets,
+    );
+    expect(cardRelatedDataRepository.saveArtwork).toHaveBeenCalledTimes(1);
+    expect(cardRelatedDataRepository.saveCardPrints).toHaveBeenCalledTimes(1);
   });
 
   it('returns null when the card does not exist anywhere', async () => {
-    const cardQueryRepository: CardQueryRepositoryPort = {
-      findByExternalId: jest.fn().mockResolvedValue(null),
-    };
-    const externalCardSource: ExternalCardSourcePort = {
-      findByExternalId: jest.fn().mockResolvedValue(null),
-    };
-    const cardRepository: CardRepositoryPort = {
-      save: jest.fn(),
-    };
+    cardQueryRepository.findByExternalId.mockResolvedValue(null);
+    externalCardSource.findByExternalId.mockResolvedValue(null);
 
     const useCase = new FindOrSyncCardByExternalIdUseCase(
       cardQueryRepository,
       externalCardSource,
       cardRepository,
+      cardRelatedDataRepository,
+      postgresPoolProvider,
     );
 
     const result = await useCase.execute({ externalId: '46986414' });
 
     expect(result).toBeNull();
     expect(cardRepository.save).not.toHaveBeenCalled();
+    expect(cardRelatedDataRepository.saveCardSets).not.toHaveBeenCalled();
   });
 
   it('backpropagates domain validation errors with process context', async () => {
-    const cardQueryRepository: CardQueryRepositoryPort = {
-      findByExternalId: jest.fn().mockResolvedValue(null),
-    };
-    const externalCardSource: ExternalCardSourcePort = {
-      findByExternalId: jest
-        .fn()
-        .mockResolvedValue(buildSourceCard({ race: 'UnknownRace' as never })),
-    };
-    const cardRepository: CardRepositoryPort = {
-      save: jest.fn().mockResolvedValue(undefined),
-    };
+    cardQueryRepository.findByExternalId.mockResolvedValue(null);
+    externalCardSource.findByExternalId.mockResolvedValue(
+      buildSourceCard({ race: 'UnknownRace' as never }),
+    );
 
     const useCase = new FindOrSyncCardByExternalIdUseCase(
       cardQueryRepository,
       externalCardSource,
       cardRepository,
+      cardRelatedDataRepository,
+      postgresPoolProvider,
     );
 
     let raisedError: unknown;
