@@ -3,7 +3,9 @@ import { CardExternalId } from '../../domain/value-objects/card-external-id.valu
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
+import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
+import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
 
 export interface FindOrSyncCardByExternalIdInput {
   externalId: string;
@@ -16,6 +18,8 @@ export class FindOrSyncCardByExternalIdUseCase {
     private readonly cardQueryRepository: CardQueryRepositoryPort,
     private readonly externalCardSource: ExternalCardSourcePort,
     private readonly cardRepository: CardRepositoryPort,
+    private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
+    private readonly postgresPoolProvider: PostgresPoolProvider,
   ) {}
 
   async execute(
@@ -64,21 +68,51 @@ export class FindOrSyncCardByExternalIdUseCase {
   private async syncMissingCardFromExternalSource(
     externalId: string,
   ): Promise<Card | null> {
-    const externalCard =
+    const externalData =
       await this.externalCardSource.findByExternalId(externalId);
 
-    if (!externalCard) {
+    if (!externalData) {
       return null;
     }
 
-    const synchronizedCard = Card.create(externalCard);
+    const synchronizedCard = Card.create(externalData.card);
 
-    await this.persistSynchronizedCard(synchronizedCard);
+    await this.postgresPoolProvider.transaction(async () => {
+      await this.persistSynchronizedCard(synchronizedCard, externalData);
+    });
 
     return synchronizedCard;
   }
 
-  private async persistSynchronizedCard(card: Card): Promise<void> {
+  private async persistSynchronizedCard(
+    card: Card,
+    externalData: {
+      cardSets: { name: string; code: string | null }[];
+      artworks: { imageUrl: string }[];
+      cardPrints: { setName: string; setCode: string; rarity: string; rarityCode: string | null; setPrice: number | null }[];
+    },
+  ): Promise<void> {
+    const cardPrimitives = card.toPrimitives();
+
     await this.cardRepository.save(card);
+
+    const setIds = await this.cardRelatedDataRepository.saveCardSets(
+      externalData.cardSets,
+    );
+
+    for (const [index, artwork] of externalData.artworks.entries()) {
+      const artworkId = await this.cardRelatedDataRepository.saveArtwork(
+        cardPrimitives.id,
+        artwork.imageUrl,
+      );
+
+      if (index === 0) {
+        await this.cardRelatedDataRepository.saveCardPrints(
+          artworkId,
+          externalData.cardPrints,
+          setIds,
+        );
+      }
+    }
   }
 }
