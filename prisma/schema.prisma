@@ -154,7 +154,7 @@ model CardPrint {
   artworkId  String @map("artwork_id")
   cardSetId  String @map("card_set_id")
 
-  setCode    String  @unique @map("set_code") // ej: "MACR-EN081" (Es único para esta impresión exacta)
+  setCode    String  @map("set_code") // ej: "MACR-EN081"
   rarity     String // ej: "Secret Rare"
   rarityCode String? @map("rarity_code") // ej: "(ScR)"
   setPrice   Float?  @map("set_price") // Permite almacenar el valor individual "4.32" devuelto por la API
@@ -166,6 +166,7 @@ model CardPrint {
 
   @@index([artworkId])
   @@index([cardSetId])
+  @@unique([artworkId, cardSetId, setCode, rarity])
   @@map("card_prints")
 }
 
