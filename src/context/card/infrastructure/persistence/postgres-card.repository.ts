@@ -79,6 +79,39 @@ export class PostgresCardRepository
     return mapPostgresRowToCard(row);
   }
 
+  async findByName(name: string): Promise<Card[]> {
+    const result =
+      await this.postgresPoolProvider.client.query<PostgresCardRow>(
+        `
+        SELECT
+          "id",
+          "external_id",
+          "name",
+          "typeline",
+          "type",
+          "human_readable_card_type",
+          "frame_type",
+          "desc",
+          "race",
+          "atk",
+          "def",
+          "level",
+          "scale",
+          "linkval",
+          "linkmarkers",
+          "attribute",
+          "rawData" AS "raw_data"
+        FROM "cards"
+        WHERE "name" ILIKE '%' || $1 || '%'
+        ORDER BY "name"
+        LIMIT 20
+      `,
+        [name],
+      );
+
+    return result.rows.map(mapPostgresRowToCard);
+  }
+
   async save(card: Card): Promise<void> {
     const record = mapCardToPostgresRecord(card);
 

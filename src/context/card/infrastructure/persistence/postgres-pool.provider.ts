@@ -1,9 +1,11 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { Pool } from 'pg';
+import { AsyncLocalStorage } from 'async_hooks';
+import { Pool, PoolClient } from 'pg';
 
 @Injectable()
 export class PostgresPoolProvider implements OnModuleDestroy {
   private readonly pool: Pool;
+  private readonly als = new AsyncLocalStorage<PoolClient>();
 
   constructor() {
     const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
@@ -15,8 +17,24 @@ export class PostgresPoolProvider implements OnModuleDestroy {
     this.pool = new Pool({ connectionString });
   }
 
-  get client(): Pool {
-    return this.pool;
+  get client(): Pool | PoolClient {
+    return this.als.getStore() ?? this.pool;
+  }
+
+  async transaction<T>(fn: () => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+      const result = await this.als.run(client, fn);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async onModuleDestroy(): Promise<void> {
