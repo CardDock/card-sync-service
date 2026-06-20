@@ -1,5 +1,6 @@
-import { SyncCardParams } from '../types/card.types';
+import { SyncCardWithRelatedData } from '../types/sync-card-with-related.types';
 
 export interface ExternalCardSourcePort {
-  findByExternalId(externalId: string): Promise<SyncCardParams | null>;
+  findByExternalId(externalId: string): Promise<SyncCardWithRelatedData | null>;
+  findByName(name: string): Promise<SyncCardWithRelatedData[]>;
 }
