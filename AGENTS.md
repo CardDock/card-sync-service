@@ -56,3 +56,7 @@ pnpm run start:prod           # node dist/main
 - Repository uses `ON CONFLICT (external_id) DO UPDATE` — upsert semantics.
 - Field normalizers convert between external API labels (e.g. `"Beast-Warrior"`) and domain types (`"BeastWarrior"`).
 - pnpm workspace: `allowBuilds` set for `@nestjs/core`, `@prisma/engines`, `prisma`.
+- Coverage: ~78% statements, ~76% branches (229 tests, 43 suites). `src/generated/prisma/` excluido via `coveragePathIgnorePatterns` en Jest config.
+- `card.controller.ts`, `card-field-normalizers.ts`, `logging.interceptor.ts`, `domain-error.filter.ts`, `json-value.mapper.ts` al 100%.
+- `postgres-card.mapper.ts` al 95.65% (solo línea 98 sin cubrir: `inner === ''`, caso borde de Postgres).
+- Capa de persistencia (repos, pool, logger) con 0-10% — no mockeada intencionalmente por bajo ROI. Business logic cubierta via use cases.

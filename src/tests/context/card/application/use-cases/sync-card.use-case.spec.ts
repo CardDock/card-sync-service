@@ -166,6 +166,34 @@ describe('SyncCardUseCase', () => {
     );
   });
 
+  it('wraps non-domain errors without causeCode in context', async () => {
+    externalCardSource.findByExternalId.mockRejectedValue(
+      new Error('Network failure'),
+    );
+
+    const useCase = new SyncCardUseCase(
+      externalCardSource,
+      cardRepository,
+      cardRelatedDataRepository,
+      postgresPoolProvider,
+      buildLoggerMock(),
+    );
+
+    let raisedError: unknown;
+    try {
+      await useCase.execute({ externalId: '46986414' });
+    } catch (error) {
+      raisedError = error;
+    }
+
+    expect(raisedError).toBeInstanceOf(CardDomainProcessError);
+    const processError = raisedError as CardDomainProcessError;
+    expect(processError.context).toMatchObject({
+      externalId: '46986414',
+    });
+    expect(processError.context).not.toHaveProperty('causeCode');
+  });
+
   it('wraps domain validation errors in CardDomainProcessError', async () => {
     externalCardSource.findByExternalId.mockResolvedValue(
       buildSourceCard({ race: 'UnknownRace' as never }),

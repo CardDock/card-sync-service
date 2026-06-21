@@ -23,4 +23,8 @@ lerna-debug.log*
 .temp
 .tmp
 
+# prisma
 /src/generated/prisma
+
+# jest
+/coverage

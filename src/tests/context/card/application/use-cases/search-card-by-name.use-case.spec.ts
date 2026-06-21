@@ -155,6 +155,34 @@ describe('SearchCardByNameUseCase', () => {
     expect(cardRepository.save).toHaveBeenCalledTimes(2);
   });
 
+  it('wraps non-domain errors without causeCode in context', async () => {
+    externalCardSource.findByName.mockRejectedValue(
+      new Error('Network failure'),
+    );
+
+    const useCase = new SearchCardByNameUseCase(
+      externalCardSource,
+      cardRepository,
+      cardRelatedDataRepository,
+      postgresPoolProvider,
+      buildLoggerMock(),
+    );
+
+    let raisedError: unknown;
+    try {
+      await useCase.execute({ name: 'Dark Magician' });
+    } catch (error) {
+      raisedError = error;
+    }
+
+    expect(raisedError).toBeInstanceOf(CardDomainProcessError);
+    const processError = raisedError as CardDomainProcessError;
+    expect(processError.context).toMatchObject({
+      name: 'Dark Magician',
+    });
+    expect(processError.context).not.toHaveProperty('causeCode');
+  });
+
   it('wraps domain validation errors in CardDomainProcessError', async () => {
     externalCardSource.findByName.mockResolvedValue([
       buildSourceCard({ race: 'UnknownRace' as never }),

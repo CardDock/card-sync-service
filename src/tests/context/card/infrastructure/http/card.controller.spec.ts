@@ -11,6 +11,7 @@ import { ListCardSetsUseCase } from '../../../../../context/card/application/use
 import { SyncCardUseCase } from '../../../../../context/card/application/use-cases/sync-card.use-case';
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { PaginatedResult } from '../../../../../context/card/domain/ports/card-query-repository.port';
+import type { CardPrimitives } from '../../../../../context/card/domain/types/card.types';
 
 const buildLoggerMock = (): Logger =>
   ({
@@ -217,6 +218,159 @@ describe('CardController', () => {
     });
     expect(result.items).toHaveLength(1);
     expect(result.total).toBe(1);
+  });
+
+  it('returns prints for a card', async () => {
+    const mocks = buildUseCaseMocks();
+    const prints = [{ externalId: '23771716', setId: 'set-1', rarity: 'Ultra Rare', rarityCode: 'UR', setCode: 'CT1-EN001', setPrice: '2.50' }];
+    mocks.getPrints.execute.mockResolvedValue(prints);
+
+    const controller = createController(mocks);
+
+    const result = await controller.getCardPrints('23771716');
+
+    expect(mocks.getPrints.execute).toHaveBeenCalledWith({ externalId: '23771716' });
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ externalId: '23771716' });
+  });
+
+  it('throws NotFoundException when card has no prints', async () => {
+    const mocks = buildUseCaseMocks();
+    mocks.getPrints.execute.mockResolvedValue([]);
+
+    const controller = createController(mocks);
+
+    let raisedError: unknown;
+
+    try {
+      await controller.getCardPrints('23771716');
+    } catch (error) {
+      raisedError = error;
+    }
+
+    expect(raisedError).toBeInstanceOf(NotFoundException);
+    expect((raisedError as Error).message).toBe(
+      'No prints found for card with externalId 23771716',
+    );
+  });
+
+  it('returns artworks for a card', async () => {
+    const mocks = buildUseCaseMocks();
+    const artworks = [{ externalId: '23771716', imageUrl: 'https://example.com/artwork.png' }];
+    mocks.getArtworks.execute.mockResolvedValue(artworks);
+
+    const controller = createController(mocks);
+
+    const result = await controller.getCardArtworks('23771716');
+
+    expect(mocks.getArtworks.execute).toHaveBeenCalledWith({ externalId: '23771716' });
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ externalId: '23771716' });
+  });
+
+  it('throws NotFoundException when card has no artworks', async () => {
+    const mocks = buildUseCaseMocks();
+    mocks.getArtworks.execute.mockResolvedValue([]);
+
+    const controller = createController(mocks);
+
+    let raisedError: unknown;
+
+    try {
+      await controller.getCardArtworks('23771716');
+    } catch (error) {
+      raisedError = error;
+    }
+
+    expect(raisedError).toBeInstanceOf(NotFoundException);
+    expect((raisedError as Error).message).toBe(
+      'No artworks found for card with externalId 23771716',
+    );
+  });
+
+  it('returns card sets', async () => {
+    const mocks = buildUseCaseMocks();
+    const sets = [{ setName: 'Starter Deck', setCode: 'YSD-001' }];
+    mocks.listSets.execute.mockResolvedValue(sets);
+
+    const controller = createController(mocks);
+
+    const result = await controller.listCardSets();
+
+    expect(mocks.listSets.execute).toHaveBeenCalledTimes(1);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ setName: 'Starter Deck' });
+  });
+
+  it('syncs a card from YGOPRODeck', async () => {
+    const card = buildCard();
+    const mocks = buildUseCaseMocks();
+    mocks.syncCard.execute.mockResolvedValue(card);
+
+    const controller = createController(mocks);
+
+    const result = await controller.syncCard({ externalId: '23771716' });
+
+    expect(mocks.syncCard.execute).toHaveBeenCalledWith({ externalId: '23771716' });
+    expect(result).toMatchObject({
+      externalId: '23771716',
+      name: 'Elemental HERO Neos',
+    });
+  });
+
+  it('throws NotFoundException when synced card not found in YGOPRODeck', async () => {
+    const mocks = buildUseCaseMocks();
+    mocks.syncCard.execute.mockResolvedValue(null);
+
+    const controller = createController(mocks);
+
+    let raisedError: unknown;
+
+    try {
+      await controller.syncCard({ externalId: '99999999' });
+    } catch (error) {
+      raisedError = error;
+    }
+
+    expect(raisedError).toBeInstanceOf(NotFoundException);
+    expect((raisedError as Error).message).toBe(
+      'Card with externalId 99999999 was not found in YGOPRODeck API',
+    );
+  });
+
+  it('caps limit at 100 when no name filter', async () => {
+    const mocks = buildUseCaseMocks();
+    mocks.listCards.execute.mockResolvedValue({ items: [], total: 0, page: 1, limit: 100 });
+
+    const controller = createController(mocks);
+
+    await controller.listCards(
+      undefined, undefined, undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      1, 200,
+    );
+
+    expect(mocks.listCards.execute).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 100 }),
+    );
+  });
+
+  it('returns empty cards list when no name filter and listCards returns empty', async () => {
+    const mocks = buildUseCaseMocks();
+    mocks.listCards.execute.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
+
+    const controller = createController(mocks);
+
+    const result = await controller.listCards(
+      undefined, undefined, undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      1, 20,
+    );
+
+    expect(result.items).toEqual([]);
+    expect(result.total).toBe(0);
   });
 
   it('registers a physical card', async () => {
