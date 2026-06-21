@@ -5,6 +5,7 @@ import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repositor
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
+import { Logger } from '../../domain/ports/logger.port';
 import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
 
 export interface FindOrSyncCardByExternalIdInput {
@@ -20,6 +21,7 @@ export class FindOrSyncCardByExternalIdUseCase {
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
     private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly logger: Logger,
   ) {}
 
   async execute(
@@ -28,14 +30,19 @@ export class FindOrSyncCardByExternalIdUseCase {
     try {
       const cardExternalId = this.normalizeCardExternalId(command.externalId);
 
+      this.logger.info({ externalId: cardExternalId }, 'Find card: checking database cache');
       const storedCard = await this.findStoredCard(cardExternalId);
 
       if (storedCard) {
+        const primitives = storedCard.toPrimitives();
+        this.logger.info({ externalId: cardExternalId, cardId: primitives.id, name: primitives.name }, 'Find card: found in cache, skipped sync');
         return storedCard;
       }
 
+      this.logger.info({ externalId: cardExternalId }, 'Find card: not in cache, fetching from YGOPRODeck API');
       return await this.syncMissingCardFromExternalSource(cardExternalId);
     } catch (error) {
+      this.logger.error({ externalId: command.externalId, error }, 'Find card: failed');
       throw this.buildProcessError(command.externalId, error);
     }
   }
@@ -72,15 +79,19 @@ export class FindOrSyncCardByExternalIdUseCase {
       await this.externalCardSource.findByExternalId(externalId);
 
     if (!externalData) {
+      this.logger.warn({ externalId }, 'Sync card: not found on YGOPRODeck API');
       return null;
     }
 
     const synchronizedCard = Card.create(externalData.card);
+    const primitives = synchronizedCard.toPrimitives();
+    this.logger.info({ externalId, cardId: primitives.id, name: primitives.name }, 'Sync card: data received from YGOPRODeck, persisting to database');
 
     await this.postgresPoolProvider.transaction(async () => {
       await this.persistSynchronizedCard(synchronizedCard, externalData);
     });
 
+    this.logger.info({ externalId, cardId: primitives.id, name: primitives.name }, 'Sync card: saved to database successfully');
     return synchronizedCard;
   }
 

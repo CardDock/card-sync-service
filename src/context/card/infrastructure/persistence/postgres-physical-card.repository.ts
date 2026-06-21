@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Logger } from '../../domain/ports/logger.port';
 import { PhysicalCardRepositoryPort } from '../../domain/ports/physical-card-repository.port';
 import { PhysicalCard } from '../../domain/entities/physical-card.entity';
 import { PostgresPoolProvider } from './postgres-pool.provider';
@@ -7,7 +8,10 @@ import { PostgresPoolProvider } from './postgres-pool.provider';
 export class PostgresPhysicalCardRepository
   implements PhysicalCardRepositoryPort
 {
-  constructor(private readonly postgresPoolProvider: PostgresPoolProvider) {}
+  constructor(
+    private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly logger: Logger,
+  ) {}
 
   async save(physicalCard: PhysicalCard): Promise<PhysicalCard> {
     const record = physicalCard.toPrimitives();

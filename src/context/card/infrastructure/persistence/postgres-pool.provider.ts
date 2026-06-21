@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Logger } from '../../domain/ports/logger.port';
 import { AsyncLocalStorage } from 'async_hooks';
 import { Pool, PoolClient } from 'pg';
 
@@ -7,7 +8,7 @@ export class PostgresPoolProvider implements OnModuleDestroy {
   private readonly pool: Pool;
   private readonly als = new AsyncLocalStorage<PoolClient>();
 
-  constructor() {
+  constructor(private readonly logger: Logger) {
     const connectionString = process.env.DIRECT_URL ?? process.env.DATABASE_URL;
 
     if (!connectionString) {

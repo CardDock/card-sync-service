@@ -5,6 +5,7 @@ import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-d
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
+import { Logger } from '../../domain/ports/logger.port';
 
 export interface SearchCardByNameInput {
   name: string;
@@ -19,19 +20,24 @@ export class SearchCardByNameUseCase {
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
     private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly logger: Logger,
   ) {}
 
   async execute(command: SearchCardByNameCommand): Promise<Card[]> {
     try {
+      this.logger.info({ name: command.name }, 'Search card: querying database cache');
       const localResults =
         await this.cardQueryRepository.findByName(command.name);
 
       if (localResults.length > 0) {
+        this.logger.info({ name: command.name, count: localResults.length }, 'Search card: found in cache');
         return localResults;
       }
 
+      this.logger.info({ name: command.name }, 'Search card: not in cache, fetching from YGOPRODeck API');
       return await this.syncFromExternalSource(command.name);
     } catch (error) {
+      this.logger.error({ name: command.name, error }, 'Search card: failed');
       throw this.buildProcessError(command.name, error);
     }
   }
@@ -54,17 +60,21 @@ export class SearchCardByNameUseCase {
   }
 
   private async syncFromExternalSource(name: string): Promise<Card[]> {
+    this.logger.info({ name }, 'Search card: requesting YGOPRODeck API');
     const externalResults =
       await this.externalCardSource.findByName(name);
 
     if (externalResults.length === 0) {
+      this.logger.warn({ name }, 'Search card: YGOPRODeck returned no results');
       return [];
     }
 
+    this.logger.info({ name, count: externalResults.length }, 'Search card: data received from YGOPRODeck, persisting to database');
     const cards: Card[] = [];
 
     for (const externalData of externalResults) {
       const synchronizedCard = Card.create(externalData.card);
+      const primitives = synchronizedCard.toPrimitives();
 
       await this.postgresPoolProvider.transaction(async () => {
         await this.cardRepository.save(synchronizedCard);
@@ -76,7 +86,7 @@ export class SearchCardByNameUseCase {
         for (const [index, artwork] of externalData.artworks.entries()) {
           const artworkId =
             await this.cardRelatedDataRepository.saveArtwork(
-              synchronizedCard.toPrimitives().id,
+              primitives.id,
               artwork.imageUrl,
             );
 
@@ -90,9 +100,11 @@ export class SearchCardByNameUseCase {
         }
       });
 
+      this.logger.info({ name, cardId: primitives.id, cardName: primitives.name }, 'Search card: synced from YGOPRODeck');
       cards.push(synchronizedCard);
     }
 
+    this.logger.info({ name, totalSynced: cards.length }, 'Search card: sync completed');
     return cards;
   }
 }

@@ -1,4 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { Logger } from './domain/ports/logger.port';
+import { PinoLoggerAdapter } from './infrastructure/persistence/pino-logger.adapter';
+import { LoggingInterceptor } from './infrastructure/http/logging.interceptor';
 import { FindOrSyncCardByExternalIdUseCase } from './application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from './application/use-cases/search-card-by-name.use-case';
 import { RegisterPhysicalCardUseCase } from './application/use-cases/register-physical-card.use-case';
@@ -17,6 +21,8 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     PostgresCardRelatedDataRepository,
     PostgresPhysicalCardRepository,
     YgoProDeckExternalCardSource,
+    { provide: Logger, useClass: PinoLoggerAdapter },
+    { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     {
       provide: FindOrSyncCardByExternalIdUseCase,
       useFactory: (
@@ -25,6 +31,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
         postgresPoolProvider: PostgresPoolProvider,
+        logger: Logger,
       ) =>
         new FindOrSyncCardByExternalIdUseCase(
           cardQueryRepository,
@@ -32,6 +39,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
           cardRepository,
           cardRelatedDataRepository,
           postgresPoolProvider,
+          logger,
         ),
       inject: [
         PostgresCardRepository,
@@ -39,6 +47,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
         PostgresPoolProvider,
+        Logger,
       ],
     },
     {
@@ -49,6 +58,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
         postgresPoolProvider: PostgresPoolProvider,
+        logger: Logger,
       ) =>
         new SearchCardByNameUseCase(
           cardQueryRepository,
@@ -56,6 +66,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
           cardRepository,
           cardRelatedDataRepository,
           postgresPoolProvider,
+          logger,
         ),
       inject: [
         PostgresCardRepository,
@@ -63,6 +74,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
         PostgresPoolProvider,
+        Logger,
       ],
     },
     {
@@ -70,14 +82,17 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
       useFactory: (
         physicalCardRepository: PostgresPhysicalCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        logger: Logger,
       ) =>
         new RegisterPhysicalCardUseCase(
           physicalCardRepository,
           cardRelatedDataRepository,
+          logger,
         ),
       inject: [
         PostgresPhysicalCardRepository,
         PostgresCardRelatedDataRepository,
+        Logger,
       ],
     },
   ],

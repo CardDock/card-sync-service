@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Logger } from '../../domain/ports/logger.port';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { SyncCardWithRelatedData } from '../../domain/types/sync-card-with-related.types';
 import { CardDomainProcessError } from '../../domain/errors';
@@ -12,6 +13,10 @@ export class YgoProDeckExternalCardSource implements ExternalCardSourcePort {
   private readonly baseUrl =
     process.env.YGOPRODECK_API_BASE_URL ??
     'https://db.ygoprodeck.com/api/v7/cardinfo.php';
+
+  constructor(
+    private readonly logger: Logger,
+  ) {}
 
   async findByExternalId(
     externalId: string,

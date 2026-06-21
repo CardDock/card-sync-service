@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Logger } from '../../domain/ports/logger.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardSetData } from '../../domain/types/card-set.types';
 import { ArtworkData } from '../../domain/types/artwork.types';
@@ -9,7 +10,10 @@ import { PostgresPoolProvider } from './postgres-pool.provider';
 export class PostgresCardRelatedDataRepository
   implements CardRelatedDataRepositoryPort
 {
-  constructor(private readonly postgresPoolProvider: PostgresPoolProvider) {}
+  constructor(
+    private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly logger: Logger,
+  ) {}
 
   async saveCardSets(sets: CardSetData[]): Promise<Map<string, string>> {
     if (sets.length === 0) {

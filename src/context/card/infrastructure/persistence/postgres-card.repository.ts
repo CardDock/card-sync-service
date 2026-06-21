@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { QueryResult } from 'pg';
+import { Logger } from '../../domain/ports/logger.port';
 import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { Card } from '../../domain/entities/card.entity';
@@ -39,7 +40,10 @@ interface PostgresCardRow {
 export class PostgresCardRepository
   implements CardQueryRepositoryPort, CardRepositoryPort
 {
-  constructor(private readonly postgresPoolProvider: PostgresPoolProvider) {}
+  constructor(
+    private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly logger: Logger,
+  ) {}
 
   async findByExternalId(externalId: string): Promise<Card | null> {
     const result =
