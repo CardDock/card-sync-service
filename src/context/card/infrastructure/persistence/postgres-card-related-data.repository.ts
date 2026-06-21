@@ -62,26 +62,6 @@ export class PostgresCardRelatedDataRepository
     return result.rows[0].id;
   }
 
-  async findFirstArtworkIdByCardExternalId(
-    externalId: string,
-  ): Promise<string | null> {
-    const result = await this.postgresPoolProvider.client.query<{
-      id: string;
-    }>(
-      `
-      SELECT a."id"
-      FROM "artworks" a
-      JOIN "cards" c ON c."id" = a."card_id"
-      WHERE c."external_id" = $1
-      ORDER BY a."id"
-      LIMIT 1
-      `,
-      [externalId],
-    );
-
-    return result.rows[0]?.id ?? null;
-  }
-
   async saveCardPrints(
     artworkId: string,
     prints: CardPrintData[],

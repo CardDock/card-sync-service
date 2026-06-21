@@ -5,7 +5,6 @@ import { PinoLoggerAdapter } from './infrastructure/persistence/pino-logger.adap
 import { LoggingInterceptor } from './infrastructure/http/logging.interceptor';
 import { FindOrSyncCardByExternalIdUseCase } from './application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from './application/use-cases/search-card-by-name.use-case';
-import { RegisterPhysicalCardUseCase } from './application/use-cases/register-physical-card.use-case';
 import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
 import { GetCardPrintsUseCase } from './application/use-cases/get-card-prints.use-case';
 import { GetCardArtworksUseCase } from './application/use-cases/get-card-artworks.use-case';
@@ -15,7 +14,6 @@ import { CardController } from './infrastructure/http/card.controller';
 import { YgoProDeckExternalCardSource } from './infrastructure/external/ygoprodeck-card-source';
 import { PostgresCardRepository } from './infrastructure/persistence/postgres-card.repository';
 import { PostgresCardRelatedDataRepository } from './infrastructure/persistence/postgres-card-related-data.repository';
-import { PostgresPhysicalCardRepository } from './infrastructure/persistence/postgres-physical-card.repository';
 import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool.provider';
 
 @Module({
@@ -24,7 +22,6 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     PostgresPoolProvider,
     PostgresCardRepository,
     PostgresCardRelatedDataRepository,
-    PostgresPhysicalCardRepository,
     YgoProDeckExternalCardSource,
     { provide: Logger, useClass: PinoLoggerAdapter },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
@@ -76,24 +73,6 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
         PostgresPoolProvider,
-        Logger,
-      ],
-    },
-    {
-      provide: RegisterPhysicalCardUseCase,
-      useFactory: (
-        physicalCardRepository: PostgresPhysicalCardRepository,
-        cardRelatedDataRepository: PostgresCardRelatedDataRepository,
-        logger: Logger,
-      ) =>
-        new RegisterPhysicalCardUseCase(
-          physicalCardRepository,
-          cardRelatedDataRepository,
-          logger,
-        ),
-      inject: [
-        PostgresPhysicalCardRepository,
-        PostgresCardRelatedDataRepository,
         Logger,
       ],
     },
@@ -157,7 +136,6 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
   exports: [
     FindOrSyncCardByExternalIdUseCase,
     SearchCardByNameUseCase,
-    RegisterPhysicalCardUseCase,
     ListCardsUseCase,
     GetCardPrintsUseCase,
     GetCardArtworksUseCase,

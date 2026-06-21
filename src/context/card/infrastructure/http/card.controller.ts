@@ -23,16 +23,13 @@ import { Logger } from '../../domain/ports/logger.port';
 import { CardPrimitives } from '../../domain/types/card.types';
 import { FindOrSyncCardByExternalIdUseCase } from '../../application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../application/use-cases/search-card-by-name.use-case';
-import { RegisterPhysicalCardUseCase } from '../../application/use-cases/register-physical-card.use-case';
 import { ListCardsUseCase } from '../../application/use-cases/list-cards.use-case';
 import { GetCardPrintsUseCase } from '../../application/use-cases/get-card-prints.use-case';
 import { GetCardArtworksUseCase } from '../../application/use-cases/get-card-artworks.use-case';
 import { ListCardSetsUseCase } from '../../application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from '../../application/use-cases/sync-card.use-case';
 import { DomainErrorFilter } from './domain-error.filter';
-import { RegisterPhysicalCardDto } from './dto/register-physical-card.dto';
 import { CardResponseDto } from './dto/card-response.dto';
-import { PhysicalCardResponseDto } from './dto/physical-card-response.dto';
 import { PaginatedCardResponseDto } from './dto/paginated-card-response.dto';
 import { CardPrintResponseDto } from './dto/card-print-response.dto';
 import { ArtworkResponseDto } from './dto/artwork-response.dto';
@@ -46,7 +43,6 @@ export class CardController {
   constructor(
     private readonly findOrSyncCardByExternalIdUseCase: FindOrSyncCardByExternalIdUseCase,
     private readonly searchCardByNameUseCase: SearchCardByNameUseCase,
-    private readonly registerPhysicalCardUseCase: RegisterPhysicalCardUseCase,
     private readonly listCardsUseCase: ListCardsUseCase,
     private readonly getCardPrintsUseCase: GetCardPrintsUseCase,
     private readonly getCardArtworksUseCase: GetCardArtworksUseCase,
@@ -218,26 +214,5 @@ export class CardController {
 
     this.logger.info({ externalId: body.externalId, name: card.toPrimitives().name }, 'Sync card: completed');
     return card.toPrimitives();
-  }
-
-  @Post('physical-cards')
-  @ApiOperation({ summary: 'Register a physical card instance' })
-  @ApiBody({ type: RegisterPhysicalCardDto })
-  @ApiResponse({ status: 201, type: PhysicalCardResponseDto, description: 'Physical card registered successfully' })
-  async registerPhysicalCard(
-    @Body() body: RegisterPhysicalCardDto,
-  ) {
-    this.logger.info({ externalId: body.externalId, condition: body.condition, language: body.language }, 'Register physical card');
-
-    const result = this.registerPhysicalCardUseCase.execute({
-      externalId: body.externalId,
-      cardPrintId: body.cardPrintId,
-      condition: body.condition,
-      language: body.language,
-      isFirstEdition: body.isFirstEdition,
-    });
-
-    this.logger.info({ id: (await result).id, externalId: body.externalId }, 'Physical card registered');
-    return result;
   }
 }
