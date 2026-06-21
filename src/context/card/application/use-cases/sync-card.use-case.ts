@@ -45,10 +45,9 @@ export class SyncCardUseCase {
       );
 
       const card = Card.create(externalData.card);
-      const primitives = card.toPrimitives();
 
       await this.postgresPoolProvider.transaction(async () => {
-        await this.cardRepository.save(card);
+        const storedId = await this.cardRepository.save(card);
 
         const setIds = await this.cardRelatedDataRepository.saveCardSets(
           externalData.cardSets,
@@ -57,7 +56,7 @@ export class SyncCardUseCase {
         for (const [index, artwork] of externalData.artworks.entries()) {
           const artworkId =
             await this.cardRelatedDataRepository.saveArtwork(
-              primitives.id,
+              storedId,
               artwork.imageUrl,
             );
 
@@ -71,6 +70,7 @@ export class SyncCardUseCase {
         }
       });
 
+      const primitives = card.toPrimitives();
       this.logger.info(
         { externalId: command.externalId, cardId: primitives.id, cardName: primitives.name },
         'Sync card: completed',

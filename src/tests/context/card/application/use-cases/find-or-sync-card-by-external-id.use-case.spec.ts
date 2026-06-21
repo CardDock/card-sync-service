@@ -80,7 +80,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       findByName: jest.fn(),
     };
     cardRepository = {
-      save: jest.fn(),
+      save: jest.fn().mockResolvedValue('stored-card-id'),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),

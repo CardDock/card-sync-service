@@ -63,10 +63,9 @@ export class SearchCardByNameUseCase {
 
     for (const externalData of externalResults) {
       const synchronizedCard = Card.create(externalData.card);
-      const primitives = synchronizedCard.toPrimitives();
 
       await this.postgresPoolProvider.transaction(async () => {
-        await this.cardRepository.save(synchronizedCard);
+        const storedId = await this.cardRepository.save(synchronizedCard);
 
         const setIds = await this.cardRelatedDataRepository.saveCardSets(
           externalData.cardSets,
@@ -75,7 +74,7 @@ export class SearchCardByNameUseCase {
         for (const [index, artwork] of externalData.artworks.entries()) {
           const artworkId =
             await this.cardRelatedDataRepository.saveArtwork(
-              primitives.id,
+              storedId,
               artwork.imageUrl,
             );
 
@@ -89,6 +88,7 @@ export class SearchCardByNameUseCase {
         }
       });
 
+      const primitives = synchronizedCard.toPrimitives();
       this.logger.info({ name, cardId: primitives.id, cardName: primitives.name }, 'Search card: synced from YGOPRODeck');
       cards.push(synchronizedCard);
     }

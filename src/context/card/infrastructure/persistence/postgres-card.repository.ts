@@ -243,10 +243,10 @@ export class PostgresCardRepository
     };
   }
 
-  async save(card: Card): Promise<void> {
+  async save(card: Card): Promise<string> {
     const record = mapCardToPostgresRecord(card);
 
-    await this.postgresPoolProvider.client.query(
+    const result = await this.postgresPoolProvider.client.query<{ id: string }>(
       `
         INSERT INTO "cards" (
           "id",
@@ -301,6 +301,7 @@ export class PostgresCardRepository
           "linkmarkers" = EXCLUDED."linkmarkers",
           "attribute" = EXCLUDED."attribute",
           "rawData" = EXCLUDED."rawData"
+        RETURNING "id"
       `,
       [
         record.id,
@@ -322,5 +323,7 @@ export class PostgresCardRepository
         record.rawData,
       ],
     );
+
+    return result.rows[0].id;
   }
 }

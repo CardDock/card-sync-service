@@ -103,9 +103,7 @@ export class FindOrSyncCardByExternalIdUseCase {
       cardPrints: { setName: string; setCode: string; rarity: string; rarityCode: string | null; setPrice: number | null }[];
     },
   ): Promise<void> {
-    const cardPrimitives = card.toPrimitives();
-
-    await this.cardRepository.save(card);
+    const storedId = await this.cardRepository.save(card);
 
     const setIds = await this.cardRelatedDataRepository.saveCardSets(
       externalData.cardSets,
@@ -113,7 +111,7 @@ export class FindOrSyncCardByExternalIdUseCase {
 
     for (const [index, artwork] of externalData.artworks.entries()) {
       const artworkId = await this.cardRelatedDataRepository.saveArtwork(
-        cardPrimitives.id,
+        storedId,
         artwork.imageUrl,
       );
 
