@@ -1,4 +1,5 @@
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
+  nestjs-pino: true
   prisma: true
