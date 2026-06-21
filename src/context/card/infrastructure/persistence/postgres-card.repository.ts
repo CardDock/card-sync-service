@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { QueryResult } from 'pg';
 import { Logger } from '../../domain/ports/logger.port';
-import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
+import {
+  CardListFilters,
+  CardQueryRepositoryPort,
+  PaginatedResult,
+} from '../../domain/ports/card-query-repository.port';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { Card } from '../../domain/entities/card.entity';
 import {
@@ -114,6 +117,130 @@ export class PostgresCardRepository
       );
 
     return result.rows.map(mapPostgresRowToCard);
+  }
+
+  async findAll(
+    filters: CardListFilters,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedResult<Card>> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 0;
+
+    if (filters.name) {
+      paramIndex++;
+      conditions.push(`"name" ILIKE '%' || $${paramIndex} || '%'`);
+      params.push(filters.name);
+    }
+
+    if (filters.type) {
+      paramIndex++;
+      conditions.push(`"type" ILIKE '%' || $${paramIndex} || '%'`);
+      params.push(filters.type);
+    }
+
+    if (filters.race) {
+      paramIndex++;
+      conditions.push(`"race" = $${paramIndex}::"Race"`);
+      params.push(filters.race);
+    }
+
+    if (filters.attribute) {
+      paramIndex++;
+      conditions.push(`"attribute" = $${paramIndex}::"Attribute"`);
+      params.push(filters.attribute);
+    }
+
+    if (filters.frameType) {
+      paramIndex++;
+      conditions.push(`"frame_type" = $${paramIndex}::"FrameType"`);
+      params.push(filters.frameType);
+    }
+
+    if (filters.atkMin != null) {
+      paramIndex++;
+      conditions.push(`"atk" >= $${paramIndex}`);
+      params.push(filters.atkMin);
+    }
+
+    if (filters.atkMax != null) {
+      paramIndex++;
+      conditions.push(`"atk" <= $${paramIndex}`);
+      params.push(filters.atkMax);
+    }
+
+    if (filters.defMin != null) {
+      paramIndex++;
+      conditions.push(`"def" >= $${paramIndex}`);
+      params.push(filters.defMin);
+    }
+
+    if (filters.defMax != null) {
+      paramIndex++;
+      conditions.push(`"def" <= $${paramIndex}`);
+      params.push(filters.defMax);
+    }
+
+    if (filters.level != null) {
+      paramIndex++;
+      conditions.push(`"level" = $${paramIndex}`);
+      params.push(filters.level);
+    }
+
+    if (filters.linkval != null) {
+      paramIndex++;
+      conditions.push(`"linkval" = $${paramIndex}`);
+      params.push(filters.linkval);
+    }
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const offset = (page - 1) * limit;
+
+    const countResult = await this.postgresPoolProvider.client.query<{
+      count: number;
+    }>(`SELECT COUNT(*) AS "count" FROM "cards" ${whereClause}`, params);
+
+    const total = Number(countResult.rows[0].count);
+
+    const dataResult =
+      await this.postgresPoolProvider.client.query<PostgresCardRow>(
+        `
+        SELECT
+          "id",
+          "external_id",
+          "name",
+          "typeline",
+          "type",
+          "human_readable_card_type",
+          "frame_type",
+          "desc",
+          "race",
+          "atk",
+          "def",
+          "level",
+          "scale",
+          "linkval",
+          "linkmarkers",
+          "attribute",
+          "rawData" AS "raw_data"
+        FROM "cards"
+        ${whereClause}
+        ORDER BY "name"
+        LIMIT $${paramIndex + 1}
+        OFFSET $${paramIndex + 2}
+      `,
+        [...params, limit, offset],
+      );
+
+    return {
+      items: dataResult.rows.map(mapPostgresRowToCard),
+      total,
+      page,
+      limit,
+    };
   }
 
   async save(card: Card): Promise<void> {

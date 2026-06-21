@@ -50,5 +50,5 @@ export class CardResponseDto {
   attribute: string | null;
 
   @ApiProperty({ description: 'Raw data from external source' })
-  rawData: Record<string, unknown>;
+  rawData: any;
 }

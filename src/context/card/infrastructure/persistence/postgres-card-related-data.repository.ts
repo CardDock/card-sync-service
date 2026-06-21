@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Logger } from '../../domain/ports/logger.port';
-import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
+import {
+  ArtworkResult,
+  CardPrintResult,
+  CardRelatedDataRepositoryPort,
+  CardSetResult,
+} from '../../domain/ports/card-related-data-repository.port';
 import { CardSetData } from '../../domain/types/card-set.types';
 import { ArtworkData } from '../../domain/types/artwork.types';
 import { CardPrintData } from '../../domain/types/card-print.types';
@@ -105,5 +110,93 @@ export class PostgresCardRelatedDataRepository
         ],
       );
     }
+  }
+
+  async findArtworksByCardExternalId(
+    externalId: string,
+  ): Promise<ArtworkResult[]> {
+    const result = await this.postgresPoolProvider.client.query<{
+      id: string;
+      image_url: string;
+    }>(
+      `
+      SELECT a."id", a."image_url"
+      FROM "artworks" a
+      JOIN "cards" c ON c."id" = a."card_id"
+      WHERE c."external_id" = $1
+      ORDER BY a."id"
+    `,
+      [externalId],
+    );
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      imageUrl: row.image_url,
+    }));
+  }
+
+  async findPrintsByCardExternalId(
+    externalId: string,
+  ): Promise<CardPrintResult[]> {
+    const result = await this.postgresPoolProvider.client.query<{
+      id: string;
+      card_set_id: string;
+      card_set_name: string;
+      card_set_code: string | null;
+      set_code: string;
+      rarity: string;
+      rarity_code: string | null;
+      set_price: number | null;
+    }>(
+      `
+      SELECT
+        cp."id",
+        cp."card_set_id",
+        cs."name" AS "card_set_name",
+        cs."code" AS "card_set_code",
+        cp."set_code",
+        cp."rarity",
+        cp."rarity_code",
+        cp."set_price"
+      FROM "card_prints" cp
+      JOIN "card_sets" cs ON cs."id" = cp."card_set_id"
+      JOIN "artworks" a ON a."id" = cp."artwork_id"
+      JOIN "cards" c ON c."id" = a."card_id"
+      WHERE c."external_id" = $1
+      ORDER BY cs."name", cp."rarity"
+    `,
+      [externalId],
+    );
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      cardSetId: row.card_set_id,
+      cardSetName: row.card_set_name,
+      cardSetCode: row.card_set_code,
+      setCode: row.set_code,
+      rarity: row.rarity,
+      rarityCode: row.rarity_code,
+      setPrice: row.set_price,
+    }));
+  }
+
+  async findAllCardSets(): Promise<CardSetResult[]> {
+    const result = await this.postgresPoolProvider.client.query<{
+      id: string;
+      name: string;
+      code: string | null;
+    }>(
+      `
+      SELECT "id", "name", "code"
+      FROM "card_sets"
+      ORDER BY "name"
+    `,
+    );
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      code: row.code,
+    }));
   }
 }

@@ -73,6 +73,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     cardQueryRepository = {
       findByExternalId: jest.fn(),
       findByName: jest.fn(),
+      findAll: jest.fn(),
     };
     externalCardSource = {
       findByExternalId: jest.fn(),
@@ -86,6 +87,9 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       saveArtwork: jest.fn(),
       saveCardPrints: jest.fn(),
       findFirstArtworkIdByCardExternalId: jest.fn(),
+      findArtworksByCardExternalId: jest.fn(),
+      findPrintsByCardExternalId: jest.fn(),
+      findAllCardSets: jest.fn(),
     };
     postgresPoolProvider = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),

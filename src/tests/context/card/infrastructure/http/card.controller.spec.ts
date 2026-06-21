@@ -4,7 +4,13 @@ import { CardController } from '../../../../../context/card/infrastructure/http/
 import { FindOrSyncCardByExternalIdUseCase } from '../../../../../context/card/application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../../../../context/card/application/use-cases/search-card-by-name.use-case';
 import { RegisterPhysicalCardUseCase } from '../../../../../context/card/application/use-cases/register-physical-card.use-case';
+import { ListCardsUseCase } from '../../../../../context/card/application/use-cases/list-cards.use-case';
+import { GetCardPrintsUseCase } from '../../../../../context/card/application/use-cases/get-card-prints.use-case';
+import { GetCardArtworksUseCase } from '../../../../../context/card/application/use-cases/get-card-artworks.use-case';
+import { ListCardSetsUseCase } from '../../../../../context/card/application/use-cases/list-card-sets.use-case';
+import { SyncCardUseCase } from '../../../../../context/card/application/use-cases/sync-card.use-case';
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
+import { PaginatedResult } from '../../../../../context/card/domain/ports/card-query-repository.port';
 
 const buildLoggerMock = (): Logger =>
   ({
@@ -53,22 +59,43 @@ describe('CardController', () => {
     execute: jest.fn(),
   });
 
-  it('returns card primitives when externalId 23771716 exists', async () => {
-    const card = buildCard();
-    const useCaseMock = buildUseCaseMock();
-    useCaseMock.execute.mockResolvedValue(card);
+  const buildUseCaseMocks = () => ({
+    findOrSync: buildUseCaseMock(),
+    search: buildSearchUseCaseMock(),
+    physicalCard: buildPhysicalCardUseCaseMock(),
+    listCards: { execute: jest.fn() },
+    getPrints: { execute: jest.fn() },
+    getArtworks: { execute: jest.fn() },
+    listSets: { execute: jest.fn() },
+    syncCard: { execute: jest.fn() },
+  });
 
-    const controller = new CardController(
-      useCaseMock as unknown as FindOrSyncCardByExternalIdUseCase,
-      buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
-      buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
+  const createController = (
+    mocks: ReturnType<typeof buildUseCaseMocks>,
+  ) =>
+    new CardController(
+      mocks.findOrSync as unknown as FindOrSyncCardByExternalIdUseCase,
+      mocks.search as unknown as SearchCardByNameUseCase,
+      mocks.physicalCard as unknown as RegisterPhysicalCardUseCase,
+      mocks.listCards as unknown as ListCardsUseCase,
+      mocks.getPrints as unknown as GetCardPrintsUseCase,
+      mocks.getArtworks as unknown as GetCardArtworksUseCase,
+      mocks.listSets as unknown as ListCardSetsUseCase,
+      mocks.syncCard as unknown as SyncCardUseCase,
       buildLoggerMock(),
     );
 
+  it('returns card primitives when externalId 23771716 exists', async () => {
+    const card = buildCard();
+    const mocks = buildUseCaseMocks();
+    mocks.findOrSync.execute.mockResolvedValue(card);
+
+    const controller = createController(mocks);
+
     const result = await controller.findByExternalId(requestedExternalId);
 
-    expect(useCaseMock.execute).toHaveBeenCalledTimes(1);
-    expect(useCaseMock.execute).toHaveBeenCalledWith({
+    expect(mocks.findOrSync.execute).toHaveBeenCalledTimes(1);
+    expect(mocks.findOrSync.execute).toHaveBeenCalledWith({
       externalId: requestedExternalId,
     });
     expect(result).toMatchObject({
@@ -78,15 +105,10 @@ describe('CardController', () => {
   });
 
   it('throws NotFoundException when card does not exist', async () => {
-    const useCaseMock = buildUseCaseMock();
-    useCaseMock.execute.mockResolvedValue(null);
+    const mocks = buildUseCaseMocks();
+    mocks.findOrSync.execute.mockResolvedValue(null);
 
-    const controller = new CardController(
-      useCaseMock as unknown as FindOrSyncCardByExternalIdUseCase,
-      buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
-      buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
-      buildLoggerMock(),
-    );
+    const controller = createController(mocks);
 
     let raisedError: unknown;
 
@@ -104,66 +126,102 @@ describe('CardController', () => {
 
   it('forwards the route param externalId to the use case unchanged', async () => {
     const card = buildCard();
-    const useCaseMock = buildUseCaseMock();
-    useCaseMock.execute.mockResolvedValue(card);
+    const mocks = buildUseCaseMocks();
+    mocks.findOrSync.execute.mockResolvedValue(card);
 
-    const controller = new CardController(
-      useCaseMock as unknown as FindOrSyncCardByExternalIdUseCase,
-      buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
-      buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
-      buildLoggerMock(),
-    );
+    const controller = createController(mocks);
 
     await controller.findByExternalId('23771716');
 
-    expect(useCaseMock.execute).toHaveBeenLastCalledWith({
+    expect(mocks.findOrSync.execute).toHaveBeenLastCalledWith({
       externalId: '23771716',
     });
   });
 
-  it('returns cards when searching by name', async () => {
+  it('returns cards when searching by name via listCards', async () => {
     const card = buildCard();
-    const searchUseCaseMock = buildSearchUseCaseMock();
-    searchUseCaseMock.execute.mockResolvedValue([card]);
+    const mocks = buildUseCaseMocks();
+    mocks.search.execute.mockResolvedValue([card]);
 
-    const controller = new CardController(
-      buildUseCaseMock() as unknown as FindOrSyncCardByExternalIdUseCase,
-      searchUseCaseMock as unknown as SearchCardByNameUseCase,
-      buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
-      buildLoggerMock(),
+    const controller = createController(mocks);
+
+    const result = await controller.listCards(
+      'Neos', undefined, undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      1, 20,
     );
 
-    const result = await controller.searchByName('Neos');
-
-    expect(searchUseCaseMock.execute).toHaveBeenCalledWith({
+    expect(mocks.search.execute).toHaveBeenCalledWith({
       name: 'Neos',
     });
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]).toMatchObject({
       externalId: '23771716',
       name: 'Elemental HERO Neos',
     });
   });
 
   it('returns empty array when search yields no results', async () => {
-    const searchUseCaseMock = buildSearchUseCaseMock();
-    searchUseCaseMock.execute.mockResolvedValue([]);
+    const mocks = buildUseCaseMocks();
+    mocks.search.execute.mockResolvedValue([]);
 
-    const controller = new CardController(
-      buildUseCaseMock() as unknown as FindOrSyncCardByExternalIdUseCase,
-      searchUseCaseMock as unknown as SearchCardByNameUseCase,
-      buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
-      buildLoggerMock(),
+    const controller = createController(mocks);
+
+    const result = await controller.listCards(
+      'UnknownCardXYZ', undefined, undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      1, 20,
     );
 
-    const result = await controller.searchByName('UnknownCardXYZ');
+    expect(result.items).toEqual([]);
+  });
 
-    expect(result).toEqual([]);
+  it('returns paginated list when no name filter is provided', async () => {
+    const card = buildCard();
+    const mocks = buildUseCaseMocks();
+    const paginatedResult: PaginatedResult<Card> = {
+      items: [card],
+      total: 1,
+      page: 1,
+      limit: 20,
+    };
+    mocks.listCards.execute.mockResolvedValue(paginatedResult);
+
+    const controller = createController(mocks);
+
+    const result = await controller.listCards(
+      undefined, 'Normal Monster', undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined,
+      1, 20,
+    );
+
+    expect(mocks.listCards.execute).toHaveBeenCalledWith({
+      filters: {
+        name: undefined,
+        type: 'Normal Monster',
+        race: undefined,
+        attribute: undefined,
+        frameType: undefined,
+        atkMin: undefined,
+        atkMax: undefined,
+        defMin: undefined,
+        defMax: undefined,
+        level: undefined,
+        linkval: undefined,
+      },
+      page: 1,
+      limit: 20,
+    });
+    expect(result.items).toHaveLength(1);
+    expect(result.total).toBe(1);
   });
 
   it('registers a physical card', async () => {
-    const useCaseMock = buildPhysicalCardUseCaseMock();
-    useCaseMock.execute.mockResolvedValue({
+    const mocks = buildUseCaseMocks();
+    mocks.physicalCard.execute.mockResolvedValue({
       id: 'phys-id-1',
       artworkId: 'artwork-id-1',
       cardPrintId: null,
@@ -172,12 +230,7 @@ describe('CardController', () => {
       isFirstEdition: true,
     });
 
-    const controller = new CardController(
-      buildUseCaseMock() as unknown as FindOrSyncCardByExternalIdUseCase,
-      buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
-      useCaseMock as unknown as RegisterPhysicalCardUseCase,
-      buildLoggerMock(),
-    );
+    const controller = createController(mocks);
 
     const result = await controller.registerPhysicalCard({
       externalId: '46986414',
@@ -186,7 +239,7 @@ describe('CardController', () => {
       isFirstEdition: true,
     });
 
-    expect(useCaseMock.execute).toHaveBeenCalledWith({
+    expect(mocks.physicalCard.execute).toHaveBeenCalledWith({
       externalId: '46986414',
       cardPrintId: undefined,
       condition: 'NEAR_MINT',
