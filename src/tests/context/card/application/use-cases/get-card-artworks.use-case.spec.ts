@@ -13,7 +13,6 @@ describe('GetCardArtworksUseCase', () => {
       saveCardSets: jest.fn(),
       saveArtwork: jest.fn(),
       saveCardPrints: jest.fn(),
-      findFirstArtworkIdByCardExternalId: jest.fn(),
       findArtworksByCardExternalId: jest.fn(),
       findPrintsByCardExternalId: jest.fn(),
       findAllCardSets: jest.fn(),

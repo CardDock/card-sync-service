@@ -3,7 +3,6 @@ import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { CardController } from '../../../../../context/card/infrastructure/http/card.controller';
 import { FindOrSyncCardByExternalIdUseCase } from '../../../../../context/card/application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../../../../context/card/application/use-cases/search-card-by-name.use-case';
-import { RegisterPhysicalCardUseCase } from '../../../../../context/card/application/use-cases/register-physical-card.use-case';
 import { ListCardsUseCase } from '../../../../../context/card/application/use-cases/list-cards.use-case';
 import { GetCardPrintsUseCase } from '../../../../../context/card/application/use-cases/get-card-prints.use-case';
 import { GetCardArtworksUseCase } from '../../../../../context/card/application/use-cases/get-card-artworks.use-case';
@@ -56,14 +55,9 @@ describe('CardController', () => {
     execute: jest.fn(),
   });
 
-  const buildPhysicalCardUseCaseMock = () => ({
-    execute: jest.fn(),
-  });
-
   const buildUseCaseMocks = () => ({
     findOrSync: buildUseCaseMock(),
     search: buildSearchUseCaseMock(),
-    physicalCard: buildPhysicalCardUseCaseMock(),
     listCards: { execute: jest.fn() },
     getPrints: { execute: jest.fn() },
     getArtworks: { execute: jest.fn() },
@@ -77,7 +71,6 @@ describe('CardController', () => {
     new CardController(
       mocks.findOrSync as unknown as FindOrSyncCardByExternalIdUseCase,
       mocks.search as unknown as SearchCardByNameUseCase,
-      mocks.physicalCard as unknown as RegisterPhysicalCardUseCase,
       mocks.listCards as unknown as ListCardsUseCase,
       mocks.getPrints as unknown as GetCardPrintsUseCase,
       mocks.getArtworks as unknown as GetCardArtworksUseCase,
@@ -371,38 +364,5 @@ describe('CardController', () => {
 
     expect(result.items).toEqual([]);
     expect(result.total).toBe(0);
-  });
-
-  it('registers a physical card', async () => {
-    const mocks = buildUseCaseMocks();
-    mocks.physicalCard.execute.mockResolvedValue({
-      id: 'phys-id-1',
-      artworkId: 'artwork-id-1',
-      cardPrintId: null,
-      condition: 'NEAR_MINT',
-      language: 'EN',
-      isFirstEdition: true,
-    });
-
-    const controller = createController(mocks);
-
-    const result = await controller.registerPhysicalCard({
-      externalId: '46986414',
-      condition: 'NEAR_MINT',
-      language: 'EN',
-      isFirstEdition: true,
-    });
-
-    expect(mocks.physicalCard.execute).toHaveBeenCalledWith({
-      externalId: '46986414',
-      cardPrintId: undefined,
-      condition: 'NEAR_MINT',
-      language: 'EN',
-      isFirstEdition: true,
-    });
-    expect(result).toMatchObject({
-      id: 'phys-id-1',
-      condition: 'NEAR_MINT',
-    });
   });
 });

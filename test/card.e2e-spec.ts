@@ -4,7 +4,6 @@ import request from 'supertest';
 import { AppModule } from '../src/app/app.module';
 import { FindOrSyncCardByExternalIdUseCase } from '../src/context/card/application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../src/context/card/application/use-cases/search-card-by-name.use-case';
-import { RegisterPhysicalCardUseCase } from '../src/context/card/application/use-cases/register-physical-card.use-case';
 import { ListCardsUseCase } from '../src/context/card/application/use-cases/list-cards.use-case';
 import { GetCardPrintsUseCase } from '../src/context/card/application/use-cases/get-card-prints.use-case';
 import { GetCardArtworksUseCase } from '../src/context/card/application/use-cases/get-card-artworks.use-case';
@@ -18,7 +17,6 @@ describe('CardController (e2e)', () => {
 
   const mockFindOrSync = { execute: jest.fn() };
   const mockSearchByName = { execute: jest.fn() };
-  const mockRegisterPhysicalCard = { execute: jest.fn() };
   const mockListCards = { execute: jest.fn() };
   const mockGetCardPrints = { execute: jest.fn() };
   const mockGetCardArtworks = { execute: jest.fn() };
@@ -73,8 +71,6 @@ describe('CardController (e2e)', () => {
       .useValue(mockFindOrSync)
       .overrideProvider(SearchCardByNameUseCase)
       .useValue(mockSearchByName)
-      .overrideProvider(RegisterPhysicalCardUseCase)
-      .useValue(mockRegisterPhysicalCard)
       .overrideProvider(ListCardsUseCase)
       .useValue(mockListCards)
       .overrideProvider(GetCardPrintsUseCase)
@@ -336,56 +332,6 @@ describe('CardController (e2e)', () => {
         .post('/cards/sync')
         .send({ externalId: '99999999' })
         .expect(404);
-    });
-  });
-
-  describe('POST /physical-cards', () => {
-    const sampleResult = {
-      id: 'phys-1',
-      artworkId: 'art-1',
-      cardPrintId: null,
-      condition: 'Near Mint',
-      language: 'English',
-      isFirstEdition: true,
-    };
-
-    it('registers a physical card', async () => {
-      mockRegisterPhysicalCard.execute.mockResolvedValue(sampleResult);
-
-      const response = await request(app.getHttpServer())
-        .post('/physical-cards')
-        .send({
-          externalId: '46986414',
-          condition: 'Near Mint',
-          language: 'English',
-          isFirstEdition: true,
-        })
-        .expect(201);
-
-      expect(response.body).toMatchObject(sampleResult);
-    });
-
-    it('registers a physical card without optional fields', async () => {
-      const minimalResult = {
-        id: 'phys-2',
-        artworkId: 'art-1',
-        cardPrintId: null,
-        condition: 'Played',
-        language: 'French',
-        isFirstEdition: false,
-      };
-      mockRegisterPhysicalCard.execute.mockResolvedValue(minimalResult);
-
-      const response = await request(app.getHttpServer())
-        .post('/physical-cards')
-        .send({
-          externalId: '46986414',
-          condition: 'Played',
-          language: 'French',
-        })
-        .expect(201);
-
-      expect(response.body).toMatchObject(minimalResult);
     });
   });
 });

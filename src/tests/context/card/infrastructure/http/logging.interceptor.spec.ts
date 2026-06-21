@@ -54,7 +54,7 @@ describe('LoggingInterceptor', () => {
     const interceptor = new LoggingInterceptor(logger);
     const context = buildExecutionContextMock({
       method: 'POST',
-      url: '/physical-cards',
+      url: '/cards/sync',
       query: {},
       params: {},
     });
@@ -64,7 +64,7 @@ describe('LoggingInterceptor', () => {
       complete: () => {
         expect(logger.info).toHaveBeenNthCalledWith(
           1,
-          { method: 'POST', url: '/physical-cards', query: {}, params: {} },
+          { method: 'POST', url: '/cards/sync', query: {}, params: {} },
           'Request started',
         );
         done();
