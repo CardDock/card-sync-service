@@ -48,7 +48,4 @@ export class CardResponseDto {
 
   @ApiPropertyOptional({ description: 'Card attribute', example: 'DARK', nullable: true })
   attribute: string | null;
-
-  @ApiProperty({ description: 'Raw data from external source' })
-  rawData: any;
 }

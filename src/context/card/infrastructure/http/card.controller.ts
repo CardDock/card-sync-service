@@ -21,6 +21,8 @@ import {
 } from '@nestjs/swagger';
 import { Logger } from '../../domain/ports/logger.port';
 import { CardPrimitives } from '../../domain/types/card.types';
+
+type CardResponse = Omit<CardPrimitives, 'rawData'>;
 import { FindOrSyncCardByExternalIdUseCase } from '../../application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from '../../application/use-cases/list-cards.use-case';
@@ -58,7 +60,7 @@ export class CardController {
   @ApiNotFoundResponse({ description: 'Card with the given externalId was not found' })
   async findByExternalId(
     @Param('externalId') externalId: string,
-  ): Promise<CardPrimitives> {
+  ): Promise<CardResponse> {
     this.logger.info({ externalId }, 'Card lookup: checking cache');
 
     const card = await this.findOrSyncCardByExternalIdUseCase.execute({
@@ -73,7 +75,8 @@ export class CardController {
     }
 
     this.logger.info({ externalId, name: card.toPrimitives().name }, 'Card found in cache');
-    return card.toPrimitives();
+    const { rawData: _, ...response } = card.toPrimitives();
+    return response;
   }
 
   @Get('cards')
@@ -111,11 +114,16 @@ export class CardController {
       limit = 100;
     }
 
+    const toResponse = (p: CardPrimitives): CardResponse => {
+      const { rawData: _, ...rest } = p;
+      return rest;
+    };
+
     if (name) {
       this.logger.info({ name }, 'Card search by name');
       const cards = await this.searchCardByNameUseCase.execute({ name });
       return {
-        items: cards.map((card) => card.toPrimitives()),
+        items: cards.map((card) => toResponse(card.toPrimitives())),
         total: cards.length,
         page: 1,
         limit: cards.length,
@@ -131,7 +139,7 @@ export class CardController {
     });
 
     return {
-      items: result.items.map((card) => card.toPrimitives()),
+      items: result.items.map((card) => toResponse(card.toPrimitives())),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -198,7 +206,7 @@ export class CardController {
   @ApiNotFoundResponse({ description: 'Card not found in YGOPRODeck API' })
   async syncCard(
     @Body() body: SyncCardDto,
-  ): Promise<CardPrimitives> {
+  ): Promise<CardResponse> {
     this.logger.info({ externalId: body.externalId }, 'Force sync card from YGOPRODeck');
 
     const card = await this.syncCardUseCase.execute({
@@ -213,6 +221,7 @@ export class CardController {
     }
 
     this.logger.info({ externalId: body.externalId, name: card.toPrimitives().name }, 'Sync card: completed');
-    return card.toPrimitives();
+    const { rawData: _, ...response } = card.toPrimitives();
+    return response;
   }
 }
