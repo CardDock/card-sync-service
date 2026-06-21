@@ -1,3 +1,4 @@
+import { v5 as uuidv5 } from 'uuid';
 import {
   CardPrimitives,
   CreateCardParams,
@@ -21,11 +22,13 @@ import { CardScale } from '../value-objects/card-scale.value-object';
 import { CardTypeline } from '../value-objects/card-typeline.value-object';
 import { CardType } from '../value-objects/card-type.value-object';
 
+const CARD_ID_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+
 export class Card {
   private constructor(private props: CardPrimitives) {}
 
   static create(params: CreateCardParams): Card {
-    const id = CardId.create(params.id);
+    const id = CardId.create(params.id ?? uuidv5(params.externalId, CARD_ID_NAMESPACE));
     const externalId = CardExternalId.create(params.externalId);
     const name = CardName.create(params.name);
     const type = CardType.create(params.type);
