@@ -1,9 +1,18 @@
 import { NotFoundException } from '@nestjs/common';
+import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { CardController } from '../../../../../context/card/infrastructure/http/card.controller';
 import { FindOrSyncCardByExternalIdUseCase } from '../../../../../context/card/application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../../../../context/card/application/use-cases/search-card-by-name.use-case';
 import { RegisterPhysicalCardUseCase } from '../../../../../context/card/application/use-cases/register-physical-card.use-case';
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
+
+const buildLoggerMock = (): Logger =>
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 describe('CardController', () => {
   const requestedExternalId = '23771716';
@@ -53,6 +62,7 @@ describe('CardController', () => {
       useCaseMock as unknown as FindOrSyncCardByExternalIdUseCase,
       buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
       buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
+      buildLoggerMock(),
     );
 
     const result = await controller.findByExternalId(requestedExternalId);
@@ -75,6 +85,7 @@ describe('CardController', () => {
       useCaseMock as unknown as FindOrSyncCardByExternalIdUseCase,
       buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
       buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
+      buildLoggerMock(),
     );
 
     let raisedError: unknown;
@@ -100,6 +111,7 @@ describe('CardController', () => {
       useCaseMock as unknown as FindOrSyncCardByExternalIdUseCase,
       buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
       buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
+      buildLoggerMock(),
     );
 
     await controller.findByExternalId('23771716');
@@ -118,6 +130,7 @@ describe('CardController', () => {
       buildUseCaseMock() as unknown as FindOrSyncCardByExternalIdUseCase,
       searchUseCaseMock as unknown as SearchCardByNameUseCase,
       buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
+      buildLoggerMock(),
     );
 
     const result = await controller.searchByName('Neos');
@@ -140,6 +153,7 @@ describe('CardController', () => {
       buildUseCaseMock() as unknown as FindOrSyncCardByExternalIdUseCase,
       searchUseCaseMock as unknown as SearchCardByNameUseCase,
       buildPhysicalCardUseCaseMock() as unknown as RegisterPhysicalCardUseCase,
+      buildLoggerMock(),
     );
 
     const result = await controller.searchByName('UnknownCardXYZ');
@@ -162,6 +176,7 @@ describe('CardController', () => {
       buildUseCaseMock() as unknown as FindOrSyncCardByExternalIdUseCase,
       buildSearchUseCaseMock() as unknown as SearchCardByNameUseCase,
       useCaseMock as unknown as RegisterPhysicalCardUseCase,
+      buildLoggerMock(),
     );
 
     const result = await controller.registerPhysicalCard({

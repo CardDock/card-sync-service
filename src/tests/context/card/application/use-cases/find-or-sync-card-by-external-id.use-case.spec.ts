@@ -10,6 +10,15 @@ import {
   CardDomainValidationError,
 } from '../../../../../context/card/domain/errors';
 import { PostgresPoolProvider } from '../../../../../context/card/infrastructure/persistence/postgres-pool.provider';
+import { Logger } from '../../../../../context/card/domain/ports/logger.port';
+
+const buildLoggerMock = (): Logger =>
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 describe('FindOrSyncCardByExternalIdUseCase', () => {
   const buildSourceCard = (
@@ -97,6 +106,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       cardRepository,
       cardRelatedDataRepository,
       postgresPoolProvider,
+      buildLoggerMock(),
     );
 
     const result = await useCase.execute({ externalId: '46986414' });
@@ -125,6 +135,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       cardRepository,
       cardRelatedDataRepository,
       postgresPoolProvider,
+      buildLoggerMock(),
     );
 
     const result = await useCase.execute({ externalId: '46986414' });
@@ -155,6 +166,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       cardRepository,
       cardRelatedDataRepository,
       postgresPoolProvider,
+      buildLoggerMock(),
     );
 
     const result = await useCase.execute({ externalId: '46986414' });
@@ -176,6 +188,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       cardRepository,
       cardRelatedDataRepository,
       postgresPoolProvider,
+      buildLoggerMock(),
     );
 
     let raisedError: unknown;
