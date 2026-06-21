@@ -58,7 +58,6 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     {
       provide: SearchCardByNameUseCase,
       useFactory: (
-        cardQueryRepository: PostgresCardRepository,
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
@@ -66,7 +65,6 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         logger: Logger,
       ) =>
         new SearchCardByNameUseCase(
-          cardQueryRepository,
           externalCardSource,
           cardRepository,
           cardRelatedDataRepository,
@@ -74,7 +72,6 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
           logger,
         ),
       inject: [
-        PostgresCardRepository,
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,

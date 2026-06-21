@@ -1,5 +1,4 @@
 import { Card } from '../../domain/entities/card.entity';
-import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
@@ -15,7 +14,6 @@ export type SearchCardByNameCommand = SearchCardByNameInput;
 
 export class SearchCardByNameUseCase {
   constructor(
-    private readonly cardQueryRepository: CardQueryRepositoryPort,
     private readonly externalCardSource: ExternalCardSourcePort,
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
@@ -25,16 +23,7 @@ export class SearchCardByNameUseCase {
 
   async execute(command: SearchCardByNameCommand): Promise<Card[]> {
     try {
-      this.logger.info({ name: command.name }, 'Search card: querying database cache');
-      const localResults =
-        await this.cardQueryRepository.findByName(command.name);
-
-      if (localResults.length > 0) {
-        this.logger.info({ name: command.name, count: localResults.length }, 'Search card: found in cache');
-        return localResults;
-      }
-
-      this.logger.info({ name: command.name }, 'Search card: not in cache, fetching from YGOPRODeck API');
+      this.logger.info({ name: command.name }, 'Search card: fetching from YGOPRODeck API');
       return await this.syncFromExternalSource(command.name);
     } catch (error) {
       this.logger.error({ name: command.name, error }, 'Search card: failed');
