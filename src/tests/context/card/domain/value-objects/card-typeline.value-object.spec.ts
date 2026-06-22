@@ -12,4 +12,16 @@ describe('CardTypeline', () => {
       new Error('Card typeline must be an array of non-empty strings'),
     );
   });
+
+  it('throws when value is not an array', () => {
+    expect(() => (CardTypeline.create as any)('not-an-array')).toThrow(
+      new Error('Card typeline must be an array of non-empty strings'),
+    );
+  });
+
+  it('throws when an item is not a string', () => {
+    expect(() => CardTypeline.create(['Dragon', 123 as any])).toThrow(
+      new Error('Card typeline must be an array of non-empty strings'),
+    );
+  });
 });
