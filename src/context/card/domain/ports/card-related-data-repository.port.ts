@@ -27,7 +27,7 @@ export interface CardRelatedDataRepositoryPort {
   saveCardSets(sets: CardSetData[]): Promise<Map<string, string>>;
   saveArtwork(cardId: string, imageUrl: string): Promise<string>;
   saveCardPrints(artworkId: string, prints: CardPrintData[], setIds: Map<string, string>): Promise<void>;
-  findArtworksByCardExternalId(externalId: string): Promise<ArtworkResult[]>;
-  findPrintsByCardExternalId(externalId: string): Promise<CardPrintResult[]>;
+  findArtworksByCardId(cardId: string): Promise<ArtworkResult[]>;
+  findPrintsByCardId(cardId: string): Promise<CardPrintResult[]>;
   findAllCardSets(): Promise<CardSetResult[]>;
 }

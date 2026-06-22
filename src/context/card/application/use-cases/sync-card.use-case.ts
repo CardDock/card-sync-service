@@ -2,12 +2,12 @@ import { Card } from '../../domain/entities/card.entity';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
-import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Logger } from '../../domain/ports/logger.port';
+import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
 
 export interface SyncCardInput {
-  externalId: string;
+  id: string;
 }
 
 export type SyncCardCommand = SyncCardInput;
@@ -17,36 +17,36 @@ export class SyncCardUseCase {
     private readonly externalCardSource: ExternalCardSourcePort,
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
-    private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly transactionManager: TransactionManagerPort,
     private readonly logger: Logger,
   ) {}
 
   async execute(command: SyncCardCommand): Promise<Card> {
     try {
       this.logger.info(
-        { externalId: command.externalId },
+        { id: command.id },
         'Sync card: fetching from YGOPRODeck API',
       );
 
       const externalData =
-        await this.externalCardSource.findByExternalId(command.externalId);
+        await this.externalCardSource.findById(command.id);
 
       if (!externalData) {
         this.logger.warn(
-          { externalId: command.externalId },
+          { id: command.id },
           'Sync card: YGOPRODeck returned no data',
         );
         return null;
       }
 
       this.logger.info(
-        { externalId: command.externalId, name: externalData.card.name },
+        { id: command.id, name: externalData.card.name },
         'Sync card: data received, persisting to database',
       );
 
       const card = Card.create(externalData.card);
 
-      await this.postgresPoolProvider.transaction(async () => {
+      await this.transactionManager.transaction(async () => {
         const storedId = await this.cardRepository.save(card);
 
         const setIds = await this.cardRelatedDataRepository.saveCardSets(
@@ -72,31 +72,31 @@ export class SyncCardUseCase {
 
       const primitives = card.toPrimitives();
       this.logger.info(
-        { externalId: command.externalId, cardId: primitives.id, cardName: primitives.name },
+        { id: command.id, cardId: primitives.id, cardName: primitives.name },
         'Sync card: completed',
       );
 
       return card;
     } catch (error) {
       this.logger.error(
-        { externalId: command.externalId, error },
+        { id: command.id, error },
         'Sync card: failed',
       );
-      throw this.buildProcessError(command.externalId, error);
+      throw this.buildProcessError(command.id, error);
     }
   }
 
   private buildProcessError(
-    externalId: string,
+    id: string,
     cause: unknown,
   ): CardDomainProcessError {
     const causeCode = cause instanceof DomainError ? cause.code : undefined;
 
     return new CardDomainProcessError({
       stage: 'SyncCardUseCase.execute',
-      message: `Failed to sync card by externalId ${externalId}`,
+      message: `Failed to sync card by id ${id}`,
       context: {
-        externalId,
+        id,
         ...(causeCode ? { causeCode } : {}),
       },
       cause,

@@ -2,9 +2,9 @@ import { Card } from '../../domain/entities/card.entity';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
-import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Logger } from '../../domain/ports/logger.port';
+import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
 
 export interface SearchCardByNameInput {
   name: string;
@@ -17,7 +17,7 @@ export class SearchCardByNameUseCase {
     private readonly externalCardSource: ExternalCardSourcePort,
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
-    private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly transactionManager: TransactionManagerPort,
     private readonly logger: Logger,
   ) {}
 
@@ -64,7 +64,7 @@ export class SearchCardByNameUseCase {
     for (const externalData of externalResults) {
       const synchronizedCard = Card.create(externalData.card);
 
-      await this.postgresPoolProvider.transaction(async () => {
+      await this.transactionManager.transaction(async () => {
         const storedId = await this.cardRepository.save(synchronizedCard);
 
         const setIds = await this.cardRelatedDataRepository.saveCardSets(

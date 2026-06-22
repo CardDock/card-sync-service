@@ -1,4 +1,3 @@
-import { v5 as uuidv5 } from 'uuid';
 import {
   CardPrimitives,
   CreateCardParams,
@@ -8,7 +7,6 @@ import { CardAttribute } from '../value-objects/card-attribute.value-object';
 import { CardAtk } from '../value-objects/card-atk.value-object';
 import { CardDescription } from '../value-objects/card-description.value-object';
 import { CardDef } from '../value-objects/card-def.value-object';
-import { CardExternalId } from '../value-objects/card-external-id.value-object';
 import { CardFrameType } from '../value-objects/card-frame-type.value-object';
 import { CardHumanReadableCardType } from '../value-objects/card-human-readable-card-type.value-object';
 import { CardId } from '../value-objects/card-id.value-object';
@@ -22,14 +20,11 @@ import { CardScale } from '../value-objects/card-scale.value-object';
 import { CardTypeline } from '../value-objects/card-typeline.value-object';
 import { CardType } from '../value-objects/card-type.value-object';
 
-const CARD_ID_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
-
 export class Card {
   private constructor(private props: CardPrimitives) {}
 
   static create(params: CreateCardParams): Card {
-    const id = CardId.create(params.id ?? uuidv5(params.externalId, CARD_ID_NAMESPACE));
-    const externalId = CardExternalId.create(params.externalId);
+    const id = CardId.create(params.id);
     const name = CardName.create(params.name);
     const type = CardType.create(params.type);
     const humanReadableCardType = CardHumanReadableCardType.create(
@@ -50,7 +45,6 @@ export class Card {
 
     return new Card({
       id: id.toPrimitives(),
-      externalId: externalId.toPrimitives(),
       name: name.toPrimitives(),
       typeline: typeline.toPrimitives(),
       type: type.toPrimitives(),
@@ -70,7 +64,7 @@ export class Card {
   }
 
   syncFromSource(params: SyncCardParams): void {
-    const externalId = CardExternalId.create(params.externalId);
+    const id = CardId.create(params.id);
     const name = CardName.create(params.name);
     const type = CardType.create(params.type);
     const humanReadableCardType = CardHumanReadableCardType.create(
@@ -91,7 +85,7 @@ export class Card {
 
     this.props = {
       ...this.props,
-      externalId: externalId.toPrimitives(),
+      id: id.toPrimitives(),
       name: name.toPrimitives(),
       typeline: typeline.toPrimitives(),
       type: type.toPrimitives(),

@@ -15,7 +15,6 @@ import { PostgresPoolProvider } from './postgres-pool.provider';
 
 interface PostgresCardRow {
   id: string;
-  external_id: string;
   name: string;
   typeline: string[];
   type: string;
@@ -48,13 +47,12 @@ export class PostgresCardRepository
     private readonly logger: Logger,
   ) {}
 
-  async findByExternalId(externalId: string): Promise<Card | null> {
+  async findById(id: string): Promise<Card | null> {
     const result =
       await this.postgresPoolProvider.client.query<PostgresCardRow>(
         `
         SELECT
           "id",
-          "external_id",
           "name",
           "typeline",
           "type",
@@ -71,10 +69,10 @@ export class PostgresCardRepository
           "attribute",
           "rawData" AS "raw_data"
         FROM "cards"
-        WHERE "external_id" = $1
+        WHERE "id" = $1
         LIMIT 1
       `,
-        [externalId],
+        [id],
       );
 
     const [row] = result.rows;
@@ -92,7 +90,6 @@ export class PostgresCardRepository
         `
         SELECT
           "id",
-          "external_id",
           "name",
           "typeline",
           "type",
@@ -210,7 +207,6 @@ export class PostgresCardRepository
         `
         SELECT
           "id",
-          "external_id",
           "name",
           "typeline",
           "type",
@@ -250,7 +246,6 @@ export class PostgresCardRepository
       `
         INSERT INTO "cards" (
           "id",
-          "external_id",
           "name",
           "typeline",
           "type",
@@ -272,20 +267,19 @@ export class PostgresCardRepository
           $3,
           $4,
           $5,
-          $6,
-          $7::"FrameType",
-          $8,
-          $9::"Race",
+          $6::"FrameType",
+          $7,
+          $8::"Race",
+          $9,
           $10,
           $11,
           $12,
           $13,
-          $14,
-          $15::"LinkMarker"[],
-          $16::"Attribute",
-          $17::jsonb
+          $14::"LinkMarker"[],
+          $15::"Attribute",
+          $16::jsonb
         )
-        ON CONFLICT ("external_id") DO UPDATE SET
+        ON CONFLICT ("id") DO UPDATE SET
           "name" = EXCLUDED."name",
           "typeline" = EXCLUDED."typeline",
           "type" = EXCLUDED."type",
@@ -305,7 +299,6 @@ export class PostgresCardRepository
       `,
       [
         record.id,
-        record.externalId,
         record.name,
         record.typeline,
         record.type,

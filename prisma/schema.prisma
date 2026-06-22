@@ -9,23 +9,22 @@ datasource db {
 }
 
 model Card {
-  id                    String       @id @default(uuid())
-  externalId            String       @unique @map("external_id") // ID de la API primaria (ej: YGOPRODeck)
+  id                    String       @id
   name                  String       @unique
-  typeline              String[] // Soporte nativo en PostgreSQL y CockroachDB. Si usas MySQL o SQLite, cambia el tipo a Json.
+  typeline              String[]
   type                  String
   humanReadableCardType String       @map("human_readable_card_type")
   frameType             FrameType    @map("frame_type")
-  desc                  String       @db.Text // Permite almacenar textos largos que superan el límite de VARCHAR estándar.
+  desc                  String       @db.Text
   race                  Race
-  atk                   Int? // Opcional: nulo para cartas Mágicas, Trampas y monstruos Link.
-  def                   Int? // Opcional: nulo para cartas Mágicas, Trampas y monstruos Link.
-  level                 Int? // Opcional: nulo para Mágicas, Trampas y monstruos Link.
-  scale                 Int? // Opcional: nulo para cartas que no sean Pendulum.
-  linkval               Int? // Opcional: nulo para cartas que no sean Link.
-  linkmarkers           LinkMarker[] // Direcciones de las flechas Link (ej: ["Top", "Bottom-Left"])
-  attribute             Attribute? // Opcional: nulo para Mágicas y Trampas.
-  rawData               Json         @db.Json // Almacena los datos originales de la API para referencia futura.
+  atk                   Int?
+  def                   Int?
+  level                 Int?
+  scale                 Int?
+  linkval               Int?
+  linkmarkers           LinkMarker[]
+  attribute             Attribute?
+  rawData               Json         @db.Json
   artworks              Artwork[]
 
   @@index([name])
@@ -34,9 +33,8 @@ model Card {
 
 model CardSet {
   id   String  @id @default(uuid())
-  name String  @unique // ej: "Maximum Crisis"
-  code String? // Código del set si aplica a nivel general
-
+  name String  @unique
+  code String?
   prints CardPrint[]
 
   @@map("card_sets")
@@ -45,7 +43,7 @@ model CardSet {
 model Artwork {
   id       String @id @default(uuid())
   cardId   String @map("card_id")
-  imageUrl String @map("image_url") // URL de la imagen del arte
+  imageUrl String @map("image_url")
 
   card          Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
   cardPrints    CardPrint[]
@@ -60,12 +58,11 @@ model CardPrint {
   artworkId String @map("artwork_id")
   cardSetId String @map("card_set_id")
 
-  setCode    String  @map("set_code") // ej: "MACR-EN081"
-  rarity     String // ej: "Secret Rare"
-  rarityCode String? @map("rarity_code") // ej: "(ScR)"
-  setPrice   Float?  @map("set_price") // Permite almacenar el valor individual "4.32" devuelto por la API
+  setCode    String  @map("set_code")
+  rarity     String
+  rarityCode String? @map("rarity_code")
+  setPrice   Float?  @map("set_price")
 
-  // Relaciones
   artwork       Artwork        @relation(fields: [artworkId], references: [id], onDelete: Cascade)
   cardSet       CardSet        @relation(fields: [cardSetId], references: [id], onDelete: Cascade)
 
@@ -136,8 +133,6 @@ enum Race {
   WingedBeast  @map("Winged Beast")
   Wyrm
   Zombie
-
-  // Magias / Trampas
   Normal
   Field
   Equip

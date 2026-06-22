@@ -12,7 +12,6 @@ import { toJsonValue } from '../shared/json-value.mapper';
 
 interface PostgresCardRow {
   id: string;
-  external_id: string;
   name: string;
   typeline: string[] | string;
   type: string;
@@ -32,7 +31,6 @@ interface PostgresCardRow {
 
 interface PersistableCardRecord {
   id: string;
-  externalId: string;
   name: string;
   typeline: string[];
   type: string;
@@ -53,7 +51,6 @@ interface PersistableCardRecord {
 export function mapPostgresRowToCard(row: PostgresCardRow): Card {
   return Card.create({
     id: row.id,
-    externalId: row.external_id,
     name: row.name,
     typeline: parsePostgresTextArray(row.typeline),
     type: row.type,
@@ -112,7 +109,6 @@ export function mapCardToPostgresRecord(card: Card): PersistableCardRecord {
 
   return {
     id: primitives.id,
-    externalId: primitives.externalId,
     name: primitives.name,
     typeline: primitives.typeline,
     type: primitives.type,

@@ -1,11 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CardResponseDto {
-  @ApiProperty({ description: 'Internal ID', example: 'uuid' })
+  @ApiProperty({ description: 'Card ID (YGOPRODeck ID)', example: '46986414' })
   id: string;
-
-  @ApiProperty({ description: 'External ID from YGOPRODeck', example: '46986414' })
-  externalId: string;
 
   @ApiProperty({ description: 'Card name', example: 'Dark Magician' })
   name: string;

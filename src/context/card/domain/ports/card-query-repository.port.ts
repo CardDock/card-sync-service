@@ -22,7 +22,7 @@ export interface PaginatedResult<T> {
 }
 
 export interface CardQueryRepositoryPort {
-  findByExternalId(externalId: string): Promise<Card | null>;
+  findById(id: string): Promise<Card | null>;
   findByName(name: string): Promise<Card[]>;
   findAll(
     filters: CardListFilters,

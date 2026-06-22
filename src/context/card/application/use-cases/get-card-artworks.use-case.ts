@@ -2,7 +2,7 @@ import { CardRelatedDataRepositoryPort, ArtworkResult } from '../../domain/ports
 import { Logger } from '../../domain/ports/logger.port';
 
 export interface GetCardArtworksInput {
-  externalId: string;
+  id: string;
 }
 
 export type GetCardArtworksCommand = GetCardArtworksInput;
@@ -15,17 +15,17 @@ export class GetCardArtworksUseCase {
 
   async execute(command: GetCardArtworksCommand): Promise<ArtworkResult[]> {
     this.logger.info(
-      { externalId: command.externalId },
+      { id: command.id },
       'Get card artworks: querying database',
     );
 
     const artworks =
-      await this.cardRelatedDataRepository.findArtworksByCardExternalId(
-        command.externalId,
+      await this.cardRelatedDataRepository.findArtworksByCardId(
+        command.id,
       );
 
     this.logger.info(
-      { externalId: command.externalId, count: artworks.length },
+      { id: command.id, count: artworks.length },
       'Get card artworks: query completed',
     );
 

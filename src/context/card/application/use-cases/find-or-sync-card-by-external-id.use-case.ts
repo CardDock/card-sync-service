@@ -1,18 +1,18 @@
 import { Card } from '../../domain/entities/card.entity';
-import { CardExternalId } from '../../domain/value-objects/card-external-id.value-object';
+import { CardId } from '../../domain/value-objects/card-id.value-object';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Logger } from '../../domain/ports/logger.port';
-import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
+import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
 
-export interface FindOrSyncCardByExternalIdInput {
-  externalId: string;
+export interface FindOrSyncCardByIdInput {
+  id: string;
 }
 
-export type FindOrSyncCardByExternalIdCommand = FindOrSyncCardByExternalIdInput;
+export type FindOrSyncCardByIdCommand = FindOrSyncCardByIdInput;
 
 export class FindOrSyncCardByExternalIdUseCase {
   constructor(
@@ -20,78 +20,78 @@ export class FindOrSyncCardByExternalIdUseCase {
     private readonly externalCardSource: ExternalCardSourcePort,
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
-    private readonly postgresPoolProvider: PostgresPoolProvider,
+    private readonly transactionManager: TransactionManagerPort,
     private readonly logger: Logger,
   ) {}
 
   async execute(
-    command: FindOrSyncCardByExternalIdCommand,
+    command: FindOrSyncCardByIdCommand,
   ): Promise<Card | null> {
     try {
-      const cardExternalId = this.normalizeCardExternalId(command.externalId);
+      const cardId = this.normalizeCardId(command.id);
 
-      this.logger.info({ externalId: cardExternalId }, 'Find card: checking database cache');
-      const storedCard = await this.findStoredCard(cardExternalId);
+      this.logger.info({ id: cardId }, 'Find card: checking database cache');
+      const storedCard = await this.findStoredCard(cardId);
 
       if (storedCard) {
         const primitives = storedCard.toPrimitives();
-        this.logger.info({ externalId: cardExternalId, cardId: primitives.id, name: primitives.name }, 'Find card: found in cache, skipped sync');
+        this.logger.info({ id: cardId, cardId: primitives.id, name: primitives.name }, 'Find card: found in cache, skipped sync');
         return storedCard;
       }
 
-      this.logger.info({ externalId: cardExternalId }, 'Find card: not in cache, fetching from YGOPRODeck API');
-      return await this.syncMissingCardFromExternalSource(cardExternalId);
+      this.logger.info({ id: cardId }, 'Find card: not in cache, fetching from YGOPRODeck API');
+      return await this.syncMissingCardFromExternalSource(cardId);
     } catch (error) {
-      this.logger.error({ externalId: command.externalId, error }, 'Find card: failed');
-      throw this.buildProcessError(command.externalId, error);
+      this.logger.error({ id: command.id, error }, 'Find card: failed');
+      throw this.buildProcessError(command.id, error);
     }
   }
 
   private buildProcessError(
-    externalId: string,
+    id: string,
     cause: unknown,
   ): CardDomainProcessError {
     const causeCode = cause instanceof DomainError ? cause.code : undefined;
 
     return new CardDomainProcessError({
       stage: 'FindOrSyncCardByExternalIdUseCase.execute',
-      message: `Failed to find or synchronize card with external id ${externalId}`,
+      message: `Failed to find or synchronize card with id ${id}`,
       context: {
-        externalId,
+        id,
         ...(causeCode ? { causeCode } : {}),
       },
       cause,
     });
   }
 
-  private normalizeCardExternalId(externalId: string): string {
-    return CardExternalId.create(externalId).toPrimitives();
+  private normalizeCardId(id: string): string {
+    return CardId.create(id).toPrimitives();
   }
 
-  private async findStoredCard(externalId: string): Promise<Card | null> {
-    return this.cardQueryRepository.findByExternalId(externalId);
+  private async findStoredCard(id: string): Promise<Card | null> {
+    return this.cardQueryRepository.findById(id);
   }
 
   private async syncMissingCardFromExternalSource(
-    externalId: string,
+    id: string,
   ): Promise<Card | null> {
     const externalData =
-      await this.externalCardSource.findByExternalId(externalId);
+      await this.externalCardSource.findById(id);
 
     if (!externalData) {
-      this.logger.warn({ externalId }, 'Sync card: not found on YGOPRODeck API');
+      this.logger.warn({ id }, 'Sync card: not found on YGOPRODeck API');
       return null;
     }
 
     const synchronizedCard = Card.create(externalData.card);
     const primitives = synchronizedCard.toPrimitives();
-    this.logger.info({ externalId, cardId: primitives.id, name: primitives.name }, 'Sync card: data received from YGOPRODeck, persisting to database');
+    this.logger.info({ id, cardId: primitives.id, name: primitives.name }, 'Sync card: data received from YGOPRODeck, persisting to database');
 
-    await this.postgresPoolProvider.transaction(async () => {
+    await this.transactionManager.transaction(async () => {
       await this.persistSynchronizedCard(synchronizedCard, externalData);
     });
 
-    this.logger.info({ externalId, cardId: primitives.id, name: primitives.name }, 'Sync card: saved to database successfully');
+    this.logger.info({ id, cardId: primitives.id, name: primitives.name }, 'Sync card: saved to database successfully');
     return synchronizedCard;
   }
 

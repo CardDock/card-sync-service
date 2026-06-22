@@ -18,11 +18,9 @@ export class YgoProDeckExternalCardSource implements ExternalCardSourcePort {
     private readonly logger: Logger,
   ) {}
 
-  async findByExternalId(
-    externalId: string,
-  ): Promise<SyncCardWithRelatedData | null> {
+  async findById(id: string): Promise<SyncCardWithRelatedData | null> {
     const requestUrl = new URL(this.baseUrl);
-    requestUrl.searchParams.set('id', externalId);
+    requestUrl.searchParams.set('id', id);
 
     const response = await fetch(requestUrl, {
       headers: {
@@ -36,10 +34,10 @@ export class YgoProDeckExternalCardSource implements ExternalCardSourcePort {
 
     if (!response.ok) {
       throw new CardDomainProcessError({
-        stage: 'YgoProDeckExternalCardSource.findByExternalId',
-        message: `Failed to fetch card ${externalId} from external source`,
+        stage: 'YgoProDeckExternalCardSource.findById',
+        message: `Failed to fetch card ${id} from external source`,
         context: {
-          externalId,
+          id,
           httpStatus: response.status,
           provider: 'YGOPRODeck',
         },

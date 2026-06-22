@@ -98,7 +98,7 @@ export function mapYgoProDeckResponseToSyncCardParams(
   delete cleanedCard.card_images;
 
   const cardParams: SyncCardParams = {
-    externalId: String(card.id),
+    id: String(card.id),
     name: card.name,
     typeline: card.typeline ?? [],
     type: card.type,

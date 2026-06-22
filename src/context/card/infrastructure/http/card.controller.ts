@@ -53,28 +53,28 @@ export class CardController {
     private readonly logger: Logger,
   ) {}
 
-  @Get('cards/:externalId')
-  @ApiOperation({ summary: 'Find a card by its external YGOPRODeck ID' })
-  @ApiParam({ name: 'externalId', type: String, description: 'Card external ID from YGOPRODeck API', example: '46986414' })
+  @Get('cards/:id')
+  @ApiOperation({ summary: 'Find a card by its YGOPRODeck ID' })
+  @ApiParam({ name: 'id', type: String, description: 'Card ID from YGOPRODeck API', example: '46986414' })
   @ApiResponse({ status: 200, type: CardResponseDto, description: 'Card found successfully' })
-  @ApiNotFoundResponse({ description: 'Card with the given externalId was not found' })
-  async findByExternalId(
-    @Param('externalId') externalId: string,
+  @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
+  async findById(
+    @Param('id') id: string,
   ): Promise<CardResponse> {
-    this.logger.info({ externalId }, 'Card lookup: checking cache');
+    this.logger.info({ id }, 'Card lookup: checking cache');
 
     const card = await this.findOrSyncCardByExternalIdUseCase.execute({
-      externalId,
+      id,
     });
 
     if (!card) {
-      this.logger.warn({ externalId }, 'Card not found');
+      this.logger.warn({ id }, 'Card not found');
       throw new NotFoundException(
-        `Card with externalId ${externalId} was not found`,
+        `Card with id ${id} was not found`,
       );
     }
 
-    this.logger.info({ externalId, name: card.toPrimitives().name }, 'Card found in cache');
+    this.logger.info({ id, name: card.toPrimitives().name }, 'Card found in cache');
     const { rawData: _, ...response } = card.toPrimitives();
     return response;
   }
@@ -146,42 +146,42 @@ export class CardController {
     };
   }
 
-  @Get('cards/:externalId/prints')
+  @Get('cards/:id/prints')
   @ApiOperation({ summary: 'Get all print variants for a card' })
-  @ApiParam({ name: 'externalId', type: String, description: 'Card external ID', example: '46986414' })
+  @ApiParam({ name: 'id', type: String, description: 'Card ID', example: '46986414' })
   @ApiResponse({ status: 200, type: [CardPrintResponseDto], description: 'List of prints for the card' })
   @ApiNotFoundResponse({ description: 'No prints found for the given card' })
   async getCardPrints(
-    @Param('externalId') externalId: string,
+    @Param('id') id: string,
   ): Promise<CardPrintResponseDto[]> {
-    this.logger.info({ externalId }, 'Get card prints');
+    this.logger.info({ id }, 'Get card prints');
 
-    const prints = await this.getCardPrintsUseCase.execute({ externalId });
+    const prints = await this.getCardPrintsUseCase.execute({ id });
 
     if (prints.length === 0) {
       throw new NotFoundException(
-        `No prints found for card with externalId ${externalId}`,
+        `No prints found for card with id ${id}`,
       );
     }
 
     return prints;
   }
 
-  @Get('cards/:externalId/artworks')
+  @Get('cards/:id/artworks')
   @ApiOperation({ summary: 'Get all artworks for a card' })
-  @ApiParam({ name: 'externalId', type: String, description: 'Card external ID', example: '46986414' })
+  @ApiParam({ name: 'id', type: String, description: 'Card ID', example: '46986414' })
   @ApiResponse({ status: 200, type: [ArtworkResponseDto], description: 'List of artworks for the card' })
   @ApiNotFoundResponse({ description: 'No artworks found for the given card' })
   async getCardArtworks(
-    @Param('externalId') externalId: string,
+    @Param('id') id: string,
   ): Promise<ArtworkResponseDto[]> {
-    this.logger.info({ externalId }, 'Get card artworks');
+    this.logger.info({ id }, 'Get card artworks');
 
-    const artworks = await this.getCardArtworksUseCase.execute({ externalId });
+    const artworks = await this.getCardArtworksUseCase.execute({ id });
 
     if (artworks.length === 0) {
       throw new NotFoundException(
-        `No artworks found for card with externalId ${externalId}`,
+        `No artworks found for card with id ${id}`,
       );
     }
 
@@ -207,20 +207,20 @@ export class CardController {
   async syncCard(
     @Body() body: SyncCardDto,
   ): Promise<CardResponse> {
-    this.logger.info({ externalId: body.externalId }, 'Force sync card from YGOPRODeck');
+    this.logger.info({ id: body.id }, 'Force sync card from YGOPRODeck');
 
     const card = await this.syncCardUseCase.execute({
-      externalId: body.externalId,
+      id: body.id,
     });
 
     if (!card) {
-      this.logger.warn({ externalId: body.externalId }, 'Sync card: not found in YGOPRODeck');
+      this.logger.warn({ id: body.id }, 'Sync card: not found in YGOPRODeck');
       throw new NotFoundException(
-        `Card with externalId ${body.externalId} was not found in YGOPRODeck API`,
+        `Card with id ${body.id} was not found in YGOPRODeck API`,
       );
     }
 
-    this.logger.info({ externalId: body.externalId, name: card.toPrimitives().name }, 'Sync card: completed');
+    this.logger.info({ id: body.id, name: card.toPrimitives().name }, 'Sync card: completed');
     const { rawData: _, ...response } = card.toPrimitives();
     return response;
   }

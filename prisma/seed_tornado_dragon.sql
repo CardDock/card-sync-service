@@ -6,9 +6,8 @@
 -- ============================================================
 -- 1. Insert / ignore Card
 -- ============================================================
-INSERT INTO cards (id, external_id, name, typeline, type, human_readable_card_type, frame_type, "desc", race, atk, def, level, scale, linkval, linkmarkers, attribute, "rawData")
+INSERT INTO cards (id, name, typeline, type, human_readable_card_type, frame_type, "desc", race, atk, def, level, scale, linkval, linkmarkers, attribute, "rawData")
 VALUES (
-  gen_random_uuid(),
   '6983839',
   'Tornado Dragon',
   ARRAY['Wyrm', 'Xyz', 'Effect'],
@@ -53,7 +52,7 @@ VALUES (
   "card_prices": [{"cardmarket_price": "0.06", "tcgplayer_price": "0.10", "ebay_price": "0.99", "amazon_price": "1.39", "coolstuffinc_price": "0.25"}]
 }'::json
 )
-ON CONFLICT (external_id) DO UPDATE SET
+ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   "rawData" = EXCLUDED."rawData";
 
@@ -75,9 +74,7 @@ ON CONFLICT (name) DO NOTHING;
 -- 3. Insert Artwork (unique per card_id + image_url)
 -- ============================================================
 INSERT INTO artworks (id, card_id, image_url)
-SELECT gen_random_uuid(), c.id, 'https://images.ygoprodeck.com/images/cards/6983839.jpg'
-FROM cards c
-WHERE c.external_id = '6983839'
+VALUES (gen_random_uuid(), '6983839', 'https://images.ygoprodeck.com/images/cards/6983839.jpg')
 ON CONFLICT (card_id, image_url) DO NOTHING;
 
 -- ============================================================
@@ -86,8 +83,7 @@ ON CONFLICT (card_id, image_url) DO NOTHING;
 WITH
 artwork_id AS (
   SELECT a.id FROM artworks a
-  JOIN cards c ON c.id = a.card_id
-  WHERE c.external_id = '6983839'
+  WHERE a.card_id = '6983839'
   LIMIT 1
 ),
 prints_data(set_name, set_code, rarity, rarity_code, set_price) AS (
@@ -126,15 +122,13 @@ DECLARE
 BEGIN
   SELECT a.id INTO v_artwork_id
   FROM artworks a
-  JOIN cards c ON c.id = a.card_id
-  WHERE c.external_id = '6983839'
+  WHERE a.card_id = '6983839'
   LIMIT 1;
 
   SELECT cp.id INTO v_print_id
   FROM card_prints cp
   JOIN artworks a ON a.id = cp.artwork_id
-  JOIN cards c ON c.id = a.card_id
-  WHERE c.external_id = '6983839' AND cp.set_code = 'L26D-ENM23' AND cp.rarity = 'Common'
+  WHERE a.card_id = '6983839' AND cp.set_code = 'L26D-ENM23' AND cp.rarity = 'Common'
   LIMIT 1;
 
   IF NOT EXISTS (

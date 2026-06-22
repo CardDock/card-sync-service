@@ -71,7 +71,6 @@ export type JsonArray = JsonValue[];
 
 export interface CardPrimitives {
   id: string;
-  externalId: string;
   name: string;
   typeline: string[];
   type: string;
@@ -90,8 +89,7 @@ export interface CardPrimitives {
 }
 
 export interface CreateCardParams {
-  id?: string;
-  externalId: string;
+  id: string;
   name: string;
   typeline: string[];
   type: string;
@@ -110,7 +108,7 @@ export interface CreateCardParams {
 }
 
 export interface SyncCardParams {
-  externalId: string;
+  id: string;
   name: string;
   typeline: string[];
   type: string;

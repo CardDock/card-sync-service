@@ -92,9 +92,7 @@ export class PostgresCardRelatedDataRepository
     }
   }
 
-  async findArtworksByCardExternalId(
-    externalId: string,
-  ): Promise<ArtworkResult[]> {
+  async findArtworksByCardId(cardId: string): Promise<ArtworkResult[]> {
     const result = await this.postgresPoolProvider.client.query<{
       id: string;
       image_url: string;
@@ -102,11 +100,10 @@ export class PostgresCardRelatedDataRepository
       `
       SELECT a."id", a."image_url"
       FROM "artworks" a
-      JOIN "cards" c ON c."id" = a."card_id"
-      WHERE c."external_id" = $1
+      WHERE a."card_id" = $1
       ORDER BY a."id"
     `,
-      [externalId],
+      [cardId],
     );
 
     return result.rows.map((row) => ({
@@ -115,9 +112,7 @@ export class PostgresCardRelatedDataRepository
     }));
   }
 
-  async findPrintsByCardExternalId(
-    externalId: string,
-  ): Promise<CardPrintResult[]> {
+  async findPrintsByCardId(cardId: string): Promise<CardPrintResult[]> {
     const result = await this.postgresPoolProvider.client.query<{
       id: string;
       card_set_id: string;
@@ -141,11 +136,10 @@ export class PostgresCardRelatedDataRepository
       FROM "card_prints" cp
       JOIN "card_sets" cs ON cs."id" = cp."card_set_id"
       JOIN "artworks" a ON a."id" = cp."artwork_id"
-      JOIN "cards" c ON c."id" = a."card_id"
-      WHERE c."external_id" = $1
+      WHERE a."card_id" = $1
       ORDER BY cs."name", cp."rarity"
     `,
-      [externalId],
+      [cardId],
     );
 
     return result.rows.map((row) => ({
