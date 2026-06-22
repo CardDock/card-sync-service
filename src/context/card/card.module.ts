@@ -3,6 +3,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Logger } from './domain/ports/logger.port';
 import { PinoLoggerAdapter } from './infrastructure/persistence/pino-logger.adapter';
 import { LoggingInterceptor } from './infrastructure/http/logging.interceptor';
+import { TransactionManagerPort } from './domain/ports/transaction-manager.port';
 import { FindOrSyncCardByExternalIdUseCase } from './application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from './application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
@@ -20,6 +21,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
   controllers: [CardController],
   providers: [
     PostgresPoolProvider,
+    { provide: TransactionManagerPort, useClass: PostgresPoolProvider },
     PostgresCardRepository,
     PostgresCardRelatedDataRepository,
     YgoProDeckExternalCardSource,
@@ -32,7 +34,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
-        postgresPoolProvider: PostgresPoolProvider,
+        transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
         new FindOrSyncCardByExternalIdUseCase(
@@ -40,7 +42,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
           externalCardSource,
           cardRepository,
           cardRelatedDataRepository,
-          postgresPoolProvider,
+          transactionManager,
           logger,
         ),
       inject: [
@@ -48,7 +50,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
-        PostgresPoolProvider,
+        TransactionManagerPort,
         Logger,
       ],
     },
@@ -58,21 +60,21 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
-        postgresPoolProvider: PostgresPoolProvider,
+        transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
         new SearchCardByNameUseCase(
           externalCardSource,
           cardRepository,
           cardRelatedDataRepository,
-          postgresPoolProvider,
+          transactionManager,
           logger,
         ),
       inject: [
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
-        PostgresPoolProvider,
+        TransactionManagerPort,
         Logger,
       ],
     },
@@ -114,21 +116,21 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
-        postgresPoolProvider: PostgresPoolProvider,
+        transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
         new SyncCardUseCase(
           externalCardSource,
           cardRepository,
           cardRelatedDataRepository,
-          postgresPoolProvider,
+          transactionManager,
           logger,
         ),
       inject: [
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
-        PostgresPoolProvider,
+        TransactionManagerPort,
         Logger,
       ],
     },

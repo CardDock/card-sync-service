@@ -1,10 +1,11 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Logger } from '../../domain/ports/logger.port';
+import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
 import { AsyncLocalStorage } from 'async_hooks';
 import { Pool, PoolClient } from 'pg';
 
 @Injectable()
-export class PostgresPoolProvider implements OnModuleDestroy {
+export class PostgresPoolProvider implements OnModuleDestroy, TransactionManagerPort {
   private readonly pool: Pool;
   private readonly als = new AsyncLocalStorage<PoolClient>();
 
