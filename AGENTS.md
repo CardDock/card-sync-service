@@ -8,9 +8,9 @@
 ## Architecture
 
 - **DDD with Ports & Adapters**. All files under `src/context/card/`:
-  - `domain/` — pure TS entities (`Card`), value objects (17x), ports (3 interfaces), errors (`CardDomainValidationError` / `CardDomainProcessError`), types
-  - `application/use-cases/` — `FindOrSyncCardByExternalIdUseCase` — single orchestrator
-  - `infrastructure/` — NestJS controller (`GET /cards/:externalId`), `pg` pool provider, repository (implements both query + write ports), YGOPRODeck HTTP client, mappers, field normalizers
+  - `domain/` — pure TS entities (`Card`), value objects (18x), ports (4 abstract classes), errors (`CardDomainValidationError` / `CardDomainProcessError`), types
+  - `application/use-cases/` — `FindOrSyncCardByExternalIdUseCase`, `SearchCardByNameUseCase`, etc.
+  - `infrastructure/` — NestJS controller (`GET /cards/:id?language=es`), `pg` pool provider, repositories (implements query + write + translation ports), YGOPRODeck HTTP client, mappers, field normalizers
 - `src/generated/prisma/` — Prisma client output (gitignored, regenerated on `prisma generate`)
 
 ## Commands
@@ -39,7 +39,7 @@ pnpm run start:prod           # node dist/main
 - `DIRECT_URL` env var required (postgres://...). Copied from `.env.example`.
 - Prisma for schema & migrations only. Runtime queries use raw `pg` (node-postgres) via `PostgresPoolProvider`.
 - Run `npx prisma generate` after schema changes to regenerate `src/generated/prisma/`.
-- Migrations: `npx prisma migrate dev` (two exist: init, add Fish race).
+- Migrations: `npx prisma migrate dev` (create, view migration SQL, apply).
 
 ## Env
 
@@ -53,10 +53,11 @@ pnpm run start:prod           # node dist/main
 - `tsconfig.json`: `strictNullChecks: false`, `noImplicitAny: false`. Do not add strict mode types.
 - Prisma `datasource` block has **no URL** — the actual URL is provided at runtime via `prisma.config.ts` from `DIRECT_URL` env var.
 - `Card` entity uses 17 value objects — every field is validated on construction via `CardDomainValidationError`.
-- Repository uses `ON CONFLICT (external_id) DO UPDATE` — upsert semantics.
+- Repository uses `ON CONFLICT (id) DO UPDATE` — upsert semantics.
 - Field normalizers convert between external API labels (e.g. `"Beast-Warrior"`) and domain types (`"BeastWarrior"`).
+- **i18n**: Cards are always synced from YGOPRODeck in English (canonical). Translations stored in `card_translations` table. `GET /cards/:id?language=es` and `GET /cards?name=...&language=es` merge translations at the application layer. If no translation exists, English is the fallback. Supported languages: `en`, `es`. `Language` value object validates this.
 - pnpm workspace: `allowBuilds` set for `@nestjs/core`, `@prisma/engines`, `prisma`.
-- Coverage: ~78% statements, ~76% branches (229 tests, 43 suites). `src/generated/prisma/` excluido via `coveragePathIgnorePatterns` en Jest config.
-- `card.controller.ts`, `card-field-normalizers.ts`, `logging.interceptor.ts`, `domain-error.filter.ts`, `json-value.mapper.ts` al 100%.
+- Coverage: ~77% statements, ~75% branches (233 tests, 41 suites). `src/generated/prisma/` excluido via `coveragePathIgnorePatterns` en Jest config.
+- `card.controller.ts`, `card-field-normalizers.ts`, `logging.interceptor.ts`, `domain-error.filter.ts`, `json-value.mapper.ts`, `language.value-object.ts` al 100%.
 - `postgres-card.mapper.ts` al 95.65% (solo línea 98 sin cubrir: `inner === ''`, caso borde de Postgres).
 - Capa de persistencia (repos, pool, logger) con 0-10% — no mockeada intencionalmente por bajo ROI. Business logic cubierta via use cases.
