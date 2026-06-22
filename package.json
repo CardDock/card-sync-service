@@ -73,7 +73,12 @@
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s",
-      "!**/generated/**"
+      "!**/generated/**",
+      "!main.ts",
+      "!app/app.module.ts",
+      "!context/card/card.module.ts",
+      "!**/*.port.ts",
+      "!**/index.ts"
     ],
     "coverageDirectory": "../coverage",
     "coveragePathIgnorePatterns": [
