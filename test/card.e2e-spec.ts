@@ -24,7 +24,7 @@ describe('CardController (e2e)', () => {
   const mockSyncCard = { execute: jest.fn() };
 
   const darkMagician = Card.create({
-    externalId: '46986414',
+    id: '46986414',
     name: 'Dark Magician',
     typeline: ['Spellcaster', 'Normal'],
     type: 'Normal Monster',
@@ -43,7 +43,7 @@ describe('CardController (e2e)', () => {
   });
 
   const blueEyes = Card.create({
-    externalId: '89631139',
+    id: '89631139',
     name: 'Blue-Eyes White Dragon',
     typeline: ['Dragon', 'Normal'],
     type: 'Normal Monster',
@@ -104,7 +104,7 @@ describe('CardController (e2e)', () => {
         .expect(200);
 
       expect(response.body).toMatchObject({
-        externalId: '46986414',
+        id: '46986414',
         name: 'Dark Magician',
         atk: 2500,
         def: 2100,
@@ -117,9 +117,7 @@ describe('CardController (e2e)', () => {
     it('returns 404 when card not found', async () => {
       mockFindOrSync.execute.mockResolvedValue(null);
 
-      await request(app.getHttpServer())
-        .get('/cards/99999999')
-        .expect(404);
+      await request(app.getHttpServer()).get('/cards/99999999').expect(404);
     });
 
     it('returns 422 when use case throws DomainError', async () => {
@@ -130,9 +128,7 @@ describe('CardController (e2e)', () => {
         }),
       );
 
-      await request(app.getHttpServer())
-        .get('/cards/invalid')
-        .expect(422);
+      await request(app.getHttpServer()).get('/cards/invalid').expect(422);
     });
   });
 
@@ -185,7 +181,7 @@ describe('CardController (e2e)', () => {
         page: 1,
         limit: 20,
       });
-      expect(response.body.items[0].externalId).toBe('46986414');
+      expect(response.body.items[0].id).toBe('46986414');
       expect(mockSearchByName.execute).not.toHaveBeenCalled();
     });
 
@@ -217,9 +213,7 @@ describe('CardController (e2e)', () => {
         limit: 100,
       });
 
-      await request(app.getHttpServer())
-        .get('/cards?limit=200')
-        .expect(200);
+      await request(app.getHttpServer()).get('/cards?limit=200').expect(200);
 
       expect(mockListCards.execute).toHaveBeenCalledWith(
         expect.objectContaining({ limit: 100 }),
@@ -268,8 +262,7 @@ describe('CardController (e2e)', () => {
     const sampleArtworks = [
       {
         id: 'art-1',
-        imageUrl:
-          'https://images.ygoprodeck.com/images/cards/46986414.jpg',
+        imageUrl: 'https://images.ygoprodeck.com/images/cards/46986414.jpg',
       },
     ];
 
@@ -320,7 +313,7 @@ describe('CardController (e2e)', () => {
         .expect(201);
 
       expect(response.body).toMatchObject({
-        externalId: '46986414',
+        id: '46986414',
         name: 'Dark Magician',
       });
     });
@@ -330,7 +323,7 @@ describe('CardController (e2e)', () => {
 
       await request(app.getHttpServer())
         .post('/cards/sync')
-        .send({ externalId: '99999999' })
+        .send({ id: '99999999' })
         .expect(404);
     });
   });
