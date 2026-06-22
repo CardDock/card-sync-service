@@ -69,6 +69,8 @@ export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 export type JsonObject = { [key: string]: JsonValue };
 export type JsonArray = JsonValue[];
 
+export type CardResponse = Omit<CardPrimitives, 'rawData'>;
+
 export interface CardPrimitives {
   id: string;
   name: string;

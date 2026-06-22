@@ -26,9 +26,25 @@ model Card {
   attribute             Attribute?
   rawData               Json         @db.Json
   artworks              Artwork[]
+  translations          CardTranslation[]
 
   @@index([name])
   @@map("cards")
+}
+
+model CardTranslation {
+  cardId                String  @map("card_id")
+  language              String
+  name                  String
+  desc                  String  @db.Text
+  type                  String?
+  humanReadableCardType String? @map("human_readable_card_type")
+  race                  String?
+
+  card                  Card    @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, language])
+  @@map("card_translations")
 }
 
 model CardSet {
