@@ -2,6 +2,7 @@ import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { FindOrSyncCardByExternalIdUseCase } from '../../../../../context/card/application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { CardQueryRepositoryPort } from '../../../../../context/card/domain/ports/card-query-repository.port';
 import { CardRepositoryPort } from '../../../../../context/card/domain/ports/card-repository.port';
+import { CardTranslationRepositoryPort } from '../../../../../context/card/domain/ports/card-translation-repository.port';
 import { ExternalCardSourcePort } from '../../../../../context/card/domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
 import { SyncCardWithRelatedData } from '../../../../../context/card/domain/types/sync-card-with-related.types';
@@ -67,6 +68,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
   let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
   let cardRepository: jest.Mocked<CardRepositoryPort>;
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
+  let cardTranslationRepository: jest.Mocked<CardTranslationRepositoryPort>;
   let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
@@ -90,10 +92,26 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
     };
+    cardTranslationRepository = {
+      findByCardIdAndLanguage: jest.fn(),
+      findCardIdsByName: jest.fn(),
+      save: jest.fn(),
+    };
     transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
     } as unknown as jest.Mocked<TransactionManagerPort>;
   });
+
+  const createUseCase = () =>
+    new FindOrSyncCardByExternalIdUseCase(
+      cardQueryRepository,
+      externalCardSource,
+      cardRepository,
+      cardRelatedDataRepository,
+      cardTranslationRepository,
+      transactionManager,
+      buildLoggerMock(),
+    );
 
   it('returns the existing card when it is already stored', async () => {
     const existingCard = Card.create({
@@ -104,23 +122,93 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
 
     cardQueryRepository.findById.mockResolvedValue(existingCard);
 
-    const useCase = new FindOrSyncCardByExternalIdUseCase(
-      cardQueryRepository,
-      externalCardSource,
-      cardRepository,
-      cardRelatedDataRepository,
-      transactionManager,
-      buildLoggerMock(),
-    );
-
+    const useCase = createUseCase();
     const result = await useCase.execute({ id: '46986414' });
 
-    expect(result).toBe(existingCard);
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: '46986414',
+      name: 'Dark Magician',
+    });
+    expect(result).not.toHaveProperty('rawData');
     expect(externalCardSource.findById).not.toHaveBeenCalled();
     expect(cardRepository.save).not.toHaveBeenCalled();
-    expect(cardRelatedDataRepository.saveCardSets).not.toHaveBeenCalled();
-    expect(cardRelatedDataRepository.saveArtwork).not.toHaveBeenCalled();
-    expect(cardRelatedDataRepository.saveCardPrints).not.toHaveBeenCalled();
+    expect(cardTranslationRepository.findByCardIdAndLanguage).not.toHaveBeenCalled();
+  });
+
+  it('returns the existing card with language=en without querying translations', async () => {
+    const existingCard = Card.create({
+      id: '46986414',
+      name: 'Dark Magician',
+      ...buildSourceCard().card,
+    });
+
+    cardQueryRepository.findById.mockResolvedValue(existingCard);
+
+    const useCase = createUseCase();
+    const result = await useCase.execute({ id: '46986414', language: 'en' });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: '46986414',
+      name: 'Dark Magician',
+    });
+    expect(cardTranslationRepository.findByCardIdAndLanguage).not.toHaveBeenCalled();
+  });
+
+  it('applies translation when language=es and translation exists', async () => {
+    const existingCard = Card.create({
+      id: '46986414',
+      name: 'Dark Magician',
+      ...buildSourceCard().card,
+    });
+
+    cardQueryRepository.findById.mockResolvedValue(existingCard);
+    cardTranslationRepository.findByCardIdAndLanguage.mockResolvedValue({
+      name: 'Mago Oscuro',
+      desc: 'El mago definitivo en términos de ataque y defensa.',
+      type: 'Monstruo Normal',
+      humanReadableCardType: 'Monstruo Normal',
+      race: 'Lanzador de Conjuros',
+    });
+
+    const useCase = createUseCase();
+    const result = await useCase.execute({ id: '46986414', language: 'es' });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: '46986414',
+      name: 'Mago Oscuro',
+      desc: 'El mago definitivo en términos de ataque y defensa.',
+      type: 'Monstruo Normal',
+      humanReadableCardType: 'Monstruo Normal',
+      race: 'Lanzador de Conjuros',
+    });
+    expect(cardTranslationRepository.findByCardIdAndLanguage).toHaveBeenCalledWith(
+      '46986414',
+      'es',
+    );
+  });
+
+  it('falls back to English when language=es but no translation exists', async () => {
+    const existingCard = Card.create({
+      id: '46986414',
+      name: 'Dark Magician',
+      ...buildSourceCard().card,
+    });
+
+    cardQueryRepository.findById.mockResolvedValue(existingCard);
+    cardTranslationRepository.findByCardIdAndLanguage.mockResolvedValue(null);
+
+    const useCase = createUseCase();
+    const result = await useCase.execute({ id: '46986414', language: 'es' });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: '46986414',
+      name: 'Dark Magician',
+      desc: 'The ultimate wizard in terms of attack and defense.',
+    });
   });
 
   it('loads from the external source and saves it when it is missing locally', async () => {
@@ -133,22 +221,16 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     );
     cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
 
-    const useCase = new FindOrSyncCardByExternalIdUseCase(
-      cardQueryRepository,
-      externalCardSource,
-      cardRepository,
-      cardRelatedDataRepository,
-      transactionManager,
-      buildLoggerMock(),
-    );
-
+    const useCase = createUseCase();
     const result = await useCase.execute({ id: '46986414' });
 
-    expect(result?.toPrimitives()).toMatchObject({
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
       id: '46986414',
       name: 'Dark Magician',
       type: 'Normal Monster',
     });
+    expect(result).not.toHaveProperty('rawData');
     expect(transactionManager.transaction).toHaveBeenCalledTimes(1);
     expect(cardRepository.save).toHaveBeenCalledTimes(1);
     expect(cardRepository.save).toHaveBeenCalledWith(expect.any(Card));
@@ -160,19 +242,41 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     expect(cardRelatedDataRepository.saveCardPrints).toHaveBeenCalledTimes(1);
   });
 
+  it('applies translation to a newly synced card with language=es', async () => {
+    const sourceCard = buildSourceCard();
+
+    cardQueryRepository.findById.mockResolvedValue(null);
+    externalCardSource.findById.mockResolvedValue(sourceCard);
+    cardRelatedDataRepository.saveCardSets.mockResolvedValue(
+      new Map([['Legend of Blue Eyes White Dragon', 'set-id-1']]),
+    );
+    cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
+    cardTranslationRepository.findByCardIdAndLanguage.mockResolvedValue({
+      name: 'Mago Oscuro',
+      desc: 'El mago definitivo en términos de ataque y defensa.',
+      type: null,
+      humanReadableCardType: null,
+      race: null,
+    });
+
+    const useCase = createUseCase();
+    const result = await useCase.execute({ id: '46986414', language: 'es' });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: '46986414',
+      name: 'Mago Oscuro',
+      desc: 'El mago definitivo en términos de ataque y defensa.',
+      type: 'Normal Monster',
+      race: 'Spellcaster',
+    });
+  });
+
   it('returns null when the card does not exist anywhere', async () => {
     cardQueryRepository.findById.mockResolvedValue(null);
     externalCardSource.findById.mockResolvedValue(null);
 
-    const useCase = new FindOrSyncCardByExternalIdUseCase(
-      cardQueryRepository,
-      externalCardSource,
-      cardRepository,
-      cardRelatedDataRepository,
-      transactionManager,
-      buildLoggerMock(),
-    );
-
+    const useCase = createUseCase();
     const result = await useCase.execute({ id: '46986414' });
 
     expect(result).toBeNull();
@@ -186,14 +290,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       buildSourceCard({ race: 'UnknownRace' as never }),
     );
 
-    const useCase = new FindOrSyncCardByExternalIdUseCase(
-      cardQueryRepository,
-      externalCardSource,
-      cardRepository,
-      cardRelatedDataRepository,
-      transactionManager,
-      buildLoggerMock(),
-    );
+    const useCase = createUseCase();
 
     let raisedError: unknown;
 

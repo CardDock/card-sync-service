@@ -10,7 +10,7 @@ import { ListCardSetsUseCase } from '../../../../../context/card/application/use
 import { SyncCardUseCase } from '../../../../../context/card/application/use-cases/sync-card.use-case';
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { PaginatedResult } from '../../../../../context/card/domain/ports/card-query-repository.port';
-import type { CardPrimitives } from '../../../../../context/card/domain/types/card.types';
+import type { CardResponse } from '../../../../../context/card/domain/types/card.types';
 
 const buildLoggerMock = (): Logger =>
   ({
@@ -46,6 +46,11 @@ describe('CardController', () => {
       },
     });
 
+  const buildCardResponse = (): CardResponse => {
+    const { rawData: _, ...rest } = buildCard().toPrimitives();
+    return rest;
+  };
+
   const buildUseCaseMock = () => ({
     execute: jest.fn(),
   });
@@ -78,10 +83,10 @@ describe('CardController', () => {
       buildLoggerMock(),
     );
 
-  it('returns card primitives when id 23771716 exists', async () => {
-    const card = buildCard();
+  it('returns card response when id 23771716 exists', async () => {
+    const response = buildCardResponse();
     const mocks = buildUseCaseMocks();
-    mocks.findOrSync.execute.mockResolvedValue(card);
+    mocks.findOrSync.execute.mockResolvedValue(response);
 
     const controller = createController(mocks);
 
@@ -94,6 +99,21 @@ describe('CardController', () => {
     expect(result).toMatchObject({
       id: '23771716',
       name: 'Elemental HERO Neos',
+    });
+  });
+
+  it('forwards language parameter to the use case', async () => {
+    const response = buildCardResponse();
+    const mocks = buildUseCaseMocks();
+    mocks.findOrSync.execute.mockResolvedValue(response);
+
+    const controller = createController(mocks);
+
+    await controller.findById('23771716', 'es');
+
+    expect(mocks.findOrSync.execute).toHaveBeenCalledWith({
+      id: '23771716',
+      language: 'es',
     });
   });
 
@@ -118,9 +138,9 @@ describe('CardController', () => {
   });
 
   it('forwards the route param id to the use case unchanged', async () => {
-    const card = buildCard();
+    const response = buildCardResponse();
     const mocks = buildUseCaseMocks();
-    mocks.findOrSync.execute.mockResolvedValue(card);
+    mocks.findOrSync.execute.mockResolvedValue(response);
 
     const controller = createController(mocks);
 
@@ -132,16 +152,16 @@ describe('CardController', () => {
   });
 
   it('returns cards when searching by name via listCards', async () => {
-    const card = buildCard();
+    const response = buildCardResponse();
     const mocks = buildUseCaseMocks();
-    mocks.search.execute.mockResolvedValue([card]);
+    mocks.search.execute.mockResolvedValue([response]);
 
     const controller = createController(mocks);
 
     const result = await controller.listCards(
       'Neos', undefined, undefined, undefined, undefined,
       undefined, undefined, undefined, undefined,
-      undefined, undefined,
+      undefined, undefined, undefined,
       1, 20,
     );
 
@@ -155,6 +175,26 @@ describe('CardController', () => {
     });
   });
 
+  it('forwards language to search use case', async () => {
+    const response = buildCardResponse();
+    const mocks = buildUseCaseMocks();
+    mocks.search.execute.mockResolvedValue([response]);
+
+    const controller = createController(mocks);
+
+    await controller.listCards(
+      'Neos', 'es', undefined, undefined, undefined,
+      undefined, undefined, undefined, undefined,
+      undefined, undefined, undefined,
+      1, 20,
+    );
+
+    expect(mocks.search.execute).toHaveBeenCalledWith({
+      name: 'Neos',
+      language: 'es',
+    });
+  });
+
   it('returns empty array when search yields no results', async () => {
     const mocks = buildUseCaseMocks();
     mocks.search.execute.mockResolvedValue([]);
@@ -164,7 +204,7 @@ describe('CardController', () => {
     const result = await controller.listCards(
       'UnknownCardXYZ', undefined, undefined, undefined, undefined,
       undefined, undefined, undefined, undefined,
-      undefined, undefined,
+      undefined, undefined, undefined,
       1, 20,
     );
 
@@ -185,9 +225,9 @@ describe('CardController', () => {
     const controller = createController(mocks);
 
     const result = await controller.listCards(
-      undefined, 'Normal Monster', undefined, undefined, undefined,
+      undefined, undefined, 'Normal Monster', undefined, undefined,
       undefined, undefined, undefined, undefined,
-      undefined, undefined,
+      undefined, undefined, undefined,
       1, 20,
     );
 
@@ -338,7 +378,7 @@ describe('CardController', () => {
     await controller.listCards(
       undefined, undefined, undefined, undefined, undefined,
       undefined, undefined, undefined, undefined,
-      undefined, undefined,
+      undefined, undefined, undefined,
       1, 200,
     );
 
@@ -356,7 +396,7 @@ describe('CardController', () => {
     const result = await controller.listCards(
       undefined, undefined, undefined, undefined, undefined,
       undefined, undefined, undefined, undefined,
-      undefined, undefined,
+      undefined, undefined, undefined,
       1, 20,
     );
 
