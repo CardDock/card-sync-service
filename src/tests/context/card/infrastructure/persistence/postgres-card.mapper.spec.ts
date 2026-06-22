@@ -5,8 +5,7 @@ import {
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
 
 const buildMinimalRow = (overrides: Record<string, unknown> = {}) => ({
-  id: '2fdd94a4-5188-4ab5-b3e4-8355be70cf9b',
-  external_id: '46986414',
+  id: '46986414',
   name: 'Decode Talker',
   typeline: '{Cyberse,Link,Effect}',
   type: 'Link Monster',
@@ -30,7 +29,7 @@ describe('mapPostgresRowToCard', () => {
     const card = mapPostgresRowToCard(buildMinimalRow());
 
     expect(card.toPrimitives()).toMatchObject({
-      externalId: '46986414',
+      id: '46986414',
       frameType: 'link',
       race: 'Cyberse',
       linkmarkers: ['Top', 'BottomLeft', 'BottomRight'],
@@ -102,8 +101,7 @@ describe('mapPostgresRowToCard', () => {
     const card = mapPostgresRowToCard(buildMinimalRow());
 
     const primitives = card.toPrimitives();
-    expect(primitives.id).toBe('2fdd94a4-5188-4ab5-b3e4-8355be70cf9b');
-    expect(primitives.externalId).toBe('46986414');
+    expect(primitives.id).toBe('46986414');
     expect(primitives.name).toBe('Decode Talker');
     expect(primitives.type).toBe('Link Monster');
     expect(primitives.humanReadableCardType).toBe('Link Monster');
@@ -130,8 +128,7 @@ describe('mapPostgresRowToCard', () => {
 describe('mapCardToPostgresRecord', () => {
   it('maps a Card entity to postgres-compatible record', () => {
     const card = Card.create({
-      id: '2fdd94a4-5188-4ab5-b3e4-8355be70cf9b',
-      externalId: '46986414',
+      id: '46986414',
       name: 'Decode Talker',
       typeline: ['Cyberse', 'Link', 'Effect'],
       type: 'Link Monster',
@@ -152,8 +149,7 @@ describe('mapCardToPostgresRecord', () => {
     const record = mapCardToPostgresRecord(card);
 
     expect(record).toMatchObject({
-      id: '2fdd94a4-5188-4ab5-b3e4-8355be70cf9b',
-      externalId: '46986414',
+      id: '46986414',
       name: 'Decode Talker',
       typeline: ['Cyberse', 'Link', 'Effect'],
       type: 'Link Monster',

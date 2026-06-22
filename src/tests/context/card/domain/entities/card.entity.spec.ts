@@ -8,8 +8,7 @@ describe('Card', () => {
   const buildCreateParams = (
     overrides: Partial<CreateCardParams> = {},
   ): CreateCardParams => ({
-    id: '2fdd94a4-5188-4ab5-b3e4-8355be70cf9b',
-    externalId: '46986414',
+    id: '46986414',
     name: 'Dark Magician',
     typeline: ['Spellcaster', 'Normal'],
     type: 'Normal Monster',
@@ -37,7 +36,7 @@ describe('Card', () => {
   const buildSyncParams = (
     overrides: Partial<SyncCardParams> = {},
   ): SyncCardParams => ({
-    externalId: '89631139',
+    id: '89631139',
     name: 'Blue-Eyes White Dragon',
     typeline: ['Dragon', 'Normal'],
     type: 'Normal Monster',
@@ -66,6 +65,7 @@ describe('Card', () => {
     it('creates a card with normalized primitives', () => {
       const card = Card.create(
         buildCreateParams({
+          id: '46986414',
           name: '  Dark Magician  ',
           type: '  Normal Monster  ',
         }),
@@ -74,8 +74,7 @@ describe('Card', () => {
       const primitives = card.toPrimitives();
 
       expect(primitives).toMatchObject({
-        id: '2fdd94a4-5188-4ab5-b3e4-8355be70cf9b',
-        externalId: '46986414',
+        id: '46986414',
         name: 'Dark Magician',
         typeline: ['Spellcaster', 'Normal'],
         type: 'Normal Monster',
@@ -114,8 +113,7 @@ describe('Card', () => {
       card.syncFromSource(buildSyncParams());
 
       expect(card.toPrimitives()).toEqual({
-        id: '2fdd94a4-5188-4ab5-b3e4-8355be70cf9b',
-        externalId: '89631139',
+        id: '89631139',
         name: 'Blue-Eyes White Dragon',
         typeline: ['Dragon', 'Normal'],
         type: 'Normal Monster',

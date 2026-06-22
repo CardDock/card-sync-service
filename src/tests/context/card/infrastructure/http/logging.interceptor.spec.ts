@@ -11,7 +11,7 @@ const buildExecutionContextMock = (overrides = {}) => ({
       method: 'GET',
       url: '/cards/46986414',
       query: {},
-      params: { externalId: '46986414' },
+      params: { id: '46986414' },
       ...overrides,
     }),
     getResponse: () => ({ statusCode: 200 }),
@@ -36,7 +36,7 @@ describe('LoggingInterceptor', () => {
         expect(logger.info).toHaveBeenCalledTimes(2);
         expect(logger.info).toHaveBeenNthCalledWith(
           1,
-          { method: 'GET', url: '/cards/46986414', query: {}, params: { externalId: '46986414' } },
+          { method: 'GET', url: '/cards/46986414', query: {}, params: { id: '46986414' } },
           'Request started',
         );
         expect(logger.info).toHaveBeenNthCalledWith(

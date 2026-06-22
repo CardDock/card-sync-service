@@ -8,7 +8,7 @@ import {
   CardDomainProcessError,
   CardDomainValidationError,
 } from '../../../../../context/card/domain/errors';
-import { PostgresPoolProvider } from '../../../../../context/card/infrastructure/persistence/postgres-pool.provider';
+import { TransactionManagerPort } from '../../../../../context/card/domain/ports/transaction-manager.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
@@ -18,7 +18,7 @@ const buildSourceCard = (
   overrides: Partial<SyncCardWithRelatedData['card']> = {},
 ): SyncCardWithRelatedData => ({
   card: {
-    externalId: '46986414',
+    id: '46986414',
     name: 'Dark Magician',
     typeline: ['Spellcaster', 'Normal'],
     type: 'Normal Monster',
@@ -57,11 +57,11 @@ describe('SearchCardByNameUseCase', () => {
   let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
   let cardRepository: jest.Mocked<CardRepositoryPort>;
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
-  let postgresPoolProvider: jest.Mocked<PostgresPoolProvider>;
+  let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
     externalCardSource = {
-      findByExternalId: jest.fn(),
+      findById: jest.fn(),
       findByName: jest.fn(),
     };
     cardRepository = {
@@ -71,13 +71,13 @@ describe('SearchCardByNameUseCase', () => {
       saveCardSets: jest.fn(),
       saveArtwork: jest.fn(),
       saveCardPrints: jest.fn(),
-      findArtworksByCardExternalId: jest.fn(),
-      findPrintsByCardExternalId: jest.fn(),
+      findArtworksByCardId: jest.fn(),
+      findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
     };
-    postgresPoolProvider = {
+    transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
-    } as unknown as jest.Mocked<PostgresPoolProvider>;
+    } as unknown as jest.Mocked<TransactionManagerPort>;
   });
 
   it('fetches from external source and saves cards', async () => {
@@ -92,7 +92,7 @@ describe('SearchCardByNameUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
@@ -100,10 +100,10 @@ describe('SearchCardByNameUseCase', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].toPrimitives()).toMatchObject({
-      externalId: '46986414',
+      id: '46986414',
       name: 'Dark Magician',
     });
-    expect(postgresPoolProvider.transaction).toHaveBeenCalledTimes(1);
+    expect(transactionManager.transaction).toHaveBeenCalledTimes(1);
     expect(cardRepository.save).toHaveBeenCalledTimes(1);
     expect(cardRelatedDataRepository.saveCardSets).toHaveBeenCalledWith(
       sourceCard.cardSets,
@@ -122,7 +122,7 @@ describe('SearchCardByNameUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
@@ -133,8 +133,8 @@ describe('SearchCardByNameUseCase', () => {
   });
 
   it('syncs multiple cards from external source', async () => {
-    const card1 = buildSourceCard({ externalId: '46986414', name: 'Dark Magician' });
-    const card2 = buildSourceCard({ externalId: '89631139', name: 'Blue-Eyes White Dragon' });
+    const card1 = buildSourceCard({ id: '46986414', name: 'Dark Magician' });
+    const card2 = buildSourceCard({ id: '89631139', name: 'Blue-Eyes White Dragon' });
     externalCardSource.findByName.mockResolvedValue([card1, card2]);
     cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());
     cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
@@ -143,14 +143,14 @@ describe('SearchCardByNameUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
     const result = await useCase.execute({ name: 'Dragon' });
 
     expect(result).toHaveLength(2);
-    expect(postgresPoolProvider.transaction).toHaveBeenCalledTimes(2);
+    expect(transactionManager.transaction).toHaveBeenCalledTimes(2);
     expect(cardRepository.save).toHaveBeenCalledTimes(2);
   });
 
@@ -163,7 +163,7 @@ describe('SearchCardByNameUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
@@ -191,7 +191,7 @@ describe('SearchCardByNameUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 

@@ -29,7 +29,7 @@ describe('mapYgoProDeckResponseToSyncCardParams', () => {
 
     expect(result).not.toBeNull();
     expect(result!.card).toMatchObject({
-      externalId: '46986414',
+      id: '46986414',
       name: 'Dark Magician',
       typeline: ['Spellcaster', 'Normal'],
       type: 'Normal Monster',
@@ -108,7 +108,7 @@ describe('mapYgoProDeckResponseToSyncCardParams', () => {
     const result = mapYgoProDeckResponseToSyncCardParams({ data: [dto] });
 
     expect(result!.card).toMatchObject({
-      externalId: '12345',
+      id: '12345',
       typeline: [],
       humanReadableCardType: 'Spell Card',
       atk: null,

@@ -9,7 +9,7 @@ const buildLoggerMock = (): Logger =>
 const buildCard = (overrides: Partial<Card> = {}): Card =>
   Object.assign(
     Card.create({
-      externalId: '46986414',
+      id: '46986414',
       name: 'Dark Magician',
       typeline: ['Spellcaster', 'Normal'],
       type: 'Normal Monster',
@@ -34,7 +34,7 @@ describe('ListCardsUseCase', () => {
 
   beforeEach(() => {
     cardQueryRepository = {
-      findByExternalId: jest.fn(),
+      findById: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
     };

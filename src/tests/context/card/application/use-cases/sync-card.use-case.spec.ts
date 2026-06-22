@@ -8,7 +8,7 @@ import {
   CardDomainProcessError,
   CardDomainValidationError,
 } from '../../../../../context/card/domain/errors';
-import { PostgresPoolProvider } from '../../../../../context/card/infrastructure/persistence/postgres-pool.provider';
+import { TransactionManagerPort } from '../../../../../context/card/domain/ports/transaction-manager.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
@@ -18,7 +18,7 @@ const buildSourceCard = (
   overrides: Partial<SyncCardWithRelatedData['card']> = {},
 ): SyncCardWithRelatedData => ({
   card: {
-    externalId: '46986414',
+    id: '46986414',
     name: 'Dark Magician',
     typeline: ['Spellcaster', 'Normal'],
     type: 'Normal Monster',
@@ -57,11 +57,11 @@ describe('SyncCardUseCase', () => {
   let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
   let cardRepository: jest.Mocked<CardRepositoryPort>;
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
-  let postgresPoolProvider: jest.Mocked<PostgresPoolProvider>;
+  let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
     externalCardSource = {
-      findByExternalId: jest.fn(),
+      findById: jest.fn(),
       findByName: jest.fn(),
     };
     cardRepository = {
@@ -71,18 +71,18 @@ describe('SyncCardUseCase', () => {
       saveCardSets: jest.fn(),
       saveArtwork: jest.fn(),
       saveCardPrints: jest.fn(),
-      findArtworksByCardExternalId: jest.fn(),
-      findPrintsByCardExternalId: jest.fn(),
+      findArtworksByCardId: jest.fn(),
+      findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
     };
-    postgresPoolProvider = {
+    transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
-    } as unknown as jest.Mocked<PostgresPoolProvider>;
+    } as unknown as jest.Mocked<TransactionManagerPort>;
   });
 
   it('fetches from external source and saves the card', async () => {
     const sourceCard = buildSourceCard();
-    externalCardSource.findByExternalId.mockResolvedValue(sourceCard);
+    externalCardSource.findById.mockResolvedValue(sourceCard);
     cardRelatedDataRepository.saveCardSets.mockResolvedValue(
       new Map([['Legend of Blue Eyes White Dragon', 'set-id-1']]),
     );
@@ -92,18 +92,18 @@ describe('SyncCardUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
-    const result = await useCase.execute({ externalId: '46986414' });
+    const result = await useCase.execute({ id: '46986414' });
 
     expect(result.toPrimitives()).toMatchObject({
-      externalId: '46986414',
+      id: '46986414',
       name: 'Dark Magician',
     });
-    expect(externalCardSource.findByExternalId).toHaveBeenCalledWith('46986414');
-    expect(postgresPoolProvider.transaction).toHaveBeenCalledTimes(1);
+    expect(externalCardSource.findById).toHaveBeenCalledWith('46986414');
+    expect(transactionManager.transaction).toHaveBeenCalledTimes(1);
     expect(cardRepository.save).toHaveBeenCalledWith(expect.any(Card));
     expect(cardRelatedDataRepository.saveCardSets).toHaveBeenCalledWith(
       sourceCard.cardSets,
@@ -116,21 +116,21 @@ describe('SyncCardUseCase', () => {
   });
 
   it('returns null when external source has no data', async () => {
-    externalCardSource.findByExternalId.mockResolvedValue(null);
+    externalCardSource.findById.mockResolvedValue(null);
 
     const useCase = new SyncCardUseCase(
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
-    const result = await useCase.execute({ externalId: '99999999' });
+    const result = await useCase.execute({ id: '99999999' });
 
     expect(result).toBeNull();
     expect(cardRepository.save).not.toHaveBeenCalled();
-    expect(postgresPoolProvider.transaction).not.toHaveBeenCalled();
+    expect(transactionManager.transaction).not.toHaveBeenCalled();
   });
 
   it('saves prints only for the first artwork', async () => {
@@ -139,7 +139,7 @@ describe('SyncCardUseCase', () => {
       { imageUrl: 'https://example.com/1.jpg' },
       { imageUrl: 'https://example.com/2.jpg' },
     ];
-    externalCardSource.findByExternalId.mockResolvedValue(sourceCard);
+    externalCardSource.findById.mockResolvedValue(sourceCard);
     cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());
     cardRelatedDataRepository.saveArtwork
       .mockResolvedValueOnce('artwork-id-1')
@@ -149,11 +149,11 @@ describe('SyncCardUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
-    const result = await useCase.execute({ externalId: '46986414' });
+    const result = await useCase.execute({ id: '46986414' });
 
     expect(result).not.toBeNull();
     expect(cardRelatedDataRepository.saveArtwork).toHaveBeenCalledTimes(2);
@@ -166,7 +166,7 @@ describe('SyncCardUseCase', () => {
   });
 
   it('wraps non-domain errors without causeCode in context', async () => {
-    externalCardSource.findByExternalId.mockRejectedValue(
+    externalCardSource.findById.mockRejectedValue(
       new Error('Network failure'),
     );
 
@@ -174,13 +174,13 @@ describe('SyncCardUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
     let raisedError: unknown;
     try {
-      await useCase.execute({ externalId: '46986414' });
+      await useCase.execute({ id: '46986414' });
     } catch (error) {
       raisedError = error;
     }
@@ -188,13 +188,13 @@ describe('SyncCardUseCase', () => {
     expect(raisedError).toBeInstanceOf(CardDomainProcessError);
     const processError = raisedError as CardDomainProcessError;
     expect(processError.context).toMatchObject({
-      externalId: '46986414',
+      id: '46986414',
     });
     expect(processError.context).not.toHaveProperty('causeCode');
   });
 
   it('wraps domain validation errors in CardDomainProcessError', async () => {
-    externalCardSource.findByExternalId.mockResolvedValue(
+    externalCardSource.findById.mockResolvedValue(
       buildSourceCard({ race: 'UnknownRace' as never }),
     );
 
@@ -202,13 +202,13 @@ describe('SyncCardUseCase', () => {
       externalCardSource,
       cardRepository,
       cardRelatedDataRepository,
-      postgresPoolProvider,
+      transactionManager,
       buildLoggerMock(),
     );
 
     let raisedError: unknown;
     try {
-      await useCase.execute({ externalId: '46986414' });
+      await useCase.execute({ id: '46986414' });
     } catch (error) {
       raisedError = error;
     }
@@ -219,7 +219,7 @@ describe('SyncCardUseCase', () => {
     expect(processError.context).toMatchObject({
       entity: 'Card',
       stage: 'SyncCardUseCase.execute',
-      externalId: '46986414',
+      id: '46986414',
       causeCode: 'CARD_VALIDATION_ERROR',
     });
   });

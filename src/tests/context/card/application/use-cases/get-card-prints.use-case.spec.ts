@@ -13,8 +13,8 @@ describe('GetCardPrintsUseCase', () => {
       saveCardSets: jest.fn(),
       saveArtwork: jest.fn(),
       saveCardPrints: jest.fn(),
-      findArtworksByCardExternalId: jest.fn(),
-      findPrintsByCardExternalId: jest.fn(),
+      findArtworksByCardId: jest.fn(),
+      findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
     };
   });
@@ -32,22 +32,22 @@ describe('GetCardPrintsUseCase', () => {
         setPrice: 12.5,
       },
     ];
-    cardRelatedDataRepository.findPrintsByCardExternalId.mockResolvedValue(prints);
+    cardRelatedDataRepository.findPrintsByCardId.mockResolvedValue(prints);
 
     const useCase = new GetCardPrintsUseCase(cardRelatedDataRepository, buildLoggerMock());
 
-    const result = await useCase.execute({ externalId: '46986414' });
+    const result = await useCase.execute({ id: '46986414' });
 
     expect(result).toEqual(prints);
-    expect(cardRelatedDataRepository.findPrintsByCardExternalId).toHaveBeenCalledWith('46986414');
+    expect(cardRelatedDataRepository.findPrintsByCardId).toHaveBeenCalledWith('46986414');
   });
 
   it('returns empty array when no prints exist', async () => {
-    cardRelatedDataRepository.findPrintsByCardExternalId.mockResolvedValue([]);
+    cardRelatedDataRepository.findPrintsByCardId.mockResolvedValue([]);
 
     const useCase = new GetCardPrintsUseCase(cardRelatedDataRepository, buildLoggerMock());
 
-    const result = await useCase.execute({ externalId: '99999999' });
+    const result = await useCase.execute({ id: '99999999' });
 
     expect(result).toEqual([]);
   });
@@ -61,11 +61,11 @@ describe('GetCardPrintsUseCase', () => {
         id: 'print-2', cardSetId: 'set-2', cardSetName: 'Set B', cardSetCode: 'SB', setCode: 'SB-001', rarity: 'Rare', rarityCode: 'r', setPrice: 1.5,
       },
     ];
-    cardRelatedDataRepository.findPrintsByCardExternalId.mockResolvedValue(prints);
+    cardRelatedDataRepository.findPrintsByCardId.mockResolvedValue(prints);
 
     const useCase = new GetCardPrintsUseCase(cardRelatedDataRepository, buildLoggerMock());
 
-    const result = await useCase.execute({ externalId: '46986414' });
+    const result = await useCase.execute({ id: '46986414' });
 
     expect(result).toHaveLength(2);
   });

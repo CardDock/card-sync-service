@@ -13,8 +13,8 @@ describe('GetCardArtworksUseCase', () => {
       saveCardSets: jest.fn(),
       saveArtwork: jest.fn(),
       saveCardPrints: jest.fn(),
-      findArtworksByCardExternalId: jest.fn(),
-      findPrintsByCardExternalId: jest.fn(),
+      findArtworksByCardId: jest.fn(),
+      findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
     };
   });
@@ -23,22 +23,22 @@ describe('GetCardArtworksUseCase', () => {
     const artworks: ArtworkResult[] = [
       { id: 'art-1', imageUrl: 'https://example.com/card.jpg' },
     ];
-    cardRelatedDataRepository.findArtworksByCardExternalId.mockResolvedValue(artworks);
+    cardRelatedDataRepository.findArtworksByCardId.mockResolvedValue(artworks);
 
     const useCase = new GetCardArtworksUseCase(cardRelatedDataRepository, buildLoggerMock());
 
-    const result = await useCase.execute({ externalId: '46986414' });
+    const result = await useCase.execute({ id: '46986414' });
 
     expect(result).toEqual(artworks);
-    expect(cardRelatedDataRepository.findArtworksByCardExternalId).toHaveBeenCalledWith('46986414');
+    expect(cardRelatedDataRepository.findArtworksByCardId).toHaveBeenCalledWith('46986414');
   });
 
   it('returns empty array when no artworks exist', async () => {
-    cardRelatedDataRepository.findArtworksByCardExternalId.mockResolvedValue([]);
+    cardRelatedDataRepository.findArtworksByCardId.mockResolvedValue([]);
 
     const useCase = new GetCardArtworksUseCase(cardRelatedDataRepository, buildLoggerMock());
 
-    const result = await useCase.execute({ externalId: '99999999' });
+    const result = await useCase.execute({ id: '99999999' });
 
     expect(result).toEqual([]);
   });
@@ -48,11 +48,11 @@ describe('GetCardArtworksUseCase', () => {
       { id: 'art-1', imageUrl: 'https://example.com/1.jpg' },
       { id: 'art-2', imageUrl: 'https://example.com/2.jpg' },
     ];
-    cardRelatedDataRepository.findArtworksByCardExternalId.mockResolvedValue(artworks);
+    cardRelatedDataRepository.findArtworksByCardId.mockResolvedValue(artworks);
 
     const useCase = new GetCardArtworksUseCase(cardRelatedDataRepository, buildLoggerMock());
 
-    const result = await useCase.execute({ externalId: '46986414' });
+    const result = await useCase.execute({ id: '46986414' });
 
     expect(result).toHaveLength(2);
   });

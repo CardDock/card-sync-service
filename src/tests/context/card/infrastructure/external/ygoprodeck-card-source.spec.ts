@@ -22,7 +22,7 @@ describe('YgoProDeckExternalCardSource', () => {
     fetchSpy?.mockRestore();
   });
 
-  describe('findByExternalId', () => {
+  describe('findById', () => {
     it('returns mapped card data on 200', async () => {
       const apiResponse = {
         data: [
@@ -43,11 +43,11 @@ describe('YgoProDeckExternalCardSource', () => {
       fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse(apiResponse, 200));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
-      const result = await source.findByExternalId('46986414');
+      const result = await source.findById('46986414');
 
       expect(result).not.toBeNull();
       expect(result!.card).toMatchObject({
-        externalId: '46986414',
+        id: '46986414',
         name: 'Dark Magician',
         attribute: 'DARK',
       });
@@ -63,7 +63,7 @@ describe('YgoProDeckExternalCardSource', () => {
       fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 404));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
-      const result = await source.findByExternalId('99999999');
+      const result = await source.findById('99999999');
 
       expect(result).toBeNull();
     });
@@ -73,7 +73,7 @@ describe('YgoProDeckExternalCardSource', () => {
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
 
-      await expect(source.findByExternalId('46986414')).rejects.toThrow(
+      await expect(source.findById('46986414')).rejects.toThrow(
         CardDomainProcessError,
       );
     });
@@ -85,7 +85,7 @@ describe('YgoProDeckExternalCardSource', () => {
 
       let raisedError: unknown;
       try {
-        await source.findByExternalId('46986414');
+        await source.findById('46986414');
       } catch (error) {
         raisedError = error;
       }
