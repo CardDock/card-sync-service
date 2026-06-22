@@ -20,9 +20,7 @@ import {
   ApiNotFoundResponse,
 } from '@nestjs/swagger';
 import { Logger } from '../../domain/ports/logger.port';
-import { CardPrimitives } from '../../domain/types/card.types';
-
-type CardResponse = Omit<CardPrimitives, 'rawData'>;
+import { CardResponse } from '../../domain/types/card.types';
 import { FindOrSyncCardByExternalIdUseCase } from '../../application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from '../../application/use-cases/list-cards.use-case';
@@ -31,6 +29,7 @@ import { GetCardArtworksUseCase } from '../../application/use-cases/get-card-art
 import { ListCardSetsUseCase } from '../../application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from '../../application/use-cases/sync-card.use-case';
 import { DomainErrorFilter } from './domain-error.filter';
+import { NotFoundExceptionFilter } from './not-found-exception.filter';
 import { CardResponseDto } from './dto/card-response.dto';
 import { PaginatedCardResponseDto } from './dto/paginated-card-response.dto';
 import { CardPrintResponseDto } from './dto/card-print-response.dto';
@@ -40,7 +39,8 @@ import { SyncCardDto } from './dto/sync-card.dto';
 
 @ApiTags('Cards')
 @Controller()
-@UseFilters(new DomainErrorFilter())
+@UseFilters(DomainErrorFilter)
+@UseFilters(NotFoundExceptionFilter)
 export class CardController {
   constructor(
     private readonly findOrSyncCardByExternalIdUseCase: FindOrSyncCardByExternalIdUseCase,
@@ -56,32 +56,35 @@ export class CardController {
   @Get('cards/:id')
   @ApiOperation({ summary: 'Find a card by its YGOPRODeck ID' })
   @ApiParam({ name: 'id', type: String, description: 'Card ID from YGOPRODeck API', example: '46986414' })
+  @ApiQuery({ name: 'language', type: String, required: false, description: 'Language code (en, es)', example: 'es' })
   @ApiResponse({ status: 200, type: CardResponseDto, description: 'Card found successfully' })
   @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
   async findById(
     @Param('id') id: string,
+    @Query('language') language?: string,
   ): Promise<CardResponse> {
-    this.logger.info({ id }, 'Card lookup: checking cache');
+    this.logger.info({ id, language }, 'Card lookup: checking cache');
 
-    const card = await this.findOrSyncCardByExternalIdUseCase.execute({
+    const response = await this.findOrSyncCardByExternalIdUseCase.execute({
       id,
+      language,
     });
 
-    if (!card) {
+    if (!response) {
       this.logger.warn({ id }, 'Card not found');
       throw new NotFoundException(
         `Card with id ${id} was not found`,
       );
     }
 
-    this.logger.info({ id, name: card.toPrimitives().name }, 'Card found in cache');
-    const { rawData: _, ...response } = card.toPrimitives();
+    this.logger.info({ id, name: response.name }, 'Card found');
     return response;
   }
 
   @Get('cards')
   @ApiOperation({ summary: 'List or search cards with optional filters and pagination' })
   @ApiQuery({ name: 'name', type: String, required: false, description: 'Search cards by name (triggers auto-sync from YGOPRODeck if no local results)', example: 'Dark Magician' })
+  @ApiQuery({ name: 'language', type: String, required: false, description: 'Language code (en, es)', example: 'es' })
   @ApiQuery({ name: 'type', type: String, required: false, description: 'Filter by card type', example: 'Normal Monster' })
   @ApiQuery({ name: 'race', type: String, required: false, description: 'Filter by race', example: 'Spellcaster' })
   @ApiQuery({ name: 'attribute', type: String, required: false, description: 'Filter by attribute', example: 'DARK' })
@@ -97,6 +100,7 @@ export class CardController {
   @ApiResponse({ status: 200, type: PaginatedCardResponseDto, description: 'Paginated list of cards' })
   async listCards(
     @Query('name') name: string | undefined,
+    @Query('language') language: string | undefined,
     @Query('type') type: string | undefined,
     @Query('race') race: string | undefined,
     @Query('attribute') attribute: string | undefined,
@@ -114,19 +118,14 @@ export class CardController {
       limit = 100;
     }
 
-    const toResponse = (p: CardPrimitives): CardResponse => {
-      const { rawData: _, ...rest } = p;
-      return rest;
-    };
-
     if (name) {
-      this.logger.info({ name }, 'Card search by name');
-      const cards = await this.searchCardByNameUseCase.execute({ name });
+      this.logger.info({ name, language }, 'Card search by name');
+      const items = await this.searchCardByNameUseCase.execute({ name, language });
       return {
-        items: cards.map((card) => toResponse(card.toPrimitives())),
-        total: cards.length,
+        items,
+        total: items.length,
         page: 1,
-        limit: cards.length,
+        limit: items.length,
       };
     }
 
@@ -139,7 +138,10 @@ export class CardController {
     });
 
     return {
-      items: result.items.map((card) => toResponse(card.toPrimitives())),
+      items: result.items.map((card) => {
+        const { rawData: _, ...rest } = card.toPrimitives();
+        return rest;
+      }),
       total: result.total,
       page: result.page,
       limit: result.limit,

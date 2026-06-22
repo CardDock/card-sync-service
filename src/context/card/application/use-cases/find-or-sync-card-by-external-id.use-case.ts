@@ -1,15 +1,19 @@
 import { Card } from '../../domain/entities/card.entity';
 import { CardId } from '../../domain/value-objects/card-id.value-object';
+import { Language } from '../../domain/value-objects/language.value-object';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
+import { CardTranslationRepositoryPort } from '../../domain/ports/card-translation-repository.port';
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Logger } from '../../domain/ports/logger.port';
 import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
+import { CardPrimitives, CardResponse, CardRace } from '../../domain/types/card.types';
 
 export interface FindOrSyncCardByIdInput {
   id: string;
+  language?: string;
 }
 
 export type FindOrSyncCardByIdCommand = FindOrSyncCardByIdInput;
@@ -20,31 +24,76 @@ export class FindOrSyncCardByExternalIdUseCase {
     private readonly externalCardSource: ExternalCardSourcePort,
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
+    private readonly cardTranslationRepository: CardTranslationRepositoryPort,
     private readonly transactionManager: TransactionManagerPort,
     private readonly logger: Logger,
   ) {}
 
   async execute(
     command: FindOrSyncCardByIdCommand,
-  ): Promise<Card | null> {
+  ): Promise<CardResponse | null> {
     try {
       const cardId = this.normalizeCardId(command.id);
+      const language = this.normalizeLanguage(command.language);
 
-      this.logger.info({ id: cardId }, 'Find card: checking database cache');
+      this.logger.info({ id: cardId, language: language.toPrimitives() }, 'Find card: checking database cache');
       const storedCard = await this.findStoredCard(cardId);
+
+      let card: Card;
 
       if (storedCard) {
         const primitives = storedCard.toPrimitives();
         this.logger.info({ id: cardId, cardId: primitives.id, name: primitives.name }, 'Find card: found in cache, skipped sync');
-        return storedCard;
+        card = storedCard;
+      } else {
+        this.logger.info({ id: cardId }, 'Find card: not in cache, fetching from YGOPRODeck API');
+        const synced = await this.syncMissingCardFromExternalSource(cardId);
+
+        if (!synced) {
+          return null;
+        }
+
+        card = synced;
       }
 
-      this.logger.info({ id: cardId }, 'Find card: not in cache, fetching from YGOPRODeck API');
-      return await this.syncMissingCardFromExternalSource(cardId);
+      return await this.applyTranslations(card, language.toPrimitives());
     } catch (error) {
-      this.logger.error({ id: command.id, error }, 'Find card: failed');
+      this.logger.error({ id: command.id, language: command.language, error }, 'Find card: failed');
       throw this.buildProcessError(command.id, error);
     }
+  }
+
+  private async applyTranslations(card: Card, language: string): Promise<CardResponse> {
+    const primitives = card.toPrimitives();
+
+    if (language === 'en') {
+      return this.stripRawData(primitives);
+    }
+
+    const translation = await this.cardTranslationRepository.findByCardIdAndLanguage(
+      primitives.id,
+      language,
+    );
+
+    if (!translation) {
+      return this.stripRawData(primitives);
+    }
+
+    const response = this.stripRawData(primitives);
+
+    return {
+      ...response,
+      name: translation.name,
+      desc: translation.desc,
+      type: translation.type ?? response.type,
+      humanReadableCardType: translation.humanReadableCardType ?? response.humanReadableCardType,
+      race: (translation.race ?? response.race) as CardRace,
+    };
+  }
+
+  private stripRawData(primitives: CardPrimitives): CardResponse {
+    const { rawData: _, ...response } = primitives;
+    return response;
   }
 
   private buildProcessError(
@@ -66,6 +115,10 @@ export class FindOrSyncCardByExternalIdUseCase {
 
   private normalizeCardId(id: string): string {
     return CardId.create(id).toPrimitives();
+  }
+
+  private normalizeLanguage(language?: string): Language {
+    return Language.create(language ?? 'en');
   }
 
   private async findStoredCard(id: string): Promise<Card | null> {

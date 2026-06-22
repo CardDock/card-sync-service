@@ -4,6 +4,7 @@ import { Logger } from './domain/ports/logger.port';
 import { PinoLoggerAdapter } from './infrastructure/persistence/pino-logger.adapter';
 import { LoggingInterceptor } from './infrastructure/http/logging.interceptor';
 import { TransactionManagerPort } from './domain/ports/transaction-manager.port';
+import { CardTranslationRepositoryPort } from './domain/ports/card-translation-repository.port';
 import { FindOrSyncCardByExternalIdUseCase } from './application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from './application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
@@ -12,9 +13,11 @@ import { GetCardArtworksUseCase } from './application/use-cases/get-card-artwork
 import { ListCardSetsUseCase } from './application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from './application/use-cases/sync-card.use-case';
 import { CardController } from './infrastructure/http/card.controller';
+import { NotFoundExceptionFilter } from './infrastructure/http/not-found-exception.filter';
 import { YgoProDeckExternalCardSource } from './infrastructure/external/ygoprodeck-card-source';
 import { PostgresCardRepository } from './infrastructure/persistence/postgres-card.repository';
 import { PostgresCardRelatedDataRepository } from './infrastructure/persistence/postgres-card-related-data.repository';
+import { PostgresCardTranslationRepository } from './infrastructure/persistence/postgres-card-translation.repository';
 import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool.provider';
 
 @Module({
@@ -24,8 +27,11 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     { provide: TransactionManagerPort, useClass: PostgresPoolProvider },
     PostgresCardRepository,
     PostgresCardRelatedDataRepository,
+    PostgresCardTranslationRepository,
+    { provide: CardTranslationRepositoryPort, useClass: PostgresCardTranslationRepository },
     YgoProDeckExternalCardSource,
     { provide: Logger, useClass: PinoLoggerAdapter },
+    NotFoundExceptionFilter,
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     {
       provide: FindOrSyncCardByExternalIdUseCase,
@@ -34,6 +40,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        cardTranslationRepository: CardTranslationRepositoryPort,
         transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
@@ -42,6 +49,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
           externalCardSource,
           cardRepository,
           cardRelatedDataRepository,
+          cardTranslationRepository,
           transactionManager,
           logger,
         ),
@@ -50,6 +58,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
+        CardTranslationRepositoryPort,
         TransactionManagerPort,
         Logger,
       ],
@@ -57,23 +66,29 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     {
       provide: SearchCardByNameUseCase,
       useFactory: (
+        cardQueryRepository: PostgresCardRepository,
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        cardTranslationRepository: CardTranslationRepositoryPort,
         transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
         new SearchCardByNameUseCase(
+          cardQueryRepository,
           externalCardSource,
           cardRepository,
           cardRelatedDataRepository,
+          cardTranslationRepository,
           transactionManager,
           logger,
         ),
       inject: [
+        PostgresCardRepository,
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
+        CardTranslationRepositoryPort,
         TransactionManagerPort,
         Logger,
       ],
