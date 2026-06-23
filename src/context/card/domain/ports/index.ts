@@ -5,3 +5,5 @@ export { CardRelatedDataRepositoryPort } from './card-related-data-repository.po
 export { CardTranslationRepositoryPort } from './card-translation-repository.port';
 export { Logger } from './logger.port';
 export { TransactionManagerPort } from './transaction-manager.port';
+export { ImageStoragePort } from './image-storage.port';
+export { ExternalImageSourcePort } from './external-image-source.port';
