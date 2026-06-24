@@ -1,8 +1,17 @@
 import { SyncCardParams } from '../../domain/types/card.types';
 import { SyncCardWithRelatedData } from '../../domain/types/sync-card-with-related.types';
-import { createCardSetData, CardSetData } from '../../domain/types/card-set.types';
-import { createArtworkData, ArtworkData } from '../../domain/types/artwork.types';
-import { createCardPrintData, CardPrintData } from '../../domain/types/card-print.types';
+import {
+  createCardSetData,
+  CardSetData,
+} from '../../domain/types/card-set.types';
+import {
+  createArtworkData,
+  ArtworkData,
+} from '../../domain/types/artwork.types';
+import {
+  createCardPrintData,
+  CardPrintData,
+} from '../../domain/types/card-print.types';
 import {
   normalizeAttributeLabel,
   normalizeFrameTypeLabel,
@@ -56,14 +65,18 @@ function extractSetCodePrefix(setCode: string): string | null {
   return parts.length > 1 ? parts[0] : null;
 }
 
-function collectCardSets(cardSets: YgoProDeckCardSetDto[] | undefined): CardSetData[] {
+function collectCardSets(
+  cardSets: YgoProDeckCardSetDto[] | undefined,
+): CardSetData[] {
   const seen = new Set<string>();
   const sets: CardSetData[] = [];
 
   for (const cs of cardSets ?? []) {
     if (!seen.has(cs.set_name)) {
       seen.add(cs.set_name);
-      sets.push(createCardSetData(cs.set_name, extractSetCodePrefix(cs.set_code)));
+      sets.push(
+        createCardSetData(cs.set_name, extractSetCodePrefix(cs.set_code)),
+      );
     }
   }
 
@@ -74,7 +87,13 @@ function collectCardPrints(
   cardSets: YgoProDeckCardSetDto[] | undefined,
 ): CardPrintData[] {
   return (cardSets ?? []).map((cs) =>
-    createCardPrintData(cs.set_name, cs.set_code, cs.set_rarity, cs.set_rarity_code, cs.set_price),
+    createCardPrintData(
+      cs.set_name,
+      cs.set_code,
+      cs.set_rarity,
+      cs.set_rarity_code,
+      cs.set_price,
+    ),
   );
 }
 

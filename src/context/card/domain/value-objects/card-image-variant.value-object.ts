@@ -14,7 +14,9 @@ export class CardImageVariant {
   private constructor(private readonly value: CardImageVariantPrimitive) {}
 
   static create(value?: string): CardImageVariant {
-    const normalized = (value ?? 'normal').trim().toLowerCase() as CardImageVariantPrimitive;
+    const normalized = (value ?? 'normal')
+      .trim()
+      .toLowerCase() as CardImageVariantPrimitive;
 
     if (!VALID_VARIANTS.has(normalized)) {
       throw new CardDomainValidationError({

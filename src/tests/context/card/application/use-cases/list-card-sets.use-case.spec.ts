@@ -1,9 +1,17 @@
-import { CardRelatedDataRepositoryPort, CardSetResult } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
+import {
+  CardRelatedDataRepositoryPort,
+  CardSetResult,
+} from '../../../../../context/card/domain/ports/card-related-data-repository.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { ListCardSetsUseCase } from '../../../../../context/card/application/use-cases/list-card-sets.use-case';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 describe('ListCardSetsUseCase', () => {
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
@@ -26,7 +34,10 @@ describe('ListCardSetsUseCase', () => {
     ];
     cardRelatedDataRepository.findAllCardSets.mockResolvedValue(sets);
 
-    const useCase = new ListCardSetsUseCase(cardRelatedDataRepository, buildLoggerMock());
+    const useCase = new ListCardSetsUseCase(
+      cardRelatedDataRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute();
 
@@ -37,7 +48,10 @@ describe('ListCardSetsUseCase', () => {
   it('returns empty array when no card sets exist', async () => {
     cardRelatedDataRepository.findAllCardSets.mockResolvedValue([]);
 
-    const useCase = new ListCardSetsUseCase(cardRelatedDataRepository, buildLoggerMock());
+    const useCase = new ListCardSetsUseCase(
+      cardRelatedDataRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute();
 
@@ -50,7 +64,10 @@ describe('ListCardSetsUseCase', () => {
     ];
     cardRelatedDataRepository.findAllCardSets.mockResolvedValue(sets);
 
-    const useCase = new ListCardSetsUseCase(cardRelatedDataRepository, buildLoggerMock());
+    const useCase = new ListCardSetsUseCase(
+      cardRelatedDataRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute();
 

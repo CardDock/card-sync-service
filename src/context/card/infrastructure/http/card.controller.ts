@@ -55,9 +55,24 @@ export class CardController {
 
   @Get('cards/:id')
   @ApiOperation({ summary: 'Find a card by its YGOPRODeck ID' })
-  @ApiParam({ name: 'id', type: String, description: 'Card ID from YGOPRODeck API', example: '46986414' })
-  @ApiQuery({ name: 'language', type: String, required: false, description: 'Language code (en, es)', example: 'es' })
-  @ApiResponse({ status: 200, type: CardResponseDto, description: 'Card found successfully' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID from YGOPRODeck API',
+    example: '46986414',
+  })
+  @ApiQuery({
+    name: 'language',
+    type: String,
+    required: false,
+    description: 'Language code (en, es)',
+    example: 'es',
+  })
+  @ApiResponse({
+    status: 200,
+    type: CardResponseDto,
+    description: 'Card found successfully',
+  })
   @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
   async findById(
     @Param('id') id: string,
@@ -72,9 +87,7 @@ export class CardController {
 
     if (!response) {
       this.logger.warn({ id }, 'Card not found');
-      throw new NotFoundException(
-        `Card with id ${id} was not found`,
-      );
+      throw new NotFoundException(`Card with id ${id} was not found`);
     }
 
     this.logger.info({ id, name: response.name }, 'Card found');
@@ -82,22 +95,113 @@ export class CardController {
   }
 
   @Get('cards')
-  @ApiOperation({ summary: 'List or search cards with optional filters and pagination' })
-  @ApiQuery({ name: 'name', type: String, required: false, description: 'Search cards by name (triggers auto-sync from YGOPRODeck if no local results)', example: 'Dark Magician' })
-  @ApiQuery({ name: 'language', type: String, required: false, description: 'Language code (en, es)', example: 'es' })
-  @ApiQuery({ name: 'type', type: String, required: false, description: 'Filter by card type', example: 'Normal Monster' })
-  @ApiQuery({ name: 'race', type: String, required: false, description: 'Filter by race', example: 'Spellcaster' })
-  @ApiQuery({ name: 'attribute', type: String, required: false, description: 'Filter by attribute', example: 'DARK' })
-  @ApiQuery({ name: 'frameType', type: String, required: false, description: 'Filter by frame type', example: 'normal' })
-  @ApiQuery({ name: 'atkMin', type: Number, required: false, description: 'Minimum ATK', example: 2000 })
-  @ApiQuery({ name: 'atkMax', type: Number, required: false, description: 'Maximum ATK', example: 3000 })
-  @ApiQuery({ name: 'defMin', type: Number, required: false, description: 'Minimum DEF', example: 1500 })
-  @ApiQuery({ name: 'defMax', type: Number, required: false, description: 'Maximum DEF', example: 2500 })
-  @ApiQuery({ name: 'level', type: Number, required: false, description: 'Filter by level/rank', example: 7 })
-  @ApiQuery({ name: 'linkval', type: Number, required: false, description: 'Filter by link value', example: 3 })
-  @ApiQuery({ name: 'page', type: Number, required: false, description: 'Page number (default: 1)', example: 1 })
-  @ApiQuery({ name: 'limit', type: Number, required: false, description: 'Items per page (default: 20, max: 100)', example: 20 })
-  @ApiResponse({ status: 200, type: PaginatedCardResponseDto, description: 'Paginated list of cards' })
+  @ApiOperation({
+    summary: 'List or search cards with optional filters and pagination',
+  })
+  @ApiQuery({
+    name: 'name',
+    type: String,
+    required: false,
+    description:
+      'Search cards by name (triggers auto-sync from YGOPRODeck if no local results)',
+    example: 'Dark Magician',
+  })
+  @ApiQuery({
+    name: 'language',
+    type: String,
+    required: false,
+    description: 'Language code (en, es)',
+    example: 'es',
+  })
+  @ApiQuery({
+    name: 'type',
+    type: String,
+    required: false,
+    description: 'Filter by card type',
+    example: 'Normal Monster',
+  })
+  @ApiQuery({
+    name: 'race',
+    type: String,
+    required: false,
+    description: 'Filter by race',
+    example: 'Spellcaster',
+  })
+  @ApiQuery({
+    name: 'attribute',
+    type: String,
+    required: false,
+    description: 'Filter by attribute',
+    example: 'DARK',
+  })
+  @ApiQuery({
+    name: 'frameType',
+    type: String,
+    required: false,
+    description: 'Filter by frame type',
+    example: 'normal',
+  })
+  @ApiQuery({
+    name: 'atkMin',
+    type: Number,
+    required: false,
+    description: 'Minimum ATK',
+    example: 2000,
+  })
+  @ApiQuery({
+    name: 'atkMax',
+    type: Number,
+    required: false,
+    description: 'Maximum ATK',
+    example: 3000,
+  })
+  @ApiQuery({
+    name: 'defMin',
+    type: Number,
+    required: false,
+    description: 'Minimum DEF',
+    example: 1500,
+  })
+  @ApiQuery({
+    name: 'defMax',
+    type: Number,
+    required: false,
+    description: 'Maximum DEF',
+    example: 2500,
+  })
+  @ApiQuery({
+    name: 'level',
+    type: Number,
+    required: false,
+    description: 'Filter by level/rank',
+    example: 7,
+  })
+  @ApiQuery({
+    name: 'linkval',
+    type: Number,
+    required: false,
+    description: 'Filter by link value',
+    example: 3,
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Items per page (default: 20, max: 100)',
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    type: PaginatedCardResponseDto,
+    description: 'Paginated list of cards',
+  })
   async listCards(
     @Query('name') name: string | undefined,
     @Query('language') language: string | undefined,
@@ -120,7 +224,10 @@ export class CardController {
 
     if (name) {
       this.logger.info({ name, language }, 'Card search by name');
-      const items = await this.searchCardByNameUseCase.execute({ name, language });
+      const items = await this.searchCardByNameUseCase.execute({
+        name,
+        language,
+      });
       return {
         items,
         total: items.length,
@@ -129,10 +236,40 @@ export class CardController {
       };
     }
 
-    this.logger.info({ filters: { type, race, attribute, frameType, atkMin, atkMax, defMin, defMax, level, linkval }, page, limit }, 'List cards with filters');
+    this.logger.info(
+      {
+        filters: {
+          type,
+          race,
+          attribute,
+          frameType,
+          atkMin,
+          atkMax,
+          defMin,
+          defMax,
+          level,
+          linkval,
+        },
+        page,
+        limit,
+      },
+      'List cards with filters',
+    );
 
     const result = await this.listCardsUseCase.execute({
-      filters: { name, type, race, attribute, frameType, atkMin, atkMax, defMin, defMax, level, linkval },
+      filters: {
+        name,
+        type,
+        race,
+        attribute,
+        frameType,
+        atkMin,
+        atkMax,
+        defMin,
+        defMax,
+        level,
+        linkval,
+      },
       page,
       limit,
     });
@@ -150,8 +287,17 @@ export class CardController {
 
   @Get('cards/:id/prints')
   @ApiOperation({ summary: 'Get all print variants for a card' })
-  @ApiParam({ name: 'id', type: String, description: 'Card ID', example: '46986414' })
-  @ApiResponse({ status: 200, type: [CardPrintResponseDto], description: 'List of prints for the card' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiResponse({
+    status: 200,
+    type: [CardPrintResponseDto],
+    description: 'List of prints for the card',
+  })
   @ApiNotFoundResponse({ description: 'No prints found for the given card' })
   async getCardPrints(
     @Param('id') id: string,
@@ -161,9 +307,7 @@ export class CardController {
     const prints = await this.getCardPrintsUseCase.execute({ id });
 
     if (prints.length === 0) {
-      throw new NotFoundException(
-        `No prints found for card with id ${id}`,
-      );
+      throw new NotFoundException(`No prints found for card with id ${id}`);
     }
 
     return prints;
@@ -171,8 +315,17 @@ export class CardController {
 
   @Get('cards/:id/artworks')
   @ApiOperation({ summary: 'Get all artworks for a card' })
-  @ApiParam({ name: 'id', type: String, description: 'Card ID', example: '46986414' })
-  @ApiResponse({ status: 200, type: [ArtworkResponseDto], description: 'List of artworks for the card' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiResponse({
+    status: 200,
+    type: [ArtworkResponseDto],
+    description: 'List of artworks for the card',
+  })
   @ApiNotFoundResponse({ description: 'No artworks found for the given card' })
   async getCardArtworks(
     @Param('id') id: string,
@@ -182,9 +335,7 @@ export class CardController {
     const artworks = await this.getCardArtworksUseCase.execute({ id });
 
     if (artworks.length === 0) {
-      throw new NotFoundException(
-        `No artworks found for card with id ${id}`,
-      );
+      throw new NotFoundException(`No artworks found for card with id ${id}`);
     }
 
     return artworks;
@@ -192,7 +343,11 @@ export class CardController {
 
   @Get('card-sets')
   @ApiOperation({ summary: 'List all card sets' })
-  @ApiResponse({ status: 200, type: [CardSetResponseDto], description: 'List of card sets' })
+  @ApiResponse({
+    status: 200,
+    type: [CardSetResponseDto],
+    description: 'List of card sets',
+  })
   async listCardSets(): Promise<CardSetResponseDto[]> {
     this.logger.info({}, 'List card sets');
 
@@ -204,11 +359,13 @@ export class CardController {
   @Post('cards/sync')
   @ApiOperation({ summary: 'Force sync a card from YGOPRODeck API' })
   @ApiBody({ type: SyncCardDto })
-  @ApiResponse({ status: 201, type: CardResponseDto, description: 'Card synced successfully' })
+  @ApiResponse({
+    status: 201,
+    type: CardResponseDto,
+    description: 'Card synced successfully',
+  })
   @ApiNotFoundResponse({ description: 'Card not found in YGOPRODeck API' })
-  async syncCard(
-    @Body() body: SyncCardDto,
-  ): Promise<CardResponse> {
+  async syncCard(@Body() body: SyncCardDto): Promise<CardResponse> {
     this.logger.info({ id: body.id }, 'Force sync card from YGOPRODeck');
 
     const card = await this.syncCardUseCase.execute({
@@ -222,7 +379,10 @@ export class CardController {
       );
     }
 
-    this.logger.info({ id: body.id, name: card.toPrimitives().name }, 'Sync card: completed');
+    this.logger.info(
+      { id: body.id, name: card.toPrimitives().name },
+      'Sync card: completed',
+    );
     const { rawData: _, ...response } = card.toPrimitives();
     return response;
   }

@@ -8,7 +8,11 @@ import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Language } from '../../domain/value-objects/language.value-object';
 import { Logger } from '../../domain/ports/logger.port';
 import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
-import { CardPrimitives, CardResponse, CardRace } from '../../domain/types/card.types';
+import {
+  CardPrimitives,
+  CardResponse,
+  CardRace,
+} from '../../domain/types/card.types';
 
 export interface SearchCardByNameInput {
   name: string;
@@ -32,7 +36,10 @@ export class SearchCardByNameUseCase {
     try {
       const language = Language.create(command.language ?? 'en');
 
-      this.logger.info({ name: command.name, language: language.toPrimitives() }, 'Search card: starting');
+      this.logger.info(
+        { name: command.name, language: language.toPrimitives() },
+        'Search card: starting',
+      );
 
       if (!language.isEnglish()) {
         const translated = await this.searchByTranslatedName(
@@ -44,12 +51,21 @@ export class SearchCardByNameUseCase {
           return translated;
         }
 
-        this.logger.info({ name: command.name, language: language.toPrimitives() }, 'Search card: no translations found, falling back to YGOPRODeck');
+        this.logger.info(
+          { name: command.name, language: language.toPrimitives() },
+          'Search card: no translations found, falling back to YGOPRODeck',
+        );
       }
 
-      return await this.syncFromExternalSource(command.name, language.toPrimitives());
+      return await this.syncFromExternalSource(
+        command.name,
+        language.toPrimitives(),
+      );
     } catch (error) {
-      this.logger.error({ name: command.name, language: command.language, error }, 'Search card: failed');
+      this.logger.error(
+        { name: command.name, language: command.language, error },
+        'Search card: failed',
+      );
       throw this.buildProcessError(command.name, error);
     }
   }
@@ -80,7 +96,10 @@ export class SearchCardByNameUseCase {
       results.push(response);
     }
 
-    this.logger.info({ name, language, count: results.length }, 'Search card: found via translations');
+    this.logger.info(
+      { name, language, count: results.length },
+      'Search card: found via translations',
+    );
     return results;
   }
 
@@ -89,15 +108,17 @@ export class SearchCardByNameUseCase {
     language: string,
   ): Promise<CardResponse[]> {
     this.logger.info({ name }, 'Search card: requesting YGOPRODeck API');
-    const externalResults =
-      await this.externalCardSource.findByName(name);
+    const externalResults = await this.externalCardSource.findByName(name);
 
     if (externalResults.length === 0) {
       this.logger.warn({ name }, 'Search card: YGOPRODeck returned no results');
       return [];
     }
 
-    this.logger.info({ name, count: externalResults.length }, 'Search card: data received from YGOPRODeck, persisting to database');
+    this.logger.info(
+      { name, count: externalResults.length },
+      'Search card: data received from YGOPRODeck, persisting to database',
+    );
     const cards: Card[] = [];
 
     for (const externalData of externalResults) {
@@ -111,11 +132,10 @@ export class SearchCardByNameUseCase {
         );
 
         for (const [index, artwork] of externalData.artworks.entries()) {
-          const artworkId =
-            await this.cardRelatedDataRepository.saveArtwork(
-              storedId,
-              artwork.imageUrl,
-            );
+          const artworkId = await this.cardRelatedDataRepository.saveArtwork(
+            storedId,
+            artwork.imageUrl,
+          );
 
           if (index === 0) {
             await this.cardRelatedDataRepository.saveCardPrints(
@@ -128,11 +148,17 @@ export class SearchCardByNameUseCase {
       });
 
       const primitives = synchronizedCard.toPrimitives();
-      this.logger.info({ name, cardId: primitives.id, cardName: primitives.name }, 'Search card: synced from YGOPRODeck');
+      this.logger.info(
+        { name, cardId: primitives.id, cardName: primitives.name },
+        'Search card: synced from YGOPRODeck',
+      );
       cards.push(synchronizedCard);
     }
 
-    this.logger.info({ name, totalSynced: cards.length }, 'Search card: sync completed');
+    this.logger.info(
+      { name, totalSynced: cards.length },
+      'Search card: sync completed',
+    );
 
     const responses: CardResponse[] = [];
 
@@ -144,17 +170,21 @@ export class SearchCardByNameUseCase {
     return responses;
   }
 
-  private async applyTranslations(card: Card, language: string): Promise<CardResponse> {
+  private async applyTranslations(
+    card: Card,
+    language: string,
+  ): Promise<CardResponse> {
     const primitives = card.toPrimitives();
 
     if (language === 'en') {
       return this.stripRawData(primitives);
     }
 
-    const translation = await this.cardTranslationRepository.findByCardIdAndLanguage(
-      primitives.id,
-      language,
-    );
+    const translation =
+      await this.cardTranslationRepository.findByCardIdAndLanguage(
+        primitives.id,
+        language,
+      );
 
     if (!translation) {
       return this.stripRawData(primitives);
@@ -167,7 +197,8 @@ export class SearchCardByNameUseCase {
       name: translation.name,
       desc: translation.desc,
       type: translation.type ?? response.type,
-      humanReadableCardType: translation.humanReadableCardType ?? response.humanReadableCardType,
+      humanReadableCardType:
+        translation.humanReadableCardType ?? response.humanReadableCardType,
       race: (translation.race ?? response.race) as CardRace,
     };
   }

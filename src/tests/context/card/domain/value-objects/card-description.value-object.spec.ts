@@ -14,7 +14,9 @@ describe('CardDescription', () => {
     });
 
     it('trims leading and trailing spaces', () => {
-      const cardDescription = CardDescription.create('  Special summon one token.  ');
+      const cardDescription = CardDescription.create(
+        '  Special summon one token.  ',
+      );
 
       expect(cardDescription.toPrimitives()).toBe('Special summon one token.');
     });
@@ -39,8 +41,8 @@ describe('CardDescription', () => {
       ['object', { description: 'effect' }],
       ['array', ['effect']],
     ])('throws when value is %s', (_label, invalidValue) => {
-      expect(
-        () => CardDescription.create(invalidValue as unknown as string),
+      expect(() =>
+        CardDescription.create(invalidValue as unknown as string),
       ).toThrow(new Error('Card description is required'));
     });
   });

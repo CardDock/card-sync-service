@@ -2,8 +2,12 @@ import { ArtworkImageUrl } from '../../../../../context/card/domain/value-object
 
 describe('ArtworkImageUrl', () => {
   it('creates a valid URL', () => {
-    const url = ArtworkImageUrl.create('https://images.ygoprodeck.com/images/cards/46986414.jpg');
-    expect(url.toPrimitives()).toBe('https://images.ygoprodeck.com/images/cards/46986414.jpg');
+    const url = ArtworkImageUrl.create(
+      'https://images.ygoprodeck.com/images/cards/46986414.jpg',
+    );
+    expect(url.toPrimitives()).toBe(
+      'https://images.ygoprodeck.com/images/cards/46986414.jpg',
+    );
   });
 
   it('trims whitespace', () => {

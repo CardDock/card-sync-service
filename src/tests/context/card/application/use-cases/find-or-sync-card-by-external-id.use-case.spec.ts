@@ -47,12 +47,8 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       },
       ...overrides,
     },
-    cardSets: [
-      { name: 'Legend of Blue Eyes White Dragon', code: 'LOB' },
-    ],
-    artworks: [
-      { imageUrl: 'https://example.com/image.png' },
-    ],
+    cardSets: [{ name: 'Legend of Blue Eyes White Dragon', code: 'LOB' }],
+    artworks: [{ imageUrl: 'https://example.com/image.png' }],
     cardPrints: [
       {
         setName: 'Legend of Blue Eyes White Dragon',
@@ -133,7 +129,9 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     expect(result).not.toHaveProperty('rawData');
     expect(externalCardSource.findById).not.toHaveBeenCalled();
     expect(cardRepository.save).not.toHaveBeenCalled();
-    expect(cardTranslationRepository.findByCardIdAndLanguage).not.toHaveBeenCalled();
+    expect(
+      cardTranslationRepository.findByCardIdAndLanguage,
+    ).not.toHaveBeenCalled();
   });
 
   it('returns the existing card with language=en without querying translations', async () => {
@@ -153,7 +151,9 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       id: '46986414',
       name: 'Dark Magician',
     });
-    expect(cardTranslationRepository.findByCardIdAndLanguage).not.toHaveBeenCalled();
+    expect(
+      cardTranslationRepository.findByCardIdAndLanguage,
+    ).not.toHaveBeenCalled();
   });
 
   it('applies translation when language=es and translation exists', async () => {
@@ -184,10 +184,9 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       humanReadableCardType: 'Monstruo Normal',
       race: 'Lanzador de Conjuros',
     });
-    expect(cardTranslationRepository.findByCardIdAndLanguage).toHaveBeenCalledWith(
-      '46986414',
-      'es',
-    );
+    expect(
+      cardTranslationRepository.findByCardIdAndLanguage,
+    ).toHaveBeenCalledWith('46986414', 'es');
   });
 
   it('falls back to English when language=es but no translation exists', async () => {

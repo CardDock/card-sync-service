@@ -1,4 +1,7 @@
-import { CardRelatedDataRepositoryPort, CardSetResult } from '../../domain/ports/card-related-data-repository.port';
+import {
+  CardRelatedDataRepositoryPort,
+  CardSetResult,
+} from '../../domain/ports/card-related-data-repository.port';
 import { Logger } from '../../domain/ports/logger.port';
 
 export class ListCardSetsUseCase {

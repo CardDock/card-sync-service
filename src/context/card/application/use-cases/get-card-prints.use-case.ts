@@ -1,4 +1,7 @@
-import { CardRelatedDataRepositoryPort, CardPrintResult } from '../../domain/ports/card-related-data-repository.port';
+import {
+  CardRelatedDataRepositoryPort,
+  CardPrintResult,
+} from '../../domain/ports/card-related-data-repository.port';
 import { Logger } from '../../domain/ports/logger.port';
 
 export interface GetCardPrintsInput {
@@ -14,10 +17,7 @@ export class GetCardPrintsUseCase {
   ) {}
 
   async execute(command: GetCardPrintsCommand): Promise<CardPrintResult[]> {
-    this.logger.info(
-      { id: command.id },
-      'Get card prints: querying database',
-    );
+    this.logger.info({ id: command.id }, 'Get card prints: querying database');
 
     const prints = await this.cardRelatedDataRepository.findPrintsByCardId(
       command.id,

@@ -43,14 +43,20 @@ describe('Language', () => {
   });
 
   it('throws CardDomainValidationError for non-string value', () => {
-    expect(() => Language.create(null as unknown as string)).toThrow(CardDomainValidationError);
+    expect(() => Language.create(null as unknown as string)).toThrow(
+      CardDomainValidationError,
+    );
   });
 
   it('throws CardDomainValidationError for undefined value', () => {
-    expect(() => Language.create(undefined as unknown as string)).toThrow(CardDomainValidationError);
+    expect(() => Language.create(undefined as unknown as string)).toThrow(
+      CardDomainValidationError,
+    );
   });
 
   it('throws CardDomainValidationError for numeric value', () => {
-    expect(() => Language.create(123 as unknown as string)).toThrow(CardDomainValidationError);
+    expect(() => Language.create(123 as unknown as string)).toThrow(
+      CardDomainValidationError,
+    );
   });
 });

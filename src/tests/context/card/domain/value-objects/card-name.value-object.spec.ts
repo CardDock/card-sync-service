@@ -15,7 +15,9 @@ describe('CardName', () => {
     });
 
     it('throws when value is an empty string', () => {
-      expect(() => CardName.create('')).toThrow(new Error('Card name is required'));
+      expect(() => CardName.create('')).toThrow(
+        new Error('Card name is required'),
+      );
     });
 
     it('throws when value is only whitespace', () => {

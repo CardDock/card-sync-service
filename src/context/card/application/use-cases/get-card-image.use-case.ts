@@ -34,7 +34,11 @@ export class GetCardImageUseCase {
 
     if (localPath) {
       this.logger.info(
-        { cardId: input.cardId, variant: variant.toPrimitives(), filePath: localPath },
+        {
+          cardId: input.cardId,
+          variant: variant.toPrimitives(),
+          filePath: localPath,
+        },
         'Get card image: found in local storage',
       );
       return { filePath: localPath };
@@ -65,7 +69,11 @@ export class GetCardImageUseCase {
     );
 
     this.logger.info(
-      { cardId: input.cardId, variant: variant.toPrimitives(), filePath: savedPath },
+      {
+        cardId: input.cardId,
+        variant: variant.toPrimitives(),
+        filePath: savedPath,
+      },
       'Get card image: saved to local storage',
     );
 

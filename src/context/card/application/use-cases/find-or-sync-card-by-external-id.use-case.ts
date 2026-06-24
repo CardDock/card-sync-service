@@ -9,7 +9,11 @@ import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-d
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Logger } from '../../domain/ports/logger.port';
 import { TransactionManagerPort } from '../../domain/ports/transaction-manager.port';
-import { CardPrimitives, CardResponse, CardRace } from '../../domain/types/card.types';
+import {
+  CardPrimitives,
+  CardResponse,
+  CardRace,
+} from '../../domain/types/card.types';
 
 export interface FindOrSyncCardByIdInput {
   id: string;
@@ -36,17 +40,26 @@ export class FindOrSyncCardByExternalIdUseCase {
       const cardId = this.normalizeCardId(command.id);
       const language = this.normalizeLanguage(command.language);
 
-      this.logger.info({ id: cardId, language: language.toPrimitives() }, 'Find card: checking database cache');
+      this.logger.info(
+        { id: cardId, language: language.toPrimitives() },
+        'Find card: checking database cache',
+      );
       const storedCard = await this.findStoredCard(cardId);
 
       let card: Card;
 
       if (storedCard) {
         const primitives = storedCard.toPrimitives();
-        this.logger.info({ id: cardId, cardId: primitives.id, name: primitives.name }, 'Find card: found in cache, skipped sync');
+        this.logger.info(
+          { id: cardId, cardId: primitives.id, name: primitives.name },
+          'Find card: found in cache, skipped sync',
+        );
         card = storedCard;
       } else {
-        this.logger.info({ id: cardId }, 'Find card: not in cache, fetching from YGOPRODeck API');
+        this.logger.info(
+          { id: cardId },
+          'Find card: not in cache, fetching from YGOPRODeck API',
+        );
         const synced = await this.syncMissingCardFromExternalSource(cardId);
 
         if (!synced) {
@@ -58,22 +71,29 @@ export class FindOrSyncCardByExternalIdUseCase {
 
       return await this.applyTranslations(card, language.toPrimitives());
     } catch (error) {
-      this.logger.error({ id: command.id, language: command.language, error }, 'Find card: failed');
+      this.logger.error(
+        { id: command.id, language: command.language, error },
+        'Find card: failed',
+      );
       throw this.buildProcessError(command.id, error);
     }
   }
 
-  private async applyTranslations(card: Card, language: string): Promise<CardResponse> {
+  private async applyTranslations(
+    card: Card,
+    language: string,
+  ): Promise<CardResponse> {
     const primitives = card.toPrimitives();
 
     if (language === 'en') {
       return this.stripRawData(primitives);
     }
 
-    const translation = await this.cardTranslationRepository.findByCardIdAndLanguage(
-      primitives.id,
-      language,
-    );
+    const translation =
+      await this.cardTranslationRepository.findByCardIdAndLanguage(
+        primitives.id,
+        language,
+      );
 
     if (!translation) {
       return this.stripRawData(primitives);
@@ -86,7 +106,8 @@ export class FindOrSyncCardByExternalIdUseCase {
       name: translation.name,
       desc: translation.desc,
       type: translation.type ?? response.type,
-      humanReadableCardType: translation.humanReadableCardType ?? response.humanReadableCardType,
+      humanReadableCardType:
+        translation.humanReadableCardType ?? response.humanReadableCardType,
       race: (translation.race ?? response.race) as CardRace,
     };
   }
@@ -128,8 +149,7 @@ export class FindOrSyncCardByExternalIdUseCase {
   private async syncMissingCardFromExternalSource(
     id: string,
   ): Promise<Card | null> {
-    const externalData =
-      await this.externalCardSource.findById(id);
+    const externalData = await this.externalCardSource.findById(id);
 
     if (!externalData) {
       this.logger.warn({ id }, 'Sync card: not found on YGOPRODeck API');
@@ -138,13 +158,19 @@ export class FindOrSyncCardByExternalIdUseCase {
 
     const synchronizedCard = Card.create(externalData.card);
     const primitives = synchronizedCard.toPrimitives();
-    this.logger.info({ id, cardId: primitives.id, name: primitives.name }, 'Sync card: data received from YGOPRODeck, persisting to database');
+    this.logger.info(
+      { id, cardId: primitives.id, name: primitives.name },
+      'Sync card: data received from YGOPRODeck, persisting to database',
+    );
 
     await this.transactionManager.transaction(async () => {
       await this.persistSynchronizedCard(synchronizedCard, externalData);
     });
 
-    this.logger.info({ id, cardId: primitives.id, name: primitives.name }, 'Sync card: saved to database successfully');
+    this.logger.info(
+      { id, cardId: primitives.id, name: primitives.name },
+      'Sync card: saved to database successfully',
+    );
     return synchronizedCard;
   }
 
@@ -153,7 +179,13 @@ export class FindOrSyncCardByExternalIdUseCase {
     externalData: {
       cardSets: { name: string; code: string | null }[];
       artworks: { imageUrl: string }[];
-      cardPrints: { setName: string; setCode: string; rarity: string; rarityCode: string | null; setPrice: number | null }[];
+      cardPrints: {
+        setName: string;
+        setCode: string;
+        rarity: string;
+        rarityCode: string | null;
+        setPrice: number | null;
+      }[];
     },
   ): Promise<void> {
     const storedId = await this.cardRepository.save(card);

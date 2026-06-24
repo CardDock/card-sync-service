@@ -18,7 +18,8 @@ export class NotFoundExceptionFilter implements ExceptionFilter {
     const message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
-        : (exceptionResponse as Record<string, unknown>).message ?? 'Not Found';
+        : ((exceptionResponse as Record<string, unknown>).message ??
+          'Not Found');
     const request = host.switchToHttp().getRequest();
     const { method, url, query, params } = request;
 

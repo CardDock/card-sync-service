@@ -14,18 +14,43 @@ const darkMagicianDto = {
   level: 7,
   attribute: 'DARK',
   card_sets: [
-    { set_name: 'Legend of Blue Eyes White Dragon', set_code: 'LOB-000', set_rarity: 'Ultra Rare', set_rarity_code: 'ur', set_price: '12.5' },
-    { set_name: 'Legend of Blue Eyes White Dragon', set_code: 'LOB-001', set_rarity: 'Super Rare', set_rarity_code: 'sr', set_price: '5.0' },
-    { set_name: 'Metal Raiders', set_code: 'MRD-000', set_rarity: 'Ultra Rare', set_rarity_code: 'ur', set_price: '8.0' },
+    {
+      set_name: 'Legend of Blue Eyes White Dragon',
+      set_code: 'LOB-000',
+      set_rarity: 'Ultra Rare',
+      set_rarity_code: 'ur',
+      set_price: '12.5',
+    },
+    {
+      set_name: 'Legend of Blue Eyes White Dragon',
+      set_code: 'LOB-001',
+      set_rarity: 'Super Rare',
+      set_rarity_code: 'sr',
+      set_price: '5.0',
+    },
+    {
+      set_name: 'Metal Raiders',
+      set_code: 'MRD-000',
+      set_rarity: 'Ultra Rare',
+      set_rarity_code: 'ur',
+      set_price: '8.0',
+    },
   ],
   card_images: [
-    { id: 1, image_url: 'https://images.ygoprodeck.com/images/cards/46986414.jpg', image_url_small: '', image_url_cropped: '' },
+    {
+      id: 1,
+      image_url: 'https://images.ygoprodeck.com/images/cards/46986414.jpg',
+      image_url_small: '',
+      image_url_cropped: '',
+    },
   ],
 };
 
 describe('mapYgoProDeckResponseToSyncCardParams', () => {
   it('maps a full card DTO correctly', () => {
-    const result = mapYgoProDeckResponseToSyncCardParams({ data: [darkMagicianDto] });
+    const result = mapYgoProDeckResponseToSyncCardParams({
+      data: [darkMagicianDto],
+    });
 
     expect(result).not.toBeNull();
     expect(result!.card).toMatchObject({
@@ -49,32 +74,60 @@ describe('mapYgoProDeckResponseToSyncCardParams', () => {
       id: 46986414,
       name: 'Dark Magician',
     });
-    expect((result!.card.rawData as Record<string, unknown>).card_sets).toBeUndefined();
-    expect((result!.card.rawData as Record<string, unknown>).card_images).toBeUndefined();
+    expect(
+      (result!.card.rawData as Record<string, unknown>).card_sets,
+    ).toBeUndefined();
+    expect(
+      (result!.card.rawData as Record<string, unknown>).card_images,
+    ).toBeUndefined();
   });
 
   it('deduplicates card sets by name', () => {
-    const result = mapYgoProDeckResponseToSyncCardParams({ data: [darkMagicianDto] });
+    const result = mapYgoProDeckResponseToSyncCardParams({
+      data: [darkMagicianDto],
+    });
 
     expect(result!.cardSets).toHaveLength(2);
-    expect(result!.cardSets[0]).toMatchObject({ name: 'Legend of Blue Eyes White Dragon', code: 'LOB' });
-    expect(result!.cardSets[1]).toMatchObject({ name: 'Metal Raiders', code: 'MRD' });
+    expect(result!.cardSets[0]).toMatchObject({
+      name: 'Legend of Blue Eyes White Dragon',
+      code: 'LOB',
+    });
+    expect(result!.cardSets[1]).toMatchObject({
+      name: 'Metal Raiders',
+      code: 'MRD',
+    });
   });
 
   it('collects card prints from card_sets', () => {
-    const result = mapYgoProDeckResponseToSyncCardParams({ data: [darkMagicianDto] });
+    const result = mapYgoProDeckResponseToSyncCardParams({
+      data: [darkMagicianDto],
+    });
 
     expect(result!.cardPrints).toHaveLength(3);
-    expect(result!.cardPrints[0]).toMatchObject({ setName: 'Legend of Blue Eyes White Dragon', setCode: 'LOB-000', rarity: 'Ultra Rare' });
-    expect(result!.cardPrints[1]).toMatchObject({ setName: 'Legend of Blue Eyes White Dragon', setCode: 'LOB-001' });
-    expect(result!.cardPrints[2]).toMatchObject({ setName: 'Metal Raiders', setCode: 'MRD-000' });
+    expect(result!.cardPrints[0]).toMatchObject({
+      setName: 'Legend of Blue Eyes White Dragon',
+      setCode: 'LOB-000',
+      rarity: 'Ultra Rare',
+    });
+    expect(result!.cardPrints[1]).toMatchObject({
+      setName: 'Legend of Blue Eyes White Dragon',
+      setCode: 'LOB-001',
+    });
+    expect(result!.cardPrints[2]).toMatchObject({
+      setName: 'Metal Raiders',
+      setCode: 'MRD-000',
+    });
   });
 
   it('collects artworks from card_images', () => {
-    const result = mapYgoProDeckResponseToSyncCardParams({ data: [darkMagicianDto] });
+    const result = mapYgoProDeckResponseToSyncCardParams({
+      data: [darkMagicianDto],
+    });
 
     expect(result!.artworks).toHaveLength(1);
-    expect(result!.artworks[0]).toMatchObject({ imageUrl: 'https://images.ygoprodeck.com/images/cards/46986414.jpg' });
+    expect(result!.artworks[0]).toMatchObject({
+      imageUrl: 'https://images.ygoprodeck.com/images/cards/46986414.jpg',
+    });
   });
 
   it('normalizes race labels like Beast-Warrior', () => {
@@ -93,7 +146,11 @@ describe('mapYgoProDeckResponseToSyncCardParams', () => {
     };
     const result = mapYgoProDeckResponseToSyncCardParams({ data: [dto] });
 
-    expect(result!.card.linkmarkers).toEqual(['BottomLeft', 'BottomRight', 'Top']);
+    expect(result!.card.linkmarkers).toEqual([
+      'BottomLeft',
+      'BottomRight',
+      'Top',
+    ]);
   });
 
   it('handles missing optional fields', () => {

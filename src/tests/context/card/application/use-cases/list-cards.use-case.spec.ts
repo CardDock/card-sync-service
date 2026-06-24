@@ -1,10 +1,18 @@
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
-import { CardQueryRepositoryPort, PaginatedResult } from '../../../../../context/card/domain/ports/card-query-repository.port';
+import {
+  CardQueryRepositoryPort,
+  PaginatedResult,
+} from '../../../../../context/card/domain/ports/card-query-repository.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { ListCardsUseCase } from '../../../../../context/card/application/use-cases/list-cards.use-case';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 const buildCard = (overrides: Partial<Card> = {}): Card =>
   Object.assign(
@@ -50,7 +58,10 @@ describe('ListCardsUseCase', () => {
     };
     cardQueryRepository.findAll.mockResolvedValue(expected);
 
-    const useCase = new ListCardsUseCase(cardQueryRepository, buildLoggerMock());
+    const useCase = new ListCardsUseCase(
+      cardQueryRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute({
       filters: { type: 'Normal Monster' },
@@ -74,7 +85,10 @@ describe('ListCardsUseCase', () => {
       limit: 10,
     });
 
-    const useCase = new ListCardsUseCase(cardQueryRepository, buildLoggerMock());
+    const useCase = new ListCardsUseCase(
+      cardQueryRepository,
+      buildLoggerMock(),
+    );
 
     await useCase.execute({
       filters: { race: 'Dragon', attribute: 'LIGHT', level: 8 },
@@ -97,7 +111,10 @@ describe('ListCardsUseCase', () => {
       limit: 20,
     });
 
-    const useCase = new ListCardsUseCase(cardQueryRepository, buildLoggerMock());
+    const useCase = new ListCardsUseCase(
+      cardQueryRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute({
       filters: {},
