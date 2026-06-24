@@ -12,16 +12,22 @@ import { GetCardPrintsUseCase } from './application/use-cases/get-card-prints.us
 import { GetCardArtworksUseCase } from './application/use-cases/get-card-artworks.use-case';
 import { ListCardSetsUseCase } from './application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from './application/use-cases/sync-card.use-case';
+import { GetCardImageUseCase } from './application/use-cases/get-card-image.use-case';
 import { CardController } from './infrastructure/http/card.controller';
+import { MediaController } from './infrastructure/http/media.controller';
 import { NotFoundExceptionFilter } from './infrastructure/http/not-found-exception.filter';
 import { YgoProDeckExternalCardSource } from './infrastructure/external/ygoprodeck-card-source';
+import { YgoProDeckImageSourceAdapter } from './infrastructure/external/ygoprodeck-image-source';
 import { PostgresCardRepository } from './infrastructure/persistence/postgres-card.repository';
 import { PostgresCardRelatedDataRepository } from './infrastructure/persistence/postgres-card-related-data.repository';
 import { PostgresCardTranslationRepository } from './infrastructure/persistence/postgres-card-translation.repository';
 import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool.provider';
+import { ImageStoragePort } from './domain/ports/image-storage.port';
+import { ExternalImageSourcePort } from './domain/ports/external-image-source.port';
+import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-storage.adapter';
 
 @Module({
-  controllers: [CardController],
+  controllers: [CardController, MediaController],
   providers: [
     PostgresPoolProvider,
     { provide: TransactionManagerPort, useClass: PostgresPoolProvider },
@@ -30,6 +36,9 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     PostgresCardTranslationRepository,
     { provide: CardTranslationRepositoryPort, useClass: PostgresCardTranslationRepository },
     YgoProDeckExternalCardSource,
+    YgoProDeckImageSourceAdapter,
+    { provide: ImageStoragePort, useClass: LocalImageStorageAdapter },
+    { provide: ExternalImageSourcePort, useClass: YgoProDeckImageSourceAdapter },
     { provide: Logger, useClass: PinoLoggerAdapter },
     NotFoundExceptionFilter,
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
@@ -149,6 +158,15 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
         Logger,
       ],
     },
+    {
+      provide: GetCardImageUseCase,
+      useFactory: (
+        imageStorage: ImageStoragePort,
+        externalImageSource: ExternalImageSourcePort,
+        logger: Logger,
+      ) => new GetCardImageUseCase(imageStorage, externalImageSource, logger),
+      inject: [ImageStoragePort, ExternalImageSourcePort, Logger],
+    },
   ],
   exports: [
     FindOrSyncCardByExternalIdUseCase,
@@ -158,6 +176,7 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
     GetCardArtworksUseCase,
     ListCardSetsUseCase,
     SyncCardUseCase,
+    GetCardImageUseCase,
   ],
 })
 export class CardModule {}
