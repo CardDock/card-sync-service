@@ -1,7 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 import { DomainErrorFilter } from '../../../../../context/card/infrastructure/http/domain-error.filter';
 import {
-  DomainError,
   CardDomainValidationError,
   CardDomainProcessError,
 } from '../../../../../context/card/domain/errors';
@@ -31,7 +30,9 @@ describe('DomainErrorFilter', () => {
 
     filter.catch(error, host);
 
-    expect(response.status).toHaveBeenCalledWith(HttpStatus.UNPROCESSABLE_ENTITY);
+    expect(response.status).toHaveBeenCalledWith(
+      HttpStatus.UNPROCESSABLE_ENTITY,
+    );
     expect(response.json).toHaveBeenCalledWith(
       expect.objectContaining({
         statusCode: 422,

@@ -12,12 +12,8 @@ interface CardTranslationRow {
 }
 
 @Injectable()
-export class PostgresCardTranslationRepository
-  implements CardTranslationRepositoryPort
-{
-  constructor(
-    private readonly postgresPoolProvider: PostgresPoolProvider,
-  ) {}
+export class PostgresCardTranslationRepository implements CardTranslationRepositoryPort {
+  constructor(private readonly postgresPoolProvider: PostgresPoolProvider) {}
 
   async findByCardIdAndLanguage(
     cardId: string,
@@ -54,10 +50,7 @@ export class PostgresCardTranslationRepository
     };
   }
 
-  async findCardIdsByName(
-    name: string,
-    language: string,
-  ): Promise<string[]> {
+  async findCardIdsByName(name: string, language: string): Promise<string[]> {
     const result = await this.postgresPoolProvider.client.query<{
       card_id: string;
     }>(

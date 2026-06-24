@@ -13,7 +13,10 @@ export class PinoLoggerAdapter extends Logger {
       level: process.env.LOG_LEVEL ?? 'info',
       transport: isProduction
         ? undefined
-        : { target: 'pino-pretty', options: { colorize: true, singleLine: true } },
+        : {
+            target: 'pino-pretty',
+            options: { colorize: true, singleLine: true },
+          },
     });
   }
 

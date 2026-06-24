@@ -4,7 +4,12 @@ import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { GetCardImageUseCase } from '../../../../../context/card/application/use-cases/get-card-image.use-case';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 describe('GetCardImageUseCase', () => {
   let imageStorage: jest.Mocked<ImageStoragePort>;
@@ -21,9 +26,15 @@ describe('GetCardImageUseCase', () => {
   });
 
   it('returns file path when image exists locally', async () => {
-    imageStorage.getImagePath.mockResolvedValue('/uploads/cards/cards/46986414.jpg');
+    imageStorage.getImagePath.mockResolvedValue(
+      '/uploads/cards/cards/46986414.jpg',
+    );
 
-    const useCase = new GetCardImageUseCase(imageStorage, externalImageSource, buildLoggerMock());
+    const useCase = new GetCardImageUseCase(
+      imageStorage,
+      externalImageSource,
+      buildLoggerMock(),
+    );
     const result = await useCase.execute({ cardId: '46986414' });
 
     expect(result).toEqual({ filePath: '/uploads/cards/cards/46986414.jpg' });
@@ -34,9 +45,15 @@ describe('GetCardImageUseCase', () => {
   it('downloads and saves when image is not local', async () => {
     imageStorage.getImagePath.mockResolvedValue(null);
     externalImageSource.fetchImage.mockResolvedValue(Buffer.from('image-data'));
-    imageStorage.saveImage.mockResolvedValue('/uploads/cards/cards/46986414.jpg');
+    imageStorage.saveImage.mockResolvedValue(
+      '/uploads/cards/cards/46986414.jpg',
+    );
 
-    const useCase = new GetCardImageUseCase(imageStorage, externalImageSource, buildLoggerMock());
+    const useCase = new GetCardImageUseCase(
+      imageStorage,
+      externalImageSource,
+      buildLoggerMock(),
+    );
     const result = await useCase.execute({ cardId: '46986414' });
 
     expect(result).toEqual({ filePath: '/uploads/cards/cards/46986414.jpg' });
@@ -52,7 +69,11 @@ describe('GetCardImageUseCase', () => {
     imageStorage.getImagePath.mockResolvedValue(null);
     externalImageSource.fetchImage.mockResolvedValue(null);
 
-    const useCase = new GetCardImageUseCase(imageStorage, externalImageSource, buildLoggerMock());
+    const useCase = new GetCardImageUseCase(
+      imageStorage,
+      externalImageSource,
+      buildLoggerMock(),
+    );
     const result = await useCase.execute({ cardId: '99999999' });
 
     expect(result).toBeNull();
@@ -62,9 +83,15 @@ describe('GetCardImageUseCase', () => {
   it('passes variant to storage and source', async () => {
     imageStorage.getImagePath.mockResolvedValue(null);
     externalImageSource.fetchImage.mockResolvedValue(Buffer.from('data'));
-    imageStorage.saveImage.mockResolvedValue('/uploads/cards/cards_small/46986414.jpg');
+    imageStorage.saveImage.mockResolvedValue(
+      '/uploads/cards/cards_small/46986414.jpg',
+    );
 
-    const useCase = new GetCardImageUseCase(imageStorage, externalImageSource, buildLoggerMock());
+    const useCase = new GetCardImageUseCase(
+      imageStorage,
+      externalImageSource,
+      buildLoggerMock(),
+    );
     await useCase.execute({ cardId: '46986414', variant: 'small' });
 
     expect(imageStorage.getImagePath).toHaveBeenCalledWith(

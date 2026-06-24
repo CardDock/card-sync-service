@@ -14,9 +14,7 @@ export class YgoProDeckExternalCardSource implements ExternalCardSourcePort {
     process.env.YGOPRODECK_API_BASE_URL ??
     'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
-  constructor(
-    private readonly logger: Logger,
-  ) {}
+  constructor(private readonly logger: Logger) {}
 
   async findById(id: string): Promise<SyncCardWithRelatedData | null> {
     const requestUrl = new URL(this.baseUrl);
@@ -77,6 +75,10 @@ export class YgoProDeckExternalCardSource implements ExternalCardSourcePort {
 
     const body = (await response.json()) as YgoProDeckResponse;
 
-    return body.data?.map((dto) => mapYgoProDeckResponseToSyncCardParams({ data: [dto] })).filter(Boolean) ?? [];
+    return (
+      body.data
+        ?.map((dto) => mapYgoProDeckResponseToSyncCardParams({ data: [dto] }))
+        .filter(Boolean) ?? []
+    );
   }
 }

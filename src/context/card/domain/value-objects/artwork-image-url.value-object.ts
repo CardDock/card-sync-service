@@ -26,7 +26,10 @@ export class ArtworkImageUrl {
       });
     }
 
-    if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+    if (
+      !normalized.startsWith('http://') &&
+      !normalized.startsWith('https://')
+    ) {
       throw new CardDomainValidationError({
         field: 'imageUrl',
         value,

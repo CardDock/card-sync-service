@@ -3,7 +3,12 @@ import { CardDomainProcessError } from '../../../../../context/card/domain/error
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 const buildResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -15,7 +20,8 @@ describe('YgoProDeckExternalCardSource', () => {
   let fetchSpy: jest.Spied<typeof global.fetch>;
 
   beforeAll(() => {
-    process.env.YGOPRODECK_API_BASE_URL = 'https://example.com/api/cardinfo.php';
+    process.env.YGOPRODECK_API_BASE_URL =
+      'https://example.com/api/cardinfo.php';
   });
 
   afterEach(() => {
@@ -40,7 +46,9 @@ describe('YgoProDeckExternalCardSource', () => {
           },
         ],
       };
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse(apiResponse, 200));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse(apiResponse, 200));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
       const result = await source.findById('46986414');
@@ -60,7 +68,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('returns null on 404', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 404));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({}, 404));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
       const result = await source.findById('99999999');
@@ -69,7 +79,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('throws CardDomainProcessError on 500', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 500));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({}, 500));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
 
@@ -79,7 +91,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('throws CardDomainProcessError on non-OK non-404 status', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 403));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({}, 403));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
 
@@ -117,7 +131,9 @@ describe('YgoProDeckExternalCardSource', () => {
           },
         ],
       };
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse(apiResponse, 200));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse(apiResponse, 200));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
       const result = await source.findByName('Dark Magician');
@@ -133,7 +149,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('returns empty array on 404', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 404));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({}, 404));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
       const result = await source.findByName('NonExistentCard');
@@ -142,7 +160,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('returns empty array on 400', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 400));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({}, 400));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
       const result = await source.findByName('??');
@@ -151,7 +171,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('throws CardDomainProcessError on 500', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({}, 500));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({}, 500));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
 
@@ -161,7 +183,9 @@ describe('YgoProDeckExternalCardSource', () => {
     });
 
     it('returns empty array when API response has no data', async () => {
-      fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(buildResponse({ data: [] }, 200));
+      fetchSpy = jest
+        .spyOn(global, 'fetch')
+        .mockResolvedValue(buildResponse({ data: [] }, 200));
 
       const source = new YgoProDeckExternalCardSource(buildLoggerMock());
       const result = await source.findByName('EmptyResult');

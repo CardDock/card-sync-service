@@ -28,8 +28,7 @@ export class SyncCardUseCase {
         'Sync card: fetching from YGOPRODeck API',
       );
 
-      const externalData =
-        await this.externalCardSource.findById(command.id);
+      const externalData = await this.externalCardSource.findById(command.id);
 
       if (!externalData) {
         this.logger.warn(
@@ -54,11 +53,10 @@ export class SyncCardUseCase {
         );
 
         for (const [index, artwork] of externalData.artworks.entries()) {
-          const artworkId =
-            await this.cardRelatedDataRepository.saveArtwork(
-              storedId,
-              artwork.imageUrl,
-            );
+          const artworkId = await this.cardRelatedDataRepository.saveArtwork(
+            storedId,
+            artwork.imageUrl,
+          );
 
           if (index === 0) {
             await this.cardRelatedDataRepository.saveCardPrints(
@@ -78,10 +76,7 @@ export class SyncCardUseCase {
 
       return card;
     } catch (error) {
-      this.logger.error(
-        { id: command.id, error },
-        'Sync card: failed',
-      );
+      this.logger.error({ id: command.id, error }, 'Sync card: failed');
       throw this.buildProcessError(command.id, error);
     }
   }

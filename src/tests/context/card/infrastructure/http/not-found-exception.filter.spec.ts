@@ -3,7 +3,12 @@ import { NotFoundExceptionFilter } from '../../../../../context/card/infrastruct
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 const buildResponseMock = () => {
   const json = jest.fn();
@@ -59,7 +64,9 @@ describe('NotFoundExceptionFilter', () => {
     const request = buildRequestMock();
     const host = buildHostMock(response, request) as any;
 
-    const exception = new NotFoundException({ message: 'Card with id 123 not found' });
+    const exception = new NotFoundException({
+      message: 'Card with id 123 not found',
+    });
     filter.catch(exception, host);
 
     expect(response.status).toHaveBeenCalledWith(404);

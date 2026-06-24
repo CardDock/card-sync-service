@@ -4,15 +4,17 @@ import { ExternalCardSourcePort } from '../../../../../context/card/domain/ports
 import { CardRepositoryPort } from '../../../../../context/card/domain/ports/card-repository.port';
 import { CardRelatedDataRepositoryPort } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
 import { SyncCardWithRelatedData } from '../../../../../context/card/domain/types/sync-card-with-related.types';
-import {
-  CardDomainProcessError,
-  CardDomainValidationError,
-} from '../../../../../context/card/domain/errors';
+import { CardDomainProcessError } from '../../../../../context/card/domain/errors';
 import { TransactionManagerPort } from '../../../../../context/card/domain/ports/transaction-manager.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 const buildSourceCard = (
   overrides: Partial<SyncCardWithRelatedData['card']> = {},
@@ -36,12 +38,8 @@ const buildSourceCard = (
     rawData: { id: 46986414, name: 'Dark Magician' },
     ...overrides,
   },
-  cardSets: [
-    { name: 'Legend of Blue Eyes White Dragon', code: 'LOB' },
-  ],
-  artworks: [
-    { imageUrl: 'https://example.com/image.png' },
-  ],
+  cardSets: [{ name: 'Legend of Blue Eyes White Dragon', code: 'LOB' }],
+  artworks: [{ imageUrl: 'https://example.com/image.png' }],
   cardPrints: [
     {
       setName: 'Legend of Blue Eyes White Dragon',
@@ -166,9 +164,7 @@ describe('SyncCardUseCase', () => {
   });
 
   it('wraps non-domain errors without causeCode in context', async () => {
-    externalCardSource.findById.mockRejectedValue(
-      new Error('Network failure'),
-    );
+    externalCardSource.findById.mockRejectedValue(new Error('Network failure'));
 
     const useCase = new SyncCardUseCase(
       externalCardSource,

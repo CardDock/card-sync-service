@@ -1,4 +1,3 @@
-
 import { CardType } from '../../../../../context/card/domain/value-objects/card-type.value-object';
 
 describe('CardType', () => {
@@ -16,7 +15,9 @@ describe('CardType', () => {
     });
 
     it('throws when value is an empty string', () => {
-      expect(() => CardType.create('')).toThrow(new Error('Card type is required'));
+      expect(() => CardType.create('')).toThrow(
+        new Error('Card type is required'),
+      );
     });
 
     it('throws when value is only whitespace', () => {

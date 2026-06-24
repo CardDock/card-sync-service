@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
-import { Readable } from 'stream';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { MediaController } from '../../../../../context/card/infrastructure/http/media.controller';
 import { GetCardImageUseCase } from '../../../../../context/card/application/use-cases/get-card-image.use-case';
 
 jest.mock('fs', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { Readable } = require('stream');
   const actual = jest.requireActual('fs');
   return {

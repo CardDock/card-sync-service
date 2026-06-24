@@ -1,4 +1,7 @@
-import { CardRelatedDataRepositoryPort, ArtworkResult } from '../../domain/ports/card-related-data-repository.port';
+import {
+  CardRelatedDataRepositoryPort,
+  ArtworkResult,
+} from '../../domain/ports/card-related-data-repository.port';
 import { Logger } from '../../domain/ports/logger.port';
 
 export interface GetCardArtworksInput {
@@ -19,10 +22,9 @@ export class GetCardArtworksUseCase {
       'Get card artworks: querying database',
     );
 
-    const artworks =
-      await this.cardRelatedDataRepository.findArtworksByCardId(
-        command.id,
-      );
+    const artworks = await this.cardRelatedDataRepository.findArtworksByCardId(
+      command.id,
+    );
 
     this.logger.info(
       { id: command.id, count: artworks.length },

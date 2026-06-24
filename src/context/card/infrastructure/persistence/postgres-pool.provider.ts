@@ -5,7 +5,9 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { Pool, PoolClient } from 'pg';
 
 @Injectable()
-export class PostgresPoolProvider implements OnModuleDestroy, TransactionManagerPort {
+export class PostgresPoolProvider
+  implements OnModuleDestroy, TransactionManagerPort
+{
   private readonly pool: Pool;
   private readonly als = new AsyncLocalStorage<PoolClient>();
 

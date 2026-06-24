@@ -31,7 +31,9 @@ describe('CardImageVariant', () => {
 
   it('throws for unsupported variant', () => {
     expect(() => CardImageVariant.create('huge')).toThrow(
-      new Error('Unsupported image variant: huge. Supported: normal, small, cropped'),
+      new Error(
+        'Unsupported image variant: huge. Supported: normal, small, cropped',
+      ),
     );
   });
 });

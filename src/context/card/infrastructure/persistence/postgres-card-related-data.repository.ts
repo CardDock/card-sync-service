@@ -7,14 +7,11 @@ import {
   CardSetResult,
 } from '../../domain/ports/card-related-data-repository.port';
 import { CardSetData } from '../../domain/types/card-set.types';
-import { ArtworkData } from '../../domain/types/artwork.types';
 import { CardPrintData } from '../../domain/types/card-print.types';
 import { PostgresPoolProvider } from './postgres-pool.provider';
 
 @Injectable()
-export class PostgresCardRelatedDataRepository
-  implements CardRelatedDataRepositoryPort
-{
+export class PostgresCardRelatedDataRepository implements CardRelatedDataRepositoryPort {
   constructor(
     private readonly postgresPoolProvider: PostgresPoolProvider,
     private readonly logger: Logger,

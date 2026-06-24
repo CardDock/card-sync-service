@@ -1,9 +1,17 @@
-import { CardRelatedDataRepositoryPort, CardPrintResult } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
+import {
+  CardRelatedDataRepositoryPort,
+  CardPrintResult,
+} from '../../../../../context/card/domain/ports/card-related-data-repository.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 import { GetCardPrintsUseCase } from '../../../../../context/card/application/use-cases/get-card-prints.use-case';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 describe('GetCardPrintsUseCase', () => {
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
@@ -34,18 +42,26 @@ describe('GetCardPrintsUseCase', () => {
     ];
     cardRelatedDataRepository.findPrintsByCardId.mockResolvedValue(prints);
 
-    const useCase = new GetCardPrintsUseCase(cardRelatedDataRepository, buildLoggerMock());
+    const useCase = new GetCardPrintsUseCase(
+      cardRelatedDataRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute({ id: '46986414' });
 
     expect(result).toEqual(prints);
-    expect(cardRelatedDataRepository.findPrintsByCardId).toHaveBeenCalledWith('46986414');
+    expect(cardRelatedDataRepository.findPrintsByCardId).toHaveBeenCalledWith(
+      '46986414',
+    );
   });
 
   it('returns empty array when no prints exist', async () => {
     cardRelatedDataRepository.findPrintsByCardId.mockResolvedValue([]);
 
-    const useCase = new GetCardPrintsUseCase(cardRelatedDataRepository, buildLoggerMock());
+    const useCase = new GetCardPrintsUseCase(
+      cardRelatedDataRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute({ id: '99999999' });
 
@@ -55,15 +71,32 @@ describe('GetCardPrintsUseCase', () => {
   it('returns multiple prints', async () => {
     const prints: CardPrintResult[] = [
       {
-        id: 'print-1', cardSetId: 'set-1', cardSetName: 'Set A', cardSetCode: 'SA', setCode: 'SA-001', rarity: 'Common', rarityCode: 'c', setPrice: null,
+        id: 'print-1',
+        cardSetId: 'set-1',
+        cardSetName: 'Set A',
+        cardSetCode: 'SA',
+        setCode: 'SA-001',
+        rarity: 'Common',
+        rarityCode: 'c',
+        setPrice: null,
       },
       {
-        id: 'print-2', cardSetId: 'set-2', cardSetName: 'Set B', cardSetCode: 'SB', setCode: 'SB-001', rarity: 'Rare', rarityCode: 'r', setPrice: 1.5,
+        id: 'print-2',
+        cardSetId: 'set-2',
+        cardSetName: 'Set B',
+        cardSetCode: 'SB',
+        setCode: 'SB-001',
+        rarity: 'Rare',
+        rarityCode: 'r',
+        setPrice: 1.5,
       },
     ];
     cardRelatedDataRepository.findPrintsByCardId.mockResolvedValue(prints);
 
-    const useCase = new GetCardPrintsUseCase(cardRelatedDataRepository, buildLoggerMock());
+    const useCase = new GetCardPrintsUseCase(
+      cardRelatedDataRepository,
+      buildLoggerMock(),
+    );
 
     const result = await useCase.execute({ id: '46986414' });
 

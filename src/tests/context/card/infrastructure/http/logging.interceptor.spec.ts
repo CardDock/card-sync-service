@@ -3,7 +3,12 @@ import { LoggingInterceptor } from '../../../../../context/card/infrastructure/h
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
-  ({ info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() }) as unknown as Logger;
+  ({
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    debug: jest.fn(),
+  }) as unknown as Logger;
 
 const buildExecutionContextMock = (overrides = {}) => ({
   switchToHttp: () => ({
@@ -36,12 +41,22 @@ describe('LoggingInterceptor', () => {
         expect(logger.info).toHaveBeenCalledTimes(2);
         expect(logger.info).toHaveBeenNthCalledWith(
           1,
-          { method: 'GET', url: '/cards/46986414', query: {}, params: { id: '46986414' } },
+          {
+            method: 'GET',
+            url: '/cards/46986414',
+            query: {},
+            params: { id: '46986414' },
+          },
           'Request started',
         );
         expect(logger.info).toHaveBeenNthCalledWith(
           2,
-          expect.objectContaining({ method: 'GET', url: '/cards/46986414', statusCode: 200, duration: expect.any(Number) }),
+          expect.objectContaining({
+            method: 'GET',
+            url: '/cards/46986414',
+            statusCode: 200,
+            duration: expect.any(Number),
+          }),
           'Request completed',
         );
         done();

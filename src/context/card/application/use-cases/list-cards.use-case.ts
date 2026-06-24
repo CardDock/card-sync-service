@@ -20,9 +20,7 @@ export class ListCardsUseCase {
     private readonly logger: Logger,
   ) {}
 
-  async execute(
-    command: ListCardsCommand,
-  ): Promise<PaginatedResult<Card>> {
+  async execute(command: ListCardsCommand): Promise<PaginatedResult<Card>> {
     this.logger.info(
       { filters: command.filters, page: command.page, limit: command.limit },
       'List cards: querying database',

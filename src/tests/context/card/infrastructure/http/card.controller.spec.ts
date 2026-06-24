@@ -69,9 +69,7 @@ describe('CardController', () => {
     syncCard: { execute: jest.fn() },
   });
 
-  const createController = (
-    mocks: ReturnType<typeof buildUseCaseMocks>,
-  ) =>
+  const createController = (mocks: ReturnType<typeof buildUseCaseMocks>) =>
     new CardController(
       mocks.findOrSync as unknown as FindOrSyncCardByExternalIdUseCase,
       mocks.search as unknown as SearchCardByNameUseCase,
@@ -159,10 +157,20 @@ describe('CardController', () => {
     const controller = createController(mocks);
 
     const result = await controller.listCards(
-      'Neos', undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
-      1, 20,
+      'Neos',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+      20,
     );
 
     expect(mocks.search.execute).toHaveBeenCalledWith({
@@ -183,10 +191,20 @@ describe('CardController', () => {
     const controller = createController(mocks);
 
     await controller.listCards(
-      'Neos', 'es', undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
-      1, 20,
+      'Neos',
+      'es',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+      20,
     );
 
     expect(mocks.search.execute).toHaveBeenCalledWith({
@@ -202,10 +220,20 @@ describe('CardController', () => {
     const controller = createController(mocks);
 
     const result = await controller.listCards(
-      'UnknownCardXYZ', undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
-      1, 20,
+      'UnknownCardXYZ',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+      20,
     );
 
     expect(result.items).toEqual([]);
@@ -225,10 +253,20 @@ describe('CardController', () => {
     const controller = createController(mocks);
 
     const result = await controller.listCards(
-      undefined, undefined, 'Normal Monster', undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
-      1, 20,
+      undefined,
+      undefined,
+      'Normal Monster',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+      20,
     );
 
     expect(mocks.listCards.execute).toHaveBeenCalledWith({
@@ -254,7 +292,18 @@ describe('CardController', () => {
 
   it('returns prints for a card', async () => {
     const mocks = buildUseCaseMocks();
-    const prints = [{ id: 'print-1', cardSetId: 'set-1', cardSetName: 'Set A', cardSetCode: 'SA', setCode: 'CT1-EN001', rarity: 'Ultra Rare', rarityCode: 'UR', setPrice: 2.5 }];
+    const prints = [
+      {
+        id: 'print-1',
+        cardSetId: 'set-1',
+        cardSetName: 'Set A',
+        cardSetCode: 'SA',
+        setCode: 'CT1-EN001',
+        rarity: 'Ultra Rare',
+        rarityCode: 'UR',
+        setPrice: 2.5,
+      },
+    ];
     mocks.getPrints.execute.mockResolvedValue(prints);
 
     const controller = createController(mocks);
@@ -287,7 +336,9 @@ describe('CardController', () => {
 
   it('returns artworks for a card', async () => {
     const mocks = buildUseCaseMocks();
-    const artworks = [{ id: 'art-1', imageUrl: 'https://example.com/artwork.png' }];
+    const artworks = [
+      { id: 'art-1', imageUrl: 'https://example.com/artwork.png' },
+    ];
     mocks.getArtworks.execute.mockResolvedValue(artworks);
 
     const controller = createController(mocks);
@@ -371,15 +422,30 @@ describe('CardController', () => {
 
   it('caps limit at 100 when no name filter', async () => {
     const mocks = buildUseCaseMocks();
-    mocks.listCards.execute.mockResolvedValue({ items: [], total: 0, page: 1, limit: 100 });
+    mocks.listCards.execute.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 100,
+    });
 
     const controller = createController(mocks);
 
     await controller.listCards(
-      undefined, undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
-      1, 200,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+      200,
     );
 
     expect(mocks.listCards.execute).toHaveBeenCalledWith(
@@ -389,15 +455,30 @@ describe('CardController', () => {
 
   it('returns empty cards list when no name filter and listCards returns empty', async () => {
     const mocks = buildUseCaseMocks();
-    mocks.listCards.execute.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
+    mocks.listCards.execute.mockResolvedValue({
+      items: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+    });
 
     const controller = createController(mocks);
 
     const result = await controller.listCards(
-      undefined, undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined, undefined,
-      undefined, undefined, undefined,
-      1, 20,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1,
+      20,
     );
 
     expect(result.items).toEqual([]);
