@@ -8,6 +8,11 @@ import { GetCardPrintsUseCase } from '../../../../../context/card/application/us
 import { GetCardArtworksUseCase } from '../../../../../context/card/application/use-cases/get-card-artworks.use-case';
 import { ListCardSetsUseCase } from '../../../../../context/card/application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from '../../../../../context/card/application/use-cases/sync-card.use-case';
+import { UpdateCardUseCase } from '../../../../../context/card/application/use-cases/update-card.use-case';
+import { SetCardTranslationUseCase } from '../../../../../context/card/application/use-cases/set-card-translation.use-case';
+import { AddCardArtworkUseCase } from '../../../../../context/card/application/use-cases/add-card-artwork.use-case';
+import { AddCardPrintUseCase } from '../../../../../context/card/application/use-cases/add-card-print.use-case';
+import { DeleteCardUseCase } from '../../../../../context/card/application/use-cases/delete-card.use-case';
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { PaginatedResult } from '../../../../../context/card/domain/ports/card-query-repository.port';
 import type { CardResponse } from '../../../../../context/card/domain/types/card.types';
@@ -67,6 +72,11 @@ describe('CardController', () => {
     getArtworks: { execute: jest.fn() },
     listSets: { execute: jest.fn() },
     syncCard: { execute: jest.fn() },
+    updateCard: { execute: jest.fn() },
+    setTranslation: { execute: jest.fn() },
+    addArtwork: { execute: jest.fn() },
+    addPrint: { execute: jest.fn() },
+    deleteCard: { execute: jest.fn() },
   });
 
   const createController = (mocks: ReturnType<typeof buildUseCaseMocks>) =>
@@ -78,6 +88,11 @@ describe('CardController', () => {
       mocks.getArtworks as unknown as GetCardArtworksUseCase,
       mocks.listSets as unknown as ListCardSetsUseCase,
       mocks.syncCard as unknown as SyncCardUseCase,
+      mocks.updateCard as unknown as UpdateCardUseCase,
+      mocks.setTranslation as unknown as SetCardTranslationUseCase,
+      mocks.addArtwork as unknown as AddCardArtworkUseCase,
+      mocks.addPrint as unknown as AddCardPrintUseCase,
+      mocks.deleteCard as unknown as DeleteCardUseCase,
       buildLoggerMock(),
     );
 
@@ -483,5 +498,186 @@ describe('CardController', () => {
 
     expect(result.items).toEqual([]);
     expect(result.total).toBe(0);
+  });
+
+  describe('PATCH /cards/:id', () => {
+    it('updates a card and returns the updated response', async () => {
+      const card = buildCard();
+      const mocks = buildUseCaseMocks();
+      mocks.updateCard.execute.mockResolvedValue(card);
+
+      const controller = createController(mocks);
+
+      const result = await controller.updateCard('23771716', {
+        name: 'Updated Neos',
+      });
+
+      expect(mocks.updateCard.execute).toHaveBeenCalledWith({
+        id: '23771716',
+        updates: { name: 'Updated Neos' },
+      });
+      expect(result).toMatchObject({
+        id: '23771716',
+        name: 'Elemental HERO Neos',
+      });
+    });
+
+    it('propagates CardDomainProcessError from use case', async () => {
+      const { CardDomainProcessError } =
+        await import('../../../../../context/card/domain/errors');
+      const mocks = buildUseCaseMocks();
+      mocks.updateCard.execute.mockRejectedValue(
+        new CardDomainProcessError({
+          stage: 'UpdateCardUseCase.execute',
+          message: 'Card with id 999 not found',
+          context: { id: '999' },
+        }),
+      );
+
+      const controller = createController(mocks);
+
+      let raisedError: unknown;
+      try {
+        await controller.updateCard('999', { name: 'Test' });
+      } catch (error) {
+        raisedError = error;
+      }
+
+      expect(raisedError).toBeInstanceOf(CardDomainProcessError);
+    });
+  });
+
+  describe('PUT /cards/:id/translations/:language', () => {
+    it('sets a translation for a card', async () => {
+      const mocks = buildUseCaseMocks();
+      mocks.setTranslation.execute.mockResolvedValue(undefined);
+
+      const controller = createController(mocks);
+
+      await controller.setTranslation('46986414', 'es', {
+        name: 'Mago Oscuro',
+        desc: 'El mago definitivo.',
+      });
+
+      expect(mocks.setTranslation.execute).toHaveBeenCalledWith({
+        cardId: '46986414',
+        language: 'es',
+        data: {
+          name: 'Mago Oscuro',
+          desc: 'El mago definitivo.',
+        },
+      });
+    });
+
+    it('propagates CardDomainProcessError when card not found', async () => {
+      const { CardDomainProcessError } =
+        await import('../../../../../context/card/domain/errors');
+      const mocks = buildUseCaseMocks();
+      mocks.setTranslation.execute.mockRejectedValue(
+        new CardDomainProcessError({
+          stage: 'SetCardTranslationUseCase.execute',
+          message: 'Card with id 999 not found',
+          context: { cardId: '999' },
+        }),
+      );
+
+      const controller = createController(mocks);
+
+      let raisedError: unknown;
+      try {
+        await controller.setTranslation('999', 'es', {
+          name: 'Test',
+          desc: 'Test',
+        });
+      } catch (error) {
+        raisedError = error;
+      }
+
+      expect(raisedError).toBeInstanceOf(CardDomainProcessError);
+    });
+  });
+
+  describe('POST /cards/:id/artworks', () => {
+    it('adds an artwork and returns its id', async () => {
+      const mocks = buildUseCaseMocks();
+      mocks.addArtwork.execute.mockResolvedValue({ id: 'artwork-1' });
+
+      const controller = createController(mocks);
+
+      const result = await controller.addArtwork('46986414', {
+        imageUrl: 'https://example.com/art.jpg',
+      });
+
+      expect(mocks.addArtwork.execute).toHaveBeenCalledWith({
+        cardId: '46986414',
+        imageUrl: 'https://example.com/art.jpg',
+      });
+      expect(result).toEqual({ id: 'artwork-1' });
+    });
+  });
+
+  describe('POST /cards/:id/prints', () => {
+    it('adds a print to a card', async () => {
+      const mocks = buildUseCaseMocks();
+      mocks.addPrint.execute.mockResolvedValue(undefined);
+
+      const controller = createController(mocks);
+
+      await controller.addPrint('46986414', {
+        setName: 'Starter Deck',
+        setCode: 'YSD-001',
+        rarity: 'Common',
+        rarityCode: 'C',
+        setPrice: null,
+      });
+
+      expect(mocks.addPrint.execute).toHaveBeenCalledWith({
+        cardId: '46986414',
+        print: {
+          setName: 'Starter Deck',
+          setCode: 'YSD-001',
+          rarity: 'Common',
+          rarityCode: 'C',
+          setPrice: null,
+        },
+      });
+    });
+  });
+
+  describe('DELETE /cards/:id', () => {
+    it('deletes a card', async () => {
+      const mocks = buildUseCaseMocks();
+      mocks.deleteCard.execute.mockResolvedValue(undefined);
+
+      const controller = createController(mocks);
+
+      await controller.deleteCard('46986414');
+
+      expect(mocks.deleteCard.execute).toHaveBeenCalledWith({ id: '46986414' });
+    });
+
+    it('propagates CardDomainProcessError when card not found', async () => {
+      const { CardDomainProcessError } =
+        await import('../../../../../context/card/domain/errors');
+      const mocks = buildUseCaseMocks();
+      mocks.deleteCard.execute.mockRejectedValue(
+        new CardDomainProcessError({
+          stage: 'DeleteCardUseCase.execute',
+          message: 'Card with id 999 not found',
+          context: { id: '999' },
+        }),
+      );
+
+      const controller = createController(mocks);
+
+      let raisedError: unknown;
+      try {
+        await controller.deleteCard('999');
+      } catch (error) {
+        raisedError = error;
+      }
+
+      expect(raisedError).toBeInstanceOf(CardDomainProcessError);
+    });
   });
 });

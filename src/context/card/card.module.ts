@@ -13,6 +13,11 @@ import { GetCardArtworksUseCase } from './application/use-cases/get-card-artwork
 import { ListCardSetsUseCase } from './application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from './application/use-cases/sync-card.use-case';
 import { GetCardImageUseCase } from './application/use-cases/get-card-image.use-case';
+import { UpdateCardUseCase } from './application/use-cases/update-card.use-case';
+import { SetCardTranslationUseCase } from './application/use-cases/set-card-translation.use-case';
+import { AddCardArtworkUseCase } from './application/use-cases/add-card-artwork.use-case';
+import { AddCardPrintUseCase } from './application/use-cases/add-card-print.use-case';
+import { DeleteCardUseCase } from './application/use-cases/delete-card.use-case';
 import { CardController } from './infrastructure/http/card.controller';
 import { MediaController } from './infrastructure/http/media.controller';
 import { NotFoundExceptionFilter } from './infrastructure/http/not-found-exception.filter';
@@ -173,6 +178,92 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
       ) => new GetCardImageUseCase(imageStorage, externalImageSource, logger),
       inject: [ImageStoragePort, ExternalImageSourcePort, Logger],
     },
+    {
+      provide: UpdateCardUseCase,
+      useFactory: (
+        cardQueryRepository: PostgresCardRepository,
+        cardRepository: PostgresCardRepository,
+        logger: Logger,
+      ) => new UpdateCardUseCase(cardQueryRepository, cardRepository, logger),
+      inject: [PostgresCardRepository, PostgresCardRepository, Logger],
+    },
+    {
+      provide: SetCardTranslationUseCase,
+      useFactory: (
+        cardQueryRepository: PostgresCardRepository,
+        cardTranslationRepository: CardTranslationRepositoryPort,
+        logger: Logger,
+      ) =>
+        new SetCardTranslationUseCase(
+          cardQueryRepository,
+          cardTranslationRepository,
+          logger,
+        ),
+      inject: [PostgresCardRepository, CardTranslationRepositoryPort, Logger],
+    },
+    {
+      provide: AddCardArtworkUseCase,
+      useFactory: (
+        cardQueryRepository: PostgresCardRepository,
+        cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        logger: Logger,
+      ) =>
+        new AddCardArtworkUseCase(
+          cardQueryRepository,
+          cardRelatedDataRepository,
+          logger,
+        ),
+      inject: [
+        PostgresCardRepository,
+        PostgresCardRelatedDataRepository,
+        Logger,
+      ],
+    },
+    {
+      provide: AddCardPrintUseCase,
+      useFactory: (
+        cardQueryRepository: PostgresCardRepository,
+        cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        logger: Logger,
+      ) =>
+        new AddCardPrintUseCase(
+          cardQueryRepository,
+          cardRelatedDataRepository,
+          logger,
+        ),
+      inject: [
+        PostgresCardRepository,
+        PostgresCardRelatedDataRepository,
+        Logger,
+      ],
+    },
+    {
+      provide: DeleteCardUseCase,
+      useFactory: (
+        cardQueryRepository: PostgresCardRepository,
+        cardRepository: PostgresCardRepository,
+        cardTranslationRepository: CardTranslationRepositoryPort,
+        cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        transactionManager: TransactionManagerPort,
+        logger: Logger,
+      ) =>
+        new DeleteCardUseCase(
+          cardQueryRepository,
+          cardRepository,
+          cardTranslationRepository,
+          cardRelatedDataRepository,
+          transactionManager,
+          logger,
+        ),
+      inject: [
+        PostgresCardRepository,
+        PostgresCardRepository,
+        CardTranslationRepositoryPort,
+        PostgresCardRelatedDataRepository,
+        TransactionManagerPort,
+        Logger,
+      ],
+    },
   ],
   exports: [
     FindOrSyncCardByExternalIdUseCase,
@@ -183,6 +274,11 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
     ListCardSetsUseCase,
     SyncCardUseCase,
     GetCardImageUseCase,
+    UpdateCardUseCase,
+    SetCardTranslationUseCase,
+    AddCardArtworkUseCase,
+    AddCardPrintUseCase,
+    DeleteCardUseCase,
   ],
 })
 export class CardModule {}

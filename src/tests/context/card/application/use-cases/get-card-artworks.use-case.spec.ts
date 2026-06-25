@@ -24,6 +24,8 @@ describe('GetCardArtworksUseCase', () => {
       findArtworksByCardId: jest.fn(),
       findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
+      deleteByCardId: jest.fn(),
+      findFirstArtworkIdByCardId: jest.fn(),
     };
   });
 

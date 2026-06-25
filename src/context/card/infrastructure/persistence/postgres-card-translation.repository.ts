@@ -101,4 +101,11 @@ export class PostgresCardTranslationRepository implements CardTranslationReposit
       ],
     );
   }
+
+  async deleteByCardId(cardId: string): Promise<void> {
+    await this.postgresPoolProvider.client.query(
+      `DELETE FROM "card_translations" WHERE "card_id" = $1`,
+      [cardId],
+    );
+  }
 }

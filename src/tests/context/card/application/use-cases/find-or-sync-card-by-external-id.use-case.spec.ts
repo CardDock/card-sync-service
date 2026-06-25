@@ -79,6 +79,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     };
     cardRepository = {
       save: jest.fn().mockResolvedValue('stored-card-id'),
+      delete: jest.fn(),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),
@@ -87,11 +88,14 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       findArtworksByCardId: jest.fn(),
       findPrintsByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
+      deleteByCardId: jest.fn(),
+      findFirstArtworkIdByCardId: jest.fn(),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),
       findCardIdsByName: jest.fn(),
       save: jest.fn(),
+      deleteByCardId: jest.fn(),
     };
     transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),

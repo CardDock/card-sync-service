@@ -13,4 +13,6 @@ export abstract class CardTranslationRepositoryPort {
     language: string,
     data: CardTranslationData,
   ): Promise<void>;
+
+  abstract deleteByCardId(cardId: string): Promise<void>;
 }
