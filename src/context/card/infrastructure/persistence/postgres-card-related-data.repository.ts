@@ -170,4 +170,28 @@ export class PostgresCardRelatedDataRepository implements CardRelatedDataReposit
       code: row.code,
     }));
   }
+
+  async deleteByCardId(cardId: string): Promise<void> {
+    await this.postgresPoolProvider.client.query(
+      `DELETE FROM "card_prints" WHERE "artwork_id" IN (SELECT "id" FROM "artworks" WHERE "card_id" = $1)`,
+      [cardId],
+    );
+    await this.postgresPoolProvider.client.query(
+      `DELETE FROM "artworks" WHERE "card_id" = $1`,
+      [cardId],
+    );
+  }
+
+  async findFirstArtworkIdByCardId(cardId: string): Promise<string | null> {
+    const result = await this.postgresPoolProvider.client.query<{ id: string }>(
+      `SELECT "id" FROM "artworks" WHERE "card_id" = $1 ORDER BY "id" LIMIT 1`,
+      [cardId],
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows[0].id;
+  }
 }

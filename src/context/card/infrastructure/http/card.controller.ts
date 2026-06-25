@@ -4,8 +4,12 @@ import {
   NotFoundException,
   Param,
   Post,
+  Patch,
+  Put,
+  Delete,
   Body,
   Query,
+  HttpCode,
   UseFilters,
   DefaultValuePipe,
   ParseIntPipe,
@@ -28,6 +32,11 @@ import { GetCardPrintsUseCase } from '../../application/use-cases/get-card-print
 import { GetCardArtworksUseCase } from '../../application/use-cases/get-card-artworks.use-case';
 import { ListCardSetsUseCase } from '../../application/use-cases/list-card-sets.use-case';
 import { SyncCardUseCase } from '../../application/use-cases/sync-card.use-case';
+import { UpdateCardUseCase } from '../../application/use-cases/update-card.use-case';
+import { SetCardTranslationUseCase } from '../../application/use-cases/set-card-translation.use-case';
+import { AddCardArtworkUseCase } from '../../application/use-cases/add-card-artwork.use-case';
+import { AddCardPrintUseCase } from '../../application/use-cases/add-card-print.use-case';
+import { DeleteCardUseCase } from '../../application/use-cases/delete-card.use-case';
 import { DomainErrorFilter } from './domain-error.filter';
 import { NotFoundExceptionFilter } from './not-found-exception.filter';
 import { CardResponseDto } from './dto/card-response.dto';
@@ -36,6 +45,10 @@ import { CardPrintResponseDto } from './dto/card-print-response.dto';
 import { ArtworkResponseDto } from './dto/artwork-response.dto';
 import { CardSetResponseDto } from './dto/card-set-response.dto';
 import { SyncCardDto } from './dto/sync-card.dto';
+import { UpdateCardDto } from './dto/update-card.dto';
+import { SetTranslationDto } from './dto/set-translation.dto';
+import { AddArtworkDto } from './dto/add-artwork.dto';
+import { AddPrintDto } from './dto/add-print.dto';
 
 @ApiTags('Cards')
 @Controller()
@@ -50,6 +63,11 @@ export class CardController {
     private readonly getCardArtworksUseCase: GetCardArtworksUseCase,
     private readonly listCardSetsUseCase: ListCardSetsUseCase,
     private readonly syncCardUseCase: SyncCardUseCase,
+    private readonly updateCardUseCase: UpdateCardUseCase,
+    private readonly setCardTranslationUseCase: SetCardTranslationUseCase,
+    private readonly addCardArtworkUseCase: AddCardArtworkUseCase,
+    private readonly addCardPrintUseCase: AddCardPrintUseCase,
+    private readonly deleteCardUseCase: DeleteCardUseCase,
     private readonly logger: Logger,
   ) {}
 
@@ -385,5 +403,142 @@ export class CardController {
     );
     const { rawData: _, ...response } = card.toPrimitives();
     return response;
+  }
+
+  @Patch('cards/:id')
+  @ApiOperation({ summary: 'Partially update a card (manual edit)' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiResponse({
+    status: 200,
+    type: CardResponseDto,
+    description: 'Card updated successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
+  async updateCard(
+    @Param('id') id: string,
+    @Body() body: UpdateCardDto,
+  ): Promise<CardResponse> {
+    this.logger.info({ id }, 'Update card: manual edit');
+
+    const card = await this.updateCardUseCase.execute({
+      id,
+      updates: body,
+    });
+
+    const { rawData: _, ...response } = card.toPrimitives();
+    return response;
+  }
+
+  @Put('cards/:id/translations/:language')
+  @ApiOperation({ summary: 'Set or update a translation for a card' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiParam({
+    name: 'language',
+    type: String,
+    description: 'Language code (en, es)',
+    example: 'es',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Translation set successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
+  @HttpCode(204)
+  async setTranslation(
+    @Param('id') id: string,
+    @Param('language') language: string,
+    @Body() body: SetTranslationDto,
+  ): Promise<void> {
+    this.logger.info({ id, language }, 'Set translation: manual');
+
+    await this.setCardTranslationUseCase.execute({
+      cardId: id,
+      language,
+      data: body,
+    });
+  }
+
+  @Post('cards/:id/artworks')
+  @ApiOperation({ summary: 'Add an alternative artwork to a card' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiBody({ type: AddArtworkDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Artwork added successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
+  async addArtwork(
+    @Param('id') id: string,
+    @Body() body: AddArtworkDto,
+  ): Promise<{ id: string }> {
+    this.logger.info({ id, imageUrl: body.imageUrl }, 'Add artwork: manual');
+
+    const result = await this.addCardArtworkUseCase.execute({
+      cardId: id,
+      imageUrl: body.imageUrl,
+    });
+
+    return result;
+  }
+
+  @Post('cards/:id/prints')
+  @ApiOperation({ summary: 'Add a missing print variant to a card' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiBody({ type: AddPrintDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Print added successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
+  async addPrint(
+    @Param('id') id: string,
+    @Body() body: AddPrintDto,
+  ): Promise<void> {
+    this.logger.info({ id, setCode: body.setCode }, 'Add print: manual');
+
+    await this.addCardPrintUseCase.execute({
+      cardId: id,
+      print: body,
+    });
+  }
+
+  @Delete('cards/:id')
+  @ApiOperation({ summary: 'Delete a card and all its related data' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiResponse({
+    status: 204,
+    description: 'Card deleted successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Card with the given id was not found' })
+  @HttpCode(204)
+  async deleteCard(@Param('id') id: string): Promise<void> {
+    this.logger.info({ id }, 'Delete card: manual');
+
+    await this.deleteCardUseCase.execute({ id });
   }
 }

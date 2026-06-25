@@ -319,4 +319,11 @@ export class PostgresCardRepository
 
     return result.rows[0].id;
   }
+
+  async delete(id: string): Promise<void> {
+    await this.postgresPoolProvider.client.query(
+      `DELETE FROM "cards" WHERE "id" = $1`,
+      [id],
+    );
+  }
 }

@@ -34,4 +34,6 @@ export interface CardRelatedDataRepositoryPort {
   findArtworksByCardId(cardId: string): Promise<ArtworkResult[]>;
   findPrintsByCardId(cardId: string): Promise<CardPrintResult[]>;
   findAllCardSets(): Promise<CardSetResult[]>;
+  deleteByCardId(cardId: string): Promise<void>;
+  findFirstArtworkIdByCardId(cardId: string): Promise<string | null>;
 }
