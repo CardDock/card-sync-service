@@ -6,7 +6,7 @@ const prettierConfig = require('eslint-config-prettier');
 module.exports = [
   {
     files: ['**/*.ts'],
-    ignores: ['eslint.config.js'],
+    ignores: ['eslint.config.js', 'src/generated/prisma/'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
