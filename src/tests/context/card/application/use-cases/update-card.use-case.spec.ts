@@ -48,6 +48,7 @@ describe('UpdateCardUseCase', () => {
       save: jest.fn().mockResolvedValue('46986414'),
       delete: jest.fn(),
       markAsManuallyEdited: jest.fn().mockResolvedValue(undefined),
+      updateCardFields: jest.fn(),
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),

@@ -81,6 +81,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       save: jest.fn().mockResolvedValue('stored-card-id'),
       delete: jest.fn(),
       markAsManuallyEdited: jest.fn(),
+      updateCardFields: jest.fn(),
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),

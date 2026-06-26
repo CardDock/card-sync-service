@@ -50,6 +50,28 @@ export class PostgresCardSyncDiscrepancyRepository implements CardSyncDiscrepanc
     );
   }
 
+  async findById(id: string): Promise<CardSyncDiscrepancyRecord | null> {
+    const result =
+      await this.postgresPoolProvider.client.query<CardSyncDiscrepancyRow>(
+        `SELECT "id", "card_id", "field_name", "local_value", "api_value", "status", "created_at", "updated_at" FROM "card_sync_discrepancies" WHERE "id" = $1`,
+        [id],
+      );
+
+    const [row] = result.rows;
+    return row ? mapRowToDiscrepancy(row) : null;
+  }
+
+  async countPendingByCardId(cardId: string): Promise<number> {
+    const result = await this.postgresPoolProvider.client.query<{
+      count: number;
+    }>(
+      `SELECT COUNT(*) AS "count" FROM "card_sync_discrepancies" WHERE "card_id" = $1 AND "status" = 'PENDING'`,
+      [cardId],
+    );
+
+    return Number(result.rows[0].count);
+  }
+
   async findByCardId(cardId: string): Promise<CardSyncDiscrepancyRecord[]> {
     const result =
       await this.postgresPoolProvider.client.query<CardSyncDiscrepancyRow>(

@@ -18,6 +18,40 @@ export interface ResolveCardDiscrepancyInput {
 
 export type ResolveCardDiscrepancyCommand = ResolveCardDiscrepancyInput;
 
+type CardFieldUpdates = Partial<{
+  name: string;
+  typeline: string[];
+  type: string;
+  humanReadableCardType: string;
+  frameType: string;
+  desc: string;
+  race: string;
+  atk: number | null;
+  def: number | null;
+  level: number | null;
+  scale: number | null;
+  linkval: number | null;
+  linkmarkers: string[];
+  attribute: string | null;
+}>;
+
+const FIELD_MAP: Record<string, keyof CardFieldUpdates> = {
+  name: 'name',
+  typeline: 'typeline',
+  type: 'type',
+  humanReadableCardType: 'humanReadableCardType',
+  frameType: 'frameType',
+  desc: 'desc',
+  race: 'race',
+  atk: 'atk',
+  def: 'def',
+  level: 'level',
+  scale: 'scale',
+  linkval: 'linkval',
+  linkmarkers: 'linkmarkers',
+  attribute: 'attribute',
+};
+
 export class ResolveCardDiscrepancyUseCase {
   constructor(
     private readonly discrepancyRepository: CardSyncDiscrepancyRepositoryPort,
@@ -32,6 +66,24 @@ export class ResolveCardDiscrepancyUseCase {
         'Resolve discrepancy: starting',
       );
 
+      const discrepancy = await this.discrepancyRepository.findById(
+        command.discrepancyId,
+      );
+
+      if (!discrepancy) {
+        throw new Error(`Discrepancy ${command.discrepancyId} not found`);
+      }
+
+      if (command.action === 'REVIEWED_API_WINS') {
+        const fieldKey = FIELD_MAP[discrepancy.fieldName];
+        if (fieldKey) {
+          await this.cardRepository.updateCardFields(discrepancy.cardId, {
+            [fieldKey]:
+              discrepancy.apiValue as CardFieldUpdates[keyof CardFieldUpdates],
+          } as CardFieldUpdates);
+        }
+      }
+
       const status = command.action as DiscrepancyStatus;
 
       await this.discrepancyRepository.updateStatus(
@@ -39,8 +91,21 @@ export class ResolveCardDiscrepancyUseCase {
         status,
       );
 
+      const pendingCount =
+        await this.discrepancyRepository.countPendingByCardId(
+          discrepancy.cardId,
+        );
+
+      if (pendingCount === 0) {
+        await this.cardRepository.clearManualEditFlag(discrepancy.cardId);
+      }
+
       this.logger.info(
-        { discrepancyId: command.discrepancyId, status },
+        {
+          discrepancyId: command.discrepancyId,
+          status,
+          clearedManualEdit: pendingCount === 0,
+        },
         'Resolve discrepancy: completed',
       );
     } catch (error) {

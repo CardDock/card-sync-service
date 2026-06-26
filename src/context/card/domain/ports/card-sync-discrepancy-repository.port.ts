@@ -23,7 +23,11 @@ export abstract class CardSyncDiscrepancyRepositoryPort {
     apiValue: unknown,
   ): Promise<void>;
 
+  abstract findById(id: string): Promise<CardSyncDiscrepancyRecord | null>;
+
   abstract findByCardId(cardId: string): Promise<CardSyncDiscrepancyRecord[]>;
+
+  abstract countPendingByCardId(cardId: string): Promise<number>;
 
   abstract findAll(
     status?: DiscrepancyStatus,

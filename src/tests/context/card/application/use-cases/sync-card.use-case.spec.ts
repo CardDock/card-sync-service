@@ -70,6 +70,7 @@ describe('SyncCardUseCase', () => {
       save: jest.fn().mockResolvedValue('stored-card-id'),
       delete: jest.fn(),
       markAsManuallyEdited: jest.fn(),
+      updateCardFields: jest.fn(),
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
@@ -91,9 +92,11 @@ describe('SyncCardUseCase', () => {
     };
     cardSyncDiscrepancyRepository = {
       upsert: jest.fn(),
+      findById: jest.fn(),
       findByCardId: jest.fn(),
       findAll: jest.fn(),
       updateStatus: jest.fn(),
+      countPendingByCardId: jest.fn(),
       deleteByCardIdAndFieldName: jest.fn(),
     };
     transactionManager = {

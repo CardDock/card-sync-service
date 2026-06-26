@@ -79,6 +79,53 @@ export class CardController {
     private readonly logger: Logger,
   ) {}
 
+  @Get('cards/discrepancies')
+  @ApiOperation({ summary: 'List all sync discrepancies across cards' })
+  @ApiQuery({
+    name: 'status',
+    type: String,
+    required: false,
+    description:
+      'Filter by status (PENDING, REVIEWED_LOCAL_WINS, REVIEWED_API_WINS, RESOLVED)',
+    example: 'PENDING',
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Items per page (default: 20, max: 100)',
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    type: PaginatedDiscrepancyResponseDto,
+    description: 'Paginated list of discrepancies',
+  })
+  async listDiscrepancies(
+    @Query('status') status: string | undefined,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<PaginatedDiscrepancyResponseDto> {
+    if (limit > 100) {
+      limit = 100;
+    }
+
+    this.logger.info({ status, page, limit }, 'List discrepancies');
+
+    return this.listCardDiscrepanciesUseCase.execute({
+      status: status as DiscrepancyStatus | undefined,
+      page,
+      limit,
+    });
+  }
+
   @Get('cards/:id')
   @ApiOperation({ summary: 'Find a card by its YGOPRODeck ID' })
   @ApiParam({
@@ -573,53 +620,6 @@ export class CardController {
     });
 
     return result.items;
-  }
-
-  @Get('cards/discrepancies')
-  @ApiOperation({ summary: 'List all sync discrepancies across cards' })
-  @ApiQuery({
-    name: 'status',
-    type: String,
-    required: false,
-    description:
-      'Filter by status (PENDING, REVIEWED_LOCAL_WINS, REVIEWED_API_WINS, RESOLVED)',
-    example: 'PENDING',
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-    description: 'Page number (default: 1)',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    type: Number,
-    required: false,
-    description: 'Items per page (default: 20, max: 100)',
-    example: 20,
-  })
-  @ApiResponse({
-    status: 200,
-    type: PaginatedDiscrepancyResponseDto,
-    description: 'Paginated list of discrepancies',
-  })
-  async listDiscrepancies(
-    @Query('status') status: string | undefined,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
-  ): Promise<PaginatedDiscrepancyResponseDto> {
-    if (limit > 100) {
-      limit = 100;
-    }
-
-    this.logger.info({ status, page, limit }, 'List discrepancies');
-
-    return this.listCardDiscrepanciesUseCase.execute({
-      status: status as DiscrepancyStatus | undefined,
-      page,
-      limit,
-    });
   }
 
   @Patch('cards/:id/discrepancies/:discrepancyId')

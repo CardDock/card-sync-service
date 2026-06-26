@@ -328,6 +328,33 @@ export class PostgresCardRepository
     return result.rows[0].id;
   }
 
+  async updateCardFields(
+    id: string,
+    updates: Partial<{
+      name: string;
+      typeline: string[];
+      type: string;
+      humanReadableCardType: string;
+      frameType: string;
+      desc: string;
+      race: string;
+      atk: number | null;
+      def: number | null;
+      level: number | null;
+      scale: number | null;
+      linkval: number | null;
+      linkmarkers: string[];
+      attribute: string | null;
+    }>,
+  ): Promise<void> {
+    const { setClauses, values } = buildFieldUpdateClauses(id, updates, 2);
+
+    await this.postgresPoolProvider.client.query(
+      `UPDATE "cards" SET ${setClauses.join(', ')} WHERE "id" = $1`,
+      values,
+    );
+  }
+
   async markAsManuallyEdited(
     id: string,
     updates: Partial<{
@@ -450,4 +477,51 @@ export class PostgresCardRepository
       [id],
     );
   }
+}
+
+function buildFieldUpdateClauses(
+  id: string,
+  updates: Record<string, unknown>,
+  startParamIndex: number,
+): { setClauses: string[]; values: unknown[] } {
+  const setClauses: string[] = [];
+  const values: unknown[] = [id];
+  let paramIndex = startParamIndex;
+
+  const fieldMappings: Record<string, string> = {
+    name: '"name"',
+    typeline: '"typeline"',
+    type: '"type"',
+    humanReadableCardType: '"human_readable_card_type"',
+    frameType: '"frame_type"',
+    desc: '"desc"',
+    race: '"race"',
+    atk: '"atk"',
+    def: '"def"',
+    level: '"level"',
+    scale: '"scale"',
+    linkval: '"linkval"',
+    linkmarkers: '"linkmarkers"',
+    attribute: '"attribute"',
+  };
+
+  const typedMappings: Record<string, string> = {
+    frameType: '::"FrameType"',
+    race: '::"Race"',
+    linkmarkers: '::"LinkMarker"[]',
+    attribute: '::"Attribute"',
+  };
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) continue;
+
+    const column = fieldMappings[key];
+    if (!column) continue;
+
+    const typeCast = typedMappings[key] || '';
+    setClauses.push(`${column} = $${paramIndex++}${typeCast}`);
+    values.push(value);
+  }
+
+  return { setClauses, values };
 }
