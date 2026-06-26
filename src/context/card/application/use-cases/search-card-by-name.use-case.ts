@@ -4,6 +4,7 @@ import { CardTranslationRepositoryPort } from '../../domain/ports/card-translati
 import { ExternalCardSourcePort } from '../../domain/ports/external-card-source.port';
 import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
+import { CardSyncDiscrepancyRepositoryPort } from '../../domain/ports/card-sync-discrepancy-repository.port';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Language } from '../../domain/value-objects/language.value-object';
 import { Logger } from '../../domain/ports/logger.port';
@@ -28,6 +29,7 @@ export class SearchCardByNameUseCase {
     private readonly cardRepository: CardRepositoryPort,
     private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
     private readonly cardTranslationRepository: CardTranslationRepositoryPort,
+    private readonly cardSyncDiscrepancyRepository: CardSyncDiscrepancyRepositoryPort,
     private readonly transactionManager: TransactionManagerPort,
     private readonly logger: Logger,
   ) {}
@@ -122,6 +124,26 @@ export class SearchCardByNameUseCase {
     const cards: Card[] = [];
 
     for (const externalData of externalResults) {
+      const cardId = externalData.card.id;
+      const isManuallyEdited =
+        await this.cardRepository.isManuallyEdited(cardId);
+
+      if (isManuallyEdited) {
+        this.logger.info(
+          { id: cardId, name: externalData.card.name },
+          'Search card: card is manually edited, tracking discrepancies',
+        );
+
+        await this.detectDiscrepancies(cardId, externalData.card);
+
+        const storedCard = await this.cardQueryRepository.findById(cardId);
+        if (storedCard) {
+          cards.push(storedCard);
+        }
+
+        continue;
+      }
+
       const synchronizedCard = Card.create(externalData.card);
 
       await this.transactionManager.transaction(async () => {
@@ -206,6 +228,102 @@ export class SearchCardByNameUseCase {
   private stripRawData(primitives: CardPrimitives): CardResponse {
     const { rawData: _, ...response } = primitives;
     return response;
+  }
+
+  private async detectDiscrepancies(
+    cardId: string,
+    apiCardParams: Parameters<typeof Card.create>[0],
+  ): Promise<void> {
+    const storedCard = await this.cardQueryRepository.findById(cardId);
+
+    if (!storedCard) {
+      return;
+    }
+
+    const localPrimitives = storedCard.toPrimitives();
+
+    const fieldsToCompare: Array<{
+      name: string;
+      local: unknown;
+      api: unknown;
+    }> = [
+      { name: 'name', local: localPrimitives.name, api: apiCardParams.name },
+      {
+        name: 'typeline',
+        local: localPrimitives.typeline,
+        api: apiCardParams.typeline,
+      },
+      { name: 'type', local: localPrimitives.type, api: apiCardParams.type },
+      {
+        name: 'humanReadableCardType',
+        local: localPrimitives.humanReadableCardType,
+        api: apiCardParams.humanReadableCardType,
+      },
+      {
+        name: 'frameType',
+        local: localPrimitives.frameType,
+        api: apiCardParams.frameType,
+      },
+      { name: 'desc', local: localPrimitives.desc, api: apiCardParams.desc },
+      { name: 'race', local: localPrimitives.race, api: apiCardParams.race },
+      {
+        name: 'atk',
+        local: localPrimitives.atk,
+        api: apiCardParams.atk ?? null,
+      },
+      {
+        name: 'def',
+        local: localPrimitives.def,
+        api: apiCardParams.def ?? null,
+      },
+      {
+        name: 'level',
+        local: localPrimitives.level,
+        api: apiCardParams.level ?? null,
+      },
+      {
+        name: 'scale',
+        local: localPrimitives.scale,
+        api: apiCardParams.scale ?? null,
+      },
+      {
+        name: 'linkval',
+        local: localPrimitives.linkval,
+        api: apiCardParams.linkval ?? null,
+      },
+      {
+        name: 'linkmarkers',
+        local: localPrimitives.linkmarkers,
+        api: apiCardParams.linkmarkers,
+      },
+      {
+        name: 'attribute',
+        local: localPrimitives.attribute,
+        api: apiCardParams.attribute ?? null,
+      },
+    ];
+
+    for (const field of fieldsToCompare) {
+      if (!this.valuesAreEqual(field.local, field.api)) {
+        await this.cardSyncDiscrepancyRepository.upsert(
+          cardId,
+          field.name,
+          field.local,
+          field.api,
+        );
+      }
+    }
+  }
+
+  private valuesAreEqual(a: unknown, b: unknown): boolean {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) {
+        return false;
+      }
+      return a.every((val, index) => val === b[index]);
+    }
+
+    return a === b;
   }
 
   private buildProcessError(

@@ -5,6 +5,7 @@ import { CardTranslationRepositoryPort } from '../../../../../context/card/domai
 import { ExternalCardSourcePort } from '../../../../../context/card/domain/ports/external-card-source.port';
 import { CardRepositoryPort } from '../../../../../context/card/domain/ports/card-repository.port';
 import { CardRelatedDataRepositoryPort } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
+import { CardSyncDiscrepancyRepositoryPort } from '../../../../../context/card/domain/ports/card-sync-discrepancy-repository.port';
 import { SyncCardWithRelatedData } from '../../../../../context/card/domain/types/sync-card-with-related.types';
 import { CardDomainProcessError } from '../../../../../context/card/domain/errors';
 import { TransactionManagerPort } from '../../../../../context/card/domain/ports/transaction-manager.port';
@@ -59,6 +60,7 @@ describe('SearchCardByNameUseCase', () => {
   let cardRepository: jest.Mocked<CardRepositoryPort>;
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
   let cardTranslationRepository: jest.Mocked<CardTranslationRepositoryPort>;
+  let cardSyncDiscrepancyRepository: jest.Mocked<CardSyncDiscrepancyRepositoryPort>;
   let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
@@ -74,6 +76,10 @@ describe('SearchCardByNameUseCase', () => {
     cardRepository = {
       save: jest.fn().mockResolvedValue('stored-card-id'),
       delete: jest.fn(),
+      markAsManuallyEdited: jest.fn(),
+      clearManualEditFlag: jest.fn(),
+      isManuallyEdited: jest.fn().mockResolvedValue(false),
+      getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),
@@ -91,6 +97,13 @@ describe('SearchCardByNameUseCase', () => {
       save: jest.fn(),
       deleteByCardId: jest.fn(),
     };
+    cardSyncDiscrepancyRepository = {
+      upsert: jest.fn(),
+      findByCardId: jest.fn(),
+      findAll: jest.fn(),
+      updateStatus: jest.fn(),
+      deleteByCardIdAndFieldName: jest.fn(),
+    };
     transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
     } as unknown as jest.Mocked<TransactionManagerPort>;
@@ -103,6 +116,7 @@ describe('SearchCardByNameUseCase', () => {
       cardRepository,
       cardRelatedDataRepository,
       cardTranslationRepository,
+      cardSyncDiscrepancyRepository,
       transactionManager,
       buildLoggerMock(),
     );

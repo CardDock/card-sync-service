@@ -21,6 +21,8 @@ const buildMinimalRow = (overrides: Record<string, unknown> = {}) => ({
   linkmarkers: '{Top,Bottom-Left,Bottom-Right}',
   attribute: 'DARK',
   raw_data: { id: 46986414 },
+  manually_edited: false,
+  manually_edited_at: null,
   ...overrides,
 });
 

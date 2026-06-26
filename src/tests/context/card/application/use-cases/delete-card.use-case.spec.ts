@@ -52,6 +52,10 @@ describe('DeleteCardUseCase', () => {
     cardRepository = {
       save: jest.fn(),
       delete: jest.fn(),
+      markAsManuallyEdited: jest.fn(),
+      clearManualEditFlag: jest.fn(),
+      isManuallyEdited: jest.fn().mockResolvedValue(false),
+      getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),

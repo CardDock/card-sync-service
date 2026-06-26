@@ -5,6 +5,7 @@ import { PinoLoggerAdapter } from './infrastructure/persistence/pino-logger.adap
 import { LoggingInterceptor } from './infrastructure/http/logging.interceptor';
 import { TransactionManagerPort } from './domain/ports/transaction-manager.port';
 import { CardTranslationRepositoryPort } from './domain/ports/card-translation-repository.port';
+import { CardSyncDiscrepancyRepositoryPort } from './domain/ports/card-sync-discrepancy-repository.port';
 import { FindOrSyncCardByExternalIdUseCase } from './application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from './application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
@@ -18,6 +19,8 @@ import { SetCardTranslationUseCase } from './application/use-cases/set-card-tran
 import { AddCardArtworkUseCase } from './application/use-cases/add-card-artwork.use-case';
 import { AddCardPrintUseCase } from './application/use-cases/add-card-print.use-case';
 import { DeleteCardUseCase } from './application/use-cases/delete-card.use-case';
+import { ListCardDiscrepanciesUseCase } from './application/use-cases/list-card-discrepancies.use-case';
+import { ResolveCardDiscrepancyUseCase } from './application/use-cases/resolve-card-discrepancy.use-case';
 import { CardController } from './infrastructure/http/card.controller';
 import { MediaController } from './infrastructure/http/media.controller';
 import { NotFoundExceptionFilter } from './infrastructure/http/not-found-exception.filter';
@@ -26,6 +29,7 @@ import { YgoProDeckImageSourceAdapter } from './infrastructure/external/ygoprode
 import { PostgresCardRepository } from './infrastructure/persistence/postgres-card.repository';
 import { PostgresCardRelatedDataRepository } from './infrastructure/persistence/postgres-card-related-data.repository';
 import { PostgresCardTranslationRepository } from './infrastructure/persistence/postgres-card-translation.repository';
+import { PostgresCardSyncDiscrepancyRepository } from './infrastructure/persistence/postgres-card-sync-discrepancy.repository';
 import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool.provider';
 import { ImageStoragePort } from './domain/ports/image-storage.port';
 import { ExternalImageSourcePort } from './domain/ports/external-image-source.port';
@@ -39,9 +43,14 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
     PostgresCardRepository,
     PostgresCardRelatedDataRepository,
     PostgresCardTranslationRepository,
+    PostgresCardSyncDiscrepancyRepository,
     {
       provide: CardTranslationRepositoryPort,
       useClass: PostgresCardTranslationRepository,
+    },
+    {
+      provide: CardSyncDiscrepancyRepositoryPort,
+      useClass: PostgresCardSyncDiscrepancyRepository,
     },
     YgoProDeckExternalCardSource,
     YgoProDeckImageSourceAdapter,
@@ -91,6 +100,7 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
         cardRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
         cardTranslationRepository: CardTranslationRepositoryPort,
+        cardSyncDiscrepancyRepository: CardSyncDiscrepancyRepositoryPort,
         transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
@@ -100,6 +110,7 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
           cardRepository,
           cardRelatedDataRepository,
           cardTranslationRepository,
+          cardSyncDiscrepancyRepository,
           transactionManager,
           logger,
         ),
@@ -109,6 +120,7 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
         PostgresCardRepository,
         PostgresCardRelatedDataRepository,
         CardTranslationRepositoryPort,
+        CardSyncDiscrepancyRepositoryPort,
         TransactionManagerPort,
         Logger,
       ],
@@ -150,21 +162,27 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
       useFactory: (
         externalCardSource: YgoProDeckExternalCardSource,
         cardRepository: PostgresCardRepository,
+        cardQueryRepository: PostgresCardRepository,
         cardRelatedDataRepository: PostgresCardRelatedDataRepository,
+        cardSyncDiscrepancyRepository: CardSyncDiscrepancyRepositoryPort,
         transactionManager: TransactionManagerPort,
         logger: Logger,
       ) =>
         new SyncCardUseCase(
           externalCardSource,
           cardRepository,
+          cardQueryRepository,
           cardRelatedDataRepository,
+          cardSyncDiscrepancyRepository,
           transactionManager,
           logger,
         ),
       inject: [
         YgoProDeckExternalCardSource,
         PostgresCardRepository,
+        PostgresCardRepository,
         PostgresCardRelatedDataRepository,
+        CardSyncDiscrepancyRepositoryPort,
         TransactionManagerPort,
         Logger,
       ],
@@ -264,6 +282,32 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
         Logger,
       ],
     },
+    {
+      provide: ListCardDiscrepanciesUseCase,
+      useFactory: (
+        discrepancyRepository: CardSyncDiscrepancyRepositoryPort,
+        logger: Logger,
+      ) => new ListCardDiscrepanciesUseCase(discrepancyRepository, logger),
+      inject: [CardSyncDiscrepancyRepositoryPort, Logger],
+    },
+    {
+      provide: ResolveCardDiscrepancyUseCase,
+      useFactory: (
+        discrepancyRepository: CardSyncDiscrepancyRepositoryPort,
+        cardRepository: PostgresCardRepository,
+        logger: Logger,
+      ) =>
+        new ResolveCardDiscrepancyUseCase(
+          discrepancyRepository,
+          cardRepository,
+          logger,
+        ),
+      inject: [
+        CardSyncDiscrepancyRepositoryPort,
+        PostgresCardRepository,
+        Logger,
+      ],
+    },
   ],
   exports: [
     FindOrSyncCardByExternalIdUseCase,
@@ -279,6 +323,8 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
     AddCardArtworkUseCase,
     AddCardPrintUseCase,
     DeleteCardUseCase,
+    ListCardDiscrepanciesUseCase,
+    ResolveCardDiscrepancyUseCase,
   ],
 })
 export class CardModule {}

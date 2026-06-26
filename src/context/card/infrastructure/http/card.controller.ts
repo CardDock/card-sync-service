@@ -25,6 +25,7 @@ import {
 } from '@nestjs/swagger';
 import { Logger } from '../../domain/ports/logger.port';
 import { CardResponse } from '../../domain/types/card.types';
+import { DiscrepancyStatus } from '../../domain/ports/card-sync-discrepancy-repository.port';
 import { FindOrSyncCardByExternalIdUseCase } from '../../application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from '../../application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from '../../application/use-cases/list-cards.use-case';
@@ -37,6 +38,8 @@ import { SetCardTranslationUseCase } from '../../application/use-cases/set-card-
 import { AddCardArtworkUseCase } from '../../application/use-cases/add-card-artwork.use-case';
 import { AddCardPrintUseCase } from '../../application/use-cases/add-card-print.use-case';
 import { DeleteCardUseCase } from '../../application/use-cases/delete-card.use-case';
+import { ListCardDiscrepanciesUseCase } from '../../application/use-cases/list-card-discrepancies.use-case';
+import { ResolveCardDiscrepancyUseCase } from '../../application/use-cases/resolve-card-discrepancy.use-case';
 import { DomainErrorFilter } from './domain-error.filter';
 import { NotFoundExceptionFilter } from './not-found-exception.filter';
 import { CardResponseDto } from './dto/card-response.dto';
@@ -49,6 +52,9 @@ import { UpdateCardDto } from './dto/update-card.dto';
 import { SetTranslationDto } from './dto/set-translation.dto';
 import { AddArtworkDto } from './dto/add-artwork.dto';
 import { AddPrintDto } from './dto/add-print.dto';
+import { DiscrepancyResponseDto } from './dto/discrepancy-response.dto';
+import { PaginatedDiscrepancyResponseDto } from './dto/paginated-discrepancy-response.dto';
+import { ResolveDiscrepancyDto } from './dto/resolve-discrepancy.dto';
 
 @ApiTags('Cards')
 @Controller()
@@ -68,6 +74,8 @@ export class CardController {
     private readonly addCardArtworkUseCase: AddCardArtworkUseCase,
     private readonly addCardPrintUseCase: AddCardPrintUseCase,
     private readonly deleteCardUseCase: DeleteCardUseCase,
+    private readonly listCardDiscrepanciesUseCase: ListCardDiscrepanciesUseCase,
+    private readonly resolveCardDiscrepancyUseCase: ResolveCardDiscrepancyUseCase,
     private readonly logger: Logger,
   ) {}
 
@@ -540,5 +548,112 @@ export class CardController {
     this.logger.info({ id }, 'Delete card: manual');
 
     await this.deleteCardUseCase.execute({ id });
+  }
+
+  @Get('cards/:id/discrepancies')
+  @ApiOperation({ summary: 'Get all sync discrepancies for a card' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiResponse({
+    status: 200,
+    type: [DiscrepancyResponseDto],
+    description: 'List of discrepancies for the card',
+  })
+  async getCardDiscrepancies(
+    @Param('id') id: string,
+  ): Promise<DiscrepancyResponseDto[]> {
+    this.logger.info({ id }, 'Get card discrepancies');
+
+    const result = await this.listCardDiscrepanciesUseCase.execute({
+      cardId: id,
+    });
+
+    return result.items;
+  }
+
+  @Get('cards/discrepancies')
+  @ApiOperation({ summary: 'List all sync discrepancies across cards' })
+  @ApiQuery({
+    name: 'status',
+    type: String,
+    required: false,
+    description:
+      'Filter by status (PENDING, REVIEWED_LOCAL_WINS, REVIEWED_API_WINS, RESOLVED)',
+    example: 'PENDING',
+  })
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    required: false,
+    description: 'Page number (default: 1)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    type: Number,
+    required: false,
+    description: 'Items per page (default: 20, max: 100)',
+    example: 20,
+  })
+  @ApiResponse({
+    status: 200,
+    type: PaginatedDiscrepancyResponseDto,
+    description: 'Paginated list of discrepancies',
+  })
+  async listDiscrepancies(
+    @Query('status') status: string | undefined,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+  ): Promise<PaginatedDiscrepancyResponseDto> {
+    if (limit > 100) {
+      limit = 100;
+    }
+
+    this.logger.info({ status, page, limit }, 'List discrepancies');
+
+    return this.listCardDiscrepanciesUseCase.execute({
+      status: status as DiscrepancyStatus | undefined,
+      page,
+      limit,
+    });
+  }
+
+  @Patch('cards/:id/discrepancies/:discrepancyId')
+  @ApiOperation({ summary: 'Resolve a sync discrepancy' })
+  @ApiParam({
+    name: 'id',
+    type: String,
+    description: 'Card ID',
+    example: '46986414',
+  })
+  @ApiParam({
+    name: 'discrepancyId',
+    type: String,
+    description: 'Discrepancy ID',
+  })
+  @ApiBody({ type: ResolveDiscrepancyDto })
+  @ApiResponse({
+    status: 204,
+    description: 'Discrepancy resolved successfully',
+  })
+  @HttpCode(204)
+  async resolveDiscrepancy(
+    @Param('id') _id: string,
+    @Param('discrepancyId') discrepancyId: string,
+    @Body() body: ResolveDiscrepancyDto,
+  ): Promise<void> {
+    this.logger.info(
+      { discrepancyId, action: body.action },
+      'Resolve discrepancy',
+    );
+
+    await this.resolveCardDiscrepancyUseCase.execute({
+      discrepancyId,
+      action: body.action,
+    });
   }
 }

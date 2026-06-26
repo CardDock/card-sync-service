@@ -47,6 +47,10 @@ describe('UpdateCardUseCase', () => {
     cardRepository = {
       save: jest.fn().mockResolvedValue('46986414'),
       delete: jest.fn(),
+      markAsManuallyEdited: jest.fn().mockResolvedValue(undefined),
+      clearManualEditFlag: jest.fn(),
+      isManuallyEdited: jest.fn().mockResolvedValue(false),
+      getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
     };
   });
 
@@ -67,7 +71,10 @@ describe('UpdateCardUseCase', () => {
 
     expect(result.toPrimitives().name).toBe('Dark Magician (Fixed)');
     expect(result.toPrimitives().atk).toBe(2500);
-    expect(cardRepository.save).toHaveBeenCalledWith(expect.any(Card));
+    expect(cardRepository.markAsManuallyEdited).toHaveBeenCalledWith(
+      '46986414',
+      { name: 'Dark Magician (Fixed)' },
+    );
   });
 
   it('throws CardDomainProcessError when card does not exist', async () => {
@@ -90,7 +97,7 @@ describe('UpdateCardUseCase', () => {
     }
 
     expect(raisedError).toBeInstanceOf(CardDomainProcessError);
-    expect(cardRepository.save).not.toHaveBeenCalled();
+    expect(cardRepository.markAsManuallyEdited).not.toHaveBeenCalled();
   });
 
   it('wraps validation errors in CardDomainProcessError', async () => {
@@ -114,7 +121,7 @@ describe('UpdateCardUseCase', () => {
     }
 
     expect(raisedError).toBeInstanceOf(CardDomainProcessError);
-    expect(cardRepository.save).not.toHaveBeenCalled();
+    expect(cardRepository.markAsManuallyEdited).not.toHaveBeenCalled();
   });
 
   it('can update multiple fields at once', async () => {
