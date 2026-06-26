@@ -1,0 +1,71 @@
+{
+  "version": "7.8.0",
+  "steps": [
+    {
+      "tag": "CreateEnum",
+      "enum": "DiscrepancyStatus",
+      "values": ["PENDING", "REVIEWED_LOCAL_WINS", "REVIEWED_API_WINS", "RESOLVED"]
+    },
+    {
+      "tag": "AlterTable",
+      "table": "cards",
+      "operation": "addColumns",
+      "columns": [
+        {
+          "name": "manually_edited",
+          "type": "Boolean",
+          "default": false,
+          "isRequired": true
+        },
+        {
+          "name": "manually_edited_at",
+          "type": "DateTime",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "tag": "CreateTable",
+      "table": "card_sync_discrepancies",
+      "columns": [
+        { "name": "id", "type": "String", "isRequired": true },
+        { "name": "card_id", "type": "String", "isRequired": true },
+        { "name": "field_name", "type": "String", "isRequired": true },
+        { "name": "local_value", "type": "Json", "isRequired": true },
+        { "name": "api_value", "type": "Json", "isRequired": true },
+        { "name": "status", "type": "DiscrepancyStatus", "isRequired": true, "default": "PENDING" },
+        { "name": "created_at", "type": "DateTime", "isRequired": true, "default": "now()" },
+        { "name": "updated_at", "type": "DateTime", "isRequired": true, "updatedAt": true }
+      ],
+      "primaryKey": { "columns": ["id"] },
+      "uniqueConstraints": [
+        { "name": "card_sync_discrepancies_card_id_field_name_key", "columns": ["card_id", "field_name"] }
+      ],
+      "foreignKeys": [
+        {
+          "name": "card_sync_discrepancies_card_id_fkey",
+          "columns": ["card_id"],
+          "referencedTable": "cards",
+          "referencedColumns": ["id"],
+          "onDelete": "CASCADE"
+        }
+      ]
+    },
+    {
+      "tag": "CreateIndex",
+      "index": {
+        "name": "card_sync_discrepancies_status_idx",
+        "table": "card_sync_discrepancies",
+        "columns": ["status"]
+      }
+    },
+    {
+      "tag": "CreateIndex",
+      "index": {
+        "name": "card_sync_discrepancies_card_id_idx",
+        "table": "card_sync_discrepancies",
+        "columns": ["card_id"]
+      }
+    }
+  ]
+}

@@ -27,6 +27,8 @@ interface PostgresCardRow {
   linkmarkers: string[] | string | null;
   attribute: string | null;
   raw_data: unknown;
+  manually_edited: boolean;
+  manually_edited_at: Date | null;
 }
 
 interface PersistableCardRecord {

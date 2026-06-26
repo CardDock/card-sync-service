@@ -58,11 +58,14 @@ export class UpdateCardUseCase {
 
       const card = Card.create(merged);
 
-      await this.cardRepository.save(card);
+      await this.cardRepository.markAsManuallyEdited(
+        command.id,
+        command.updates,
+      );
 
       this.logger.info(
         { id: command.id, name: card.toPrimitives().name },
-        'Update card: completed',
+        'Update card: completed, manual edit tracked',
       );
 
       return card;

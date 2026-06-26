@@ -5,8 +5,33 @@ const prettierConfig = require('eslint-config-prettier');
 
 module.exports = [
   {
+    ignores: [
+      // Salida de compilación
+      '**/dist/**',
+      '**/build/**',
+      '**/coverage/**',
+
+      // Cachés
+      '**/.cache/**',
+      '**/.turbo/**',
+      '**/.nx/**',
+      '**/*.tsbuildinfo',
+
+      // Código generado
+      '**/generated/**',
+      '**/__generated__/**',
+      '**/*.generated.ts',
+      '**/*.gen.ts',
+
+      // Prisma
+      '**/prisma/generated/**',
+
+      // Configuración
+      'eslint.config.*',
+    ],
+  },
+  {
     files: ['**/*.ts'],
-    ignores: ['eslint.config.js'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

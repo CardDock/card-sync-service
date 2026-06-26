@@ -13,6 +13,8 @@ import { SetCardTranslationUseCase } from '../../../../../context/card/applicati
 import { AddCardArtworkUseCase } from '../../../../../context/card/application/use-cases/add-card-artwork.use-case';
 import { AddCardPrintUseCase } from '../../../../../context/card/application/use-cases/add-card-print.use-case';
 import { DeleteCardUseCase } from '../../../../../context/card/application/use-cases/delete-card.use-case';
+import { ListCardDiscrepanciesUseCase } from '../../../../../context/card/application/use-cases/list-card-discrepancies.use-case';
+import { ResolveCardDiscrepancyUseCase } from '../../../../../context/card/application/use-cases/resolve-card-discrepancy.use-case';
 import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { PaginatedResult } from '../../../../../context/card/domain/ports/card-query-repository.port';
 import type { CardResponse } from '../../../../../context/card/domain/types/card.types';
@@ -77,6 +79,12 @@ describe('CardController', () => {
     addArtwork: { execute: jest.fn() },
     addPrint: { execute: jest.fn() },
     deleteCard: { execute: jest.fn() },
+    listDiscrepancies: {
+      execute: jest
+        .fn()
+        .mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
+    },
+    resolveDiscrepancy: { execute: jest.fn() },
   });
 
   const createController = (mocks: ReturnType<typeof buildUseCaseMocks>) =>
@@ -93,6 +101,8 @@ describe('CardController', () => {
       mocks.addArtwork as unknown as AddCardArtworkUseCase,
       mocks.addPrint as unknown as AddCardPrintUseCase,
       mocks.deleteCard as unknown as DeleteCardUseCase,
+      mocks.listDiscrepancies as unknown as ListCardDiscrepanciesUseCase,
+      mocks.resolveDiscrepancy as unknown as ResolveCardDiscrepancyUseCase,
       buildLoggerMock(),
     );
 

@@ -2,10 +2,12 @@ import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { SyncCardUseCase } from '../../../../../context/card/application/use-cases/sync-card.use-case';
 import { ExternalCardSourcePort } from '../../../../../context/card/domain/ports/external-card-source.port';
 import { CardRepositoryPort } from '../../../../../context/card/domain/ports/card-repository.port';
+import { CardQueryRepositoryPort } from '../../../../../context/card/domain/ports/card-query-repository.port';
 import { CardRelatedDataRepositoryPort } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
 import { SyncCardWithRelatedData } from '../../../../../context/card/domain/types/sync-card-with-related.types';
 import { CardDomainProcessError } from '../../../../../context/card/domain/errors';
 import { TransactionManagerPort } from '../../../../../context/card/domain/ports/transaction-manager.port';
+import { CardSyncDiscrepancyRepositoryPort } from '../../../../../context/card/domain/ports/card-sync-discrepancy-repository.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
 
 const buildLoggerMock = (): Logger =>
@@ -54,7 +56,9 @@ const buildSourceCard = (
 describe('SyncCardUseCase', () => {
   let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
   let cardRepository: jest.Mocked<CardRepositoryPort>;
+  let cardQueryRepository: jest.Mocked<CardQueryRepositoryPort>;
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
+  let cardSyncDiscrepancyRepository: jest.Mocked<CardSyncDiscrepancyRepositoryPort>;
   let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
@@ -65,6 +69,16 @@ describe('SyncCardUseCase', () => {
     cardRepository = {
       save: jest.fn().mockResolvedValue('stored-card-id'),
       delete: jest.fn(),
+      markAsManuallyEdited: jest.fn(),
+      updateCardFields: jest.fn(),
+      clearManualEditFlag: jest.fn(),
+      isManuallyEdited: jest.fn().mockResolvedValue(false),
+      getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
+    };
+    cardQueryRepository = {
+      findById: jest.fn(),
+      findByName: jest.fn(),
+      findAll: jest.fn(),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),
@@ -75,6 +89,15 @@ describe('SyncCardUseCase', () => {
       findAllCardSets: jest.fn(),
       deleteByCardId: jest.fn(),
       findFirstArtworkIdByCardId: jest.fn(),
+    };
+    cardSyncDiscrepancyRepository = {
+      upsert: jest.fn(),
+      findById: jest.fn(),
+      findByCardId: jest.fn(),
+      findAll: jest.fn(),
+      updateStatus: jest.fn(),
+      countPendingByCardId: jest.fn(),
+      deleteByCardIdAndFieldName: jest.fn(),
     };
     transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
@@ -92,7 +115,9 @@ describe('SyncCardUseCase', () => {
     const useCase = new SyncCardUseCase(
       externalCardSource,
       cardRepository,
+      cardQueryRepository,
       cardRelatedDataRepository,
+      cardSyncDiscrepancyRepository,
       transactionManager,
       buildLoggerMock(),
     );
@@ -122,7 +147,9 @@ describe('SyncCardUseCase', () => {
     const useCase = new SyncCardUseCase(
       externalCardSource,
       cardRepository,
+      cardQueryRepository,
       cardRelatedDataRepository,
+      cardSyncDiscrepancyRepository,
       transactionManager,
       buildLoggerMock(),
     );
@@ -149,7 +176,9 @@ describe('SyncCardUseCase', () => {
     const useCase = new SyncCardUseCase(
       externalCardSource,
       cardRepository,
+      cardQueryRepository,
       cardRelatedDataRepository,
+      cardSyncDiscrepancyRepository,
       transactionManager,
       buildLoggerMock(),
     );
@@ -172,7 +201,9 @@ describe('SyncCardUseCase', () => {
     const useCase = new SyncCardUseCase(
       externalCardSource,
       cardRepository,
+      cardQueryRepository,
       cardRelatedDataRepository,
+      cardSyncDiscrepancyRepository,
       transactionManager,
       buildLoggerMock(),
     );
@@ -200,7 +231,9 @@ describe('SyncCardUseCase', () => {
     const useCase = new SyncCardUseCase(
       externalCardSource,
       cardRepository,
+      cardQueryRepository,
       cardRelatedDataRepository,
+      cardSyncDiscrepancyRepository,
       transactionManager,
       buildLoggerMock(),
     );

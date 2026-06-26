@@ -29,6 +29,7 @@ export class LoggingInterceptor implements NestInterceptor {
           { method, url, statusCode: response.statusCode, duration },
           'Request completed',
         );
+        process.stdout.write('\n');
       }),
     );
   }

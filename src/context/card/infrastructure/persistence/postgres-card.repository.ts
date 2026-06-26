@@ -36,6 +36,8 @@ interface PostgresCardRow {
     | number
     | boolean
     | null;
+  manually_edited: boolean;
+  manually_edited_at: Date | null;
 }
 
 @Injectable()
@@ -67,7 +69,9 @@ export class PostgresCardRepository
           "linkval",
           "linkmarkers",
           "attribute",
-          "rawData" AS "raw_data"
+          "rawData" AS "raw_data",
+          "manually_edited",
+          "manually_edited_at"
         FROM "cards"
         WHERE "id" = $1
         LIMIT 1
@@ -104,7 +108,9 @@ export class PostgresCardRepository
           "linkval",
           "linkmarkers",
           "attribute",
-          "rawData" AS "raw_data"
+          "rawData" AS "raw_data",
+          "manually_edited",
+          "manually_edited_at"
         FROM "cards"
         WHERE "name" ILIKE '%' || $1 || '%'
         ORDER BY "name"
@@ -221,7 +227,9 @@ export class PostgresCardRepository
           "linkval",
           "linkmarkers",
           "attribute",
-          "rawData" AS "raw_data"
+          "rawData" AS "raw_data",
+          "manually_edited",
+          "manually_edited_at"
         FROM "cards"
         ${whereClause}
         ORDER BY "name"
@@ -320,10 +328,200 @@ export class PostgresCardRepository
     return result.rows[0].id;
   }
 
+  async updateCardFields(
+    id: string,
+    updates: Partial<{
+      name: string;
+      typeline: string[];
+      type: string;
+      humanReadableCardType: string;
+      frameType: string;
+      desc: string;
+      race: string;
+      atk: number | null;
+      def: number | null;
+      level: number | null;
+      scale: number | null;
+      linkval: number | null;
+      linkmarkers: string[];
+      attribute: string | null;
+    }>,
+  ): Promise<void> {
+    const { setClauses, values } = buildFieldUpdateClauses(id, updates, 2);
+
+    await this.postgresPoolProvider.client.query(
+      `UPDATE "cards" SET ${setClauses.join(', ')} WHERE "id" = $1`,
+      values,
+    );
+  }
+
+  async markAsManuallyEdited(
+    id: string,
+    updates: Partial<{
+      name: string;
+      typeline: string[];
+      type: string;
+      humanReadableCardType: string;
+      frameType: string;
+      desc: string;
+      race: string;
+      atk: number | null;
+      def: number | null;
+      level: number | null;
+      scale: number | null;
+      linkval: number | null;
+      linkmarkers: string[];
+      attribute: string | null;
+    }>,
+  ): Promise<void> {
+    const setClauses: string[] = [
+      '"manually_edited" = $2',
+      '"manually_edited_at" = NOW()',
+    ];
+    const values: unknown[] = [id, true];
+    let paramIndex = 3;
+
+    if (updates.name !== undefined) {
+      setClauses.push(`"name" = $${paramIndex++}`);
+      values.push(updates.name);
+    }
+    if (updates.typeline !== undefined) {
+      setClauses.push(`"typeline" = $${paramIndex++}`);
+      values.push(updates.typeline);
+    }
+    if (updates.type !== undefined) {
+      setClauses.push(`"type" = $${paramIndex++}`);
+      values.push(updates.type);
+    }
+    if (updates.humanReadableCardType !== undefined) {
+      setClauses.push(`"human_readable_card_type" = $${paramIndex++}`);
+      values.push(updates.humanReadableCardType);
+    }
+    if (updates.frameType !== undefined) {
+      setClauses.push(`"frame_type" = $${paramIndex++}::"FrameType"`);
+      values.push(updates.frameType);
+    }
+    if (updates.desc !== undefined) {
+      setClauses.push(`"desc" = $${paramIndex++}`);
+      values.push(updates.desc);
+    }
+    if (updates.race !== undefined) {
+      setClauses.push(`"race" = $${paramIndex++}::"Race"`);
+      values.push(updates.race);
+    }
+    if (updates.atk !== undefined) {
+      setClauses.push(`"atk" = $${paramIndex++}`);
+      values.push(updates.atk);
+    }
+    if (updates.def !== undefined) {
+      setClauses.push(`"def" = $${paramIndex++}`);
+      values.push(updates.def);
+    }
+    if (updates.level !== undefined) {
+      setClauses.push(`"level" = $${paramIndex++}`);
+      values.push(updates.level);
+    }
+    if (updates.scale !== undefined) {
+      setClauses.push(`"scale" = $${paramIndex++}`);
+      values.push(updates.scale);
+    }
+    if (updates.linkval !== undefined) {
+      setClauses.push(`"linkval" = $${paramIndex++}`);
+      values.push(updates.linkval);
+    }
+    if (updates.linkmarkers !== undefined) {
+      setClauses.push(`"linkmarkers" = $${paramIndex++}::"LinkMarker"[]`);
+      values.push(updates.linkmarkers);
+    }
+    if (updates.attribute !== undefined) {
+      setClauses.push(`"attribute" = $${paramIndex++}::"Attribute"`);
+      values.push(updates.attribute);
+    }
+
+    await this.postgresPoolProvider.client.query(
+      `UPDATE "cards" SET ${setClauses.join(', ')} WHERE "id" = $1`,
+      values,
+    );
+  }
+
+  async clearManualEditFlag(id: string): Promise<void> {
+    await this.postgresPoolProvider.client.query(
+      `UPDATE "cards" SET "manually_edited" = false, "manually_edited_at" = NULL WHERE "id" = $1`,
+      [id],
+    );
+  }
+
+  async isManuallyEdited(id: string): Promise<boolean> {
+    const result = await this.postgresPoolProvider.client.query<{
+      manually_edited: boolean;
+    }>(`SELECT "manually_edited" FROM "cards" WHERE "id" = $1 LIMIT 1`, [id]);
+
+    if (result.rows.length === 0) {
+      return false;
+    }
+
+    return result.rows[0].manually_edited;
+  }
+
+  async getManuallyEditedCardIds(): Promise<string[]> {
+    const result = await this.postgresPoolProvider.client.query<{ id: string }>(
+      `SELECT "id" FROM "cards" WHERE "manually_edited" = true`,
+    );
+
+    return result.rows.map((row) => row.id);
+  }
+
   async delete(id: string): Promise<void> {
     await this.postgresPoolProvider.client.query(
       `DELETE FROM "cards" WHERE "id" = $1`,
       [id],
     );
   }
+}
+
+function buildFieldUpdateClauses(
+  id: string,
+  updates: Record<string, unknown>,
+  startParamIndex: number,
+): { setClauses: string[]; values: unknown[] } {
+  const setClauses: string[] = [];
+  const values: unknown[] = [id];
+  let paramIndex = startParamIndex;
+
+  const fieldMappings: Record<string, string> = {
+    name: '"name"',
+    typeline: '"typeline"',
+    type: '"type"',
+    humanReadableCardType: '"human_readable_card_type"',
+    frameType: '"frame_type"',
+    desc: '"desc"',
+    race: '"race"',
+    atk: '"atk"',
+    def: '"def"',
+    level: '"level"',
+    scale: '"scale"',
+    linkval: '"linkval"',
+    linkmarkers: '"linkmarkers"',
+    attribute: '"attribute"',
+  };
+
+  const typedMappings: Record<string, string> = {
+    frameType: '::"FrameType"',
+    race: '::"Race"',
+    linkmarkers: '::"LinkMarker"[]',
+    attribute: '::"Attribute"',
+  };
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined) continue;
+
+    const column = fieldMappings[key];
+    if (!column) continue;
+
+    const typeCast = typedMappings[key] || '';
+    setClauses.push(`${column} = $${paramIndex++}${typeCast}`);
+    values.push(value);
+  }
+
+  return { setClauses, values };
 }

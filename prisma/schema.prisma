@@ -25,8 +25,11 @@ model Card {
   linkmarkers           LinkMarker[]
   attribute             Attribute?
   rawData               Json         @db.Json
+  manuallyEdited        Boolean      @default(false) @map("manually_edited")
+  manuallyEditedAt      DateTime?    @map("manually_edited_at")
   artworks              Artwork[]
   translations          CardTranslation[]
+  syncDiscrepancies     CardSyncDiscrepancy[]
 
   @@index([name])
   @@map("cards")
@@ -45,6 +48,31 @@ model CardTranslation {
 
   @@unique([cardId, language])
   @@map("card_translations")
+}
+
+enum DiscrepancyStatus {
+  PENDING
+  REVIEWED_LOCAL_WINS
+  REVIEWED_API_WINS
+  RESOLVED
+}
+
+model CardSyncDiscrepancy {
+  id         String            @id @default(uuid())
+  cardId     String            @map("card_id")
+  fieldName  String            @map("field_name")
+  localValue Json              @map("local_value")
+  apiValue   Json              @map("api_value")
+  status     DiscrepancyStatus @default(PENDING)
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  card       Card              @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([cardId, fieldName])
+  @@index([status])
+  @@index([cardId])
+  @@map("card_sync_discrepancies")
 }
 
 model CardSet {
