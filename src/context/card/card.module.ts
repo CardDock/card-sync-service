@@ -34,9 +34,15 @@ import { PostgresPoolProvider } from './infrastructure/persistence/postgres-pool
 import { ImageStoragePort } from './domain/ports/image-storage.port';
 import { ExternalImageSourcePort } from './domain/ports/external-image-source.port';
 import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-storage.adapter';
+import { SyncJobRepositoryPort } from './domain/ports/sync-job-repository.port';
+import { SqliteCardSourcePort } from './domain/ports/sqlite-card-source.port';
+import { PostgresSyncJobRepository } from './infrastructure/persistence/postgres-sync-job.repository';
+import { SqliteCardSourceAdapter } from './infrastructure/sqlite/sqlite-card-source.adapter';
+import { SyncController } from './infrastructure/http/sync.controller';
+import { SyncTranslationsUseCase } from './application/use-cases/sync-translations.use-case';
 
 @Module({
-  controllers: [CardController, MediaController],
+  controllers: [CardController, MediaController, SyncController],
   providers: [
     PostgresPoolProvider,
     { provide: TransactionManagerPort, useClass: PostgresPoolProvider },
@@ -62,6 +68,35 @@ import { LocalImageStorageAdapter } from './infrastructure/storage/local-image-s
     { provide: Logger, useClass: PinoLoggerAdapter },
     NotFoundExceptionFilter,
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
+    {
+      provide: SyncJobRepositoryPort,
+      useClass: PostgresSyncJobRepository,
+    },
+    {
+      provide: SqliteCardSourcePort,
+      useClass: SqliteCardSourceAdapter,
+    },
+    {
+      provide: SyncTranslationsUseCase,
+      useFactory: (
+        sqliteSource: SqliteCardSourcePort,
+        syncJobRepository: SyncJobRepositoryPort,
+        pool: PostgresPoolProvider,
+        logger: Logger,
+      ) =>
+        new SyncTranslationsUseCase(
+          sqliteSource,
+          syncJobRepository,
+          pool,
+          logger,
+        ),
+      inject: [
+        SqliteCardSourcePort,
+        SyncJobRepositoryPort,
+        PostgresPoolProvider,
+        Logger,
+      ],
+    },
     {
       provide: FindOrSyncCardByExternalIdUseCase,
       useFactory: (
