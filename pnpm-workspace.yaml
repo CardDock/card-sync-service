@@ -1,5 +1,6 @@
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
+  better-sqlite3: true
   nestjs-pino: true
   prisma: true
