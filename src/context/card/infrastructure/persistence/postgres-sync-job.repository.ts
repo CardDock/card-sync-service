@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
   SyncJobRepositoryPort,
   SyncJobRow,
@@ -10,10 +11,12 @@ export class PostgresSyncJobRepository implements SyncJobRepositoryPort {
   constructor(private readonly pool: PostgresPoolProvider) {}
 
   async create(): Promise<string> {
-    const result = await this.pool.client.query<{ id: string }>(
-      `INSERT INTO "sync_job_logs" ("status") VALUES ('PENDING') RETURNING "id"`,
+    const id = uuidv4();
+    await this.pool.client.query(
+      `INSERT INTO "sync_job_logs" ("id", "status") VALUES ($1, 'PENDING')`,
+      [id],
     );
-    return result.rows[0].id;
+    return id;
   }
 
   async update(

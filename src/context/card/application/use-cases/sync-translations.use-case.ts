@@ -34,6 +34,7 @@ export class SyncTranslationsUseCase {
 
         if (rows.length === 0) break;
 
+        await this.batchInsertStubs(rows);
         await this.batchUpsert(rows);
 
         totalProcessed += rows.length;
@@ -60,17 +61,49 @@ export class SyncTranslationsUseCase {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+      const stack = error instanceof Error ? error.stack : undefined;
 
-      this.logger.error({ jobId, error }, 'Sync translations: failed');
+      this.logger.error(
+        { jobId, error: message, err: { message, stack } },
+        'Sync translations: failed',
+      );
 
       await this.syncJobRepository.update(jobId, {
         status: 'FAILED',
         recordsProcessed: totalProcessed,
         errorMessage: message,
       });
-    } finally {
-      this.sqliteSource.close();
     }
+  }
+
+  private async batchInsertStubs(
+    rows: { cardId: string; name: string; desc: string }[],
+  ): Promise<void> {
+    const values: string[] = [];
+    const params: unknown[] = [];
+    let idx = 1;
+
+    for (const row of rows) {
+      values.push(
+        `($${idx++}, $${idx++}, $${idx++}::text[], $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}::jsonb)`,
+      );
+      params.push(
+        row.cardId,
+        `__CARD_${row.cardId}__`,
+        [],
+        'Stub',
+        'Stub',
+        'normal',
+        '',
+        'Normal',
+        {},
+      );
+    }
+
+    await this.pool.client.query(
+      `INSERT INTO "cards" ("id", "name", "typeline", "type", "human_readable_card_type", "frame_type", "desc", "race", "rawData") VALUES ${values.join(', ')} ON CONFLICT ("id") DO NOTHING`,
+      params,
+    );
   }
 
   private async batchUpsert(

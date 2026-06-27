@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import Database from 'better-sqlite3';
 import {
   SqliteCardSourcePort,
@@ -6,7 +6,9 @@ import {
 } from '../../domain/ports/sqlite-card-source.port';
 
 @Injectable()
-export class SqliteCardSourceAdapter implements SqliteCardSourcePort {
+export class SqliteCardSourceAdapter
+  implements SqliteCardSourcePort, OnModuleDestroy
+{
   private readonly db: Database.Database;
   private readonly stmtCount: Database.Statement;
   private readonly stmtChunk: Database.Statement<[number, number]>;
@@ -40,6 +42,10 @@ export class SqliteCardSourceAdapter implements SqliteCardSourcePort {
   }
 
   close(): void {
+    this.db.close();
+  }
+
+  onModuleDestroy(): void {
     this.db.close();
   }
 }
