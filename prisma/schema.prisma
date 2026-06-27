@@ -116,25 +116,6 @@ model CardPrint {
   @@map("card_prints")
 }
 
-enum SyncJobStatus {
-  PENDING
-  IN_PROGRESS
-  SUCCESS
-  FAILED
-}
-
-model SyncJobLog {
-  id               String        @id @default(uuid())
-  status           SyncJobStatus @default(PENDING)
-  recordsProcessed Int           @default(0) @map("records_processed")
-  errorMessage     String?       @map("error_message")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
-
-  @@index([status])
-  @@map("sync_job_logs")
-}
-
 enum Attribute {
   DARK
   LIGHT
