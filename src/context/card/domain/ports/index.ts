@@ -8,3 +8,7 @@ export { Logger } from './logger.port';
 export { TransactionManagerPort } from './transaction-manager.port';
 export { ImageStoragePort } from './image-storage.port';
 export { ExternalImageSourcePort } from './external-image-source.port';
+export { SyncJobRepositoryPort } from './sync-job-repository.port';
+export type { SyncJobRow } from './sync-job-repository.port';
+export { SqliteCardSourcePort } from './sqlite-card-source.port';
+export type { CardTranslationRow } from './sqlite-card-source.port';
