@@ -1,15 +1,18 @@
 import { SqliteCardSourcePort } from '../../domain/ports/sqlite-card-source.port';
 import { SyncJobRepositoryPort } from '../../domain/ports/sync-job-repository.port';
-import { PostgresPoolProvider } from '../../infrastructure/persistence/postgres-pool.provider';
+import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
+import { CardTranslationRepositoryPort } from '../../domain/ports/card-translation-repository.port';
 import { Logger } from '../../domain/ports/logger.port';
 
 const CHUNK_SIZE = 500;
+const LANGUAGE = 'es';
 
 export class SyncTranslationsUseCase {
   constructor(
     private readonly sqliteSource: SqliteCardSourcePort,
     private readonly syncJobRepository: SyncJobRepositoryPort,
-    private readonly pool: PostgresPoolProvider,
+    private readonly cardRepository: CardRepositoryPort,
+    private readonly translationRepository: CardTranslationRepositoryPort,
     private readonly logger: Logger,
   ) {}
 
@@ -34,8 +37,15 @@ export class SyncTranslationsUseCase {
 
         if (rows.length === 0) break;
 
-        await this.batchInsertStubs(rows);
-        await this.batchUpsert(rows);
+        await this.cardRepository.batchInsertStubs(rows);
+        await this.translationRepository.batchUpsert(
+          rows.map((r) => ({
+            cardId: r.cardId,
+            language: LANGUAGE,
+            name: r.name,
+            desc: r.desc,
+          })),
+        );
 
         totalProcessed += rows.length;
         offset += rows.length;
@@ -74,53 +84,5 @@ export class SyncTranslationsUseCase {
         errorMessage: message,
       });
     }
-  }
-
-  private async batchInsertStubs(
-    rows: { cardId: string; name: string; desc: string }[],
-  ): Promise<void> {
-    const values: string[] = [];
-    const params: unknown[] = [];
-    let idx = 1;
-
-    for (const row of rows) {
-      values.push(
-        `($${idx++}, $${idx++}, $${idx++}::text[], $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}::jsonb)`,
-      );
-      params.push(
-        row.cardId,
-        `__CARD_${row.cardId}__`,
-        [],
-        'Stub',
-        'Stub',
-        'normal',
-        '',
-        'Normal',
-        {},
-      );
-    }
-
-    await this.pool.client.query(
-      `INSERT INTO "cards" ("id", "name", "typeline", "type", "human_readable_card_type", "frame_type", "desc", "race", "rawData") VALUES ${values.join(', ')} ON CONFLICT ("id") DO NOTHING`,
-      params,
-    );
-  }
-
-  private async batchUpsert(
-    rows: { cardId: string; name: string; desc: string }[],
-  ): Promise<void> {
-    const values: string[] = [];
-    const params: unknown[] = [];
-    let idx = 1;
-
-    for (const row of rows) {
-      values.push(`($${idx++}, $${idx++}, $${idx++}, $${idx++})`);
-      params.push(row.cardId, 'es', row.name, row.desc);
-    }
-
-    await this.pool.client.query(
-      `INSERT INTO "card_translations" ("card_id", "language", "name", "desc") VALUES ${values.join(', ')} ON CONFLICT ("card_id", "language") DO UPDATE SET "name" = EXCLUDED."name", "desc" = EXCLUDED."desc"`,
-      params,
-    );
   }
 }

@@ -81,19 +81,22 @@ import { SyncTranslationsUseCase } from './application/use-cases/sync-translatio
       useFactory: (
         sqliteSource: SqliteCardSourcePort,
         syncJobRepository: SyncJobRepositoryPort,
-        pool: PostgresPoolProvider,
+        cardRepository: PostgresCardRepository,
+        translationRepository: CardTranslationRepositoryPort,
         logger: Logger,
       ) =>
         new SyncTranslationsUseCase(
           sqliteSource,
           syncJobRepository,
-          pool,
+          cardRepository,
+          translationRepository,
           logger,
         ),
       inject: [
         SqliteCardSourcePort,
         SyncJobRepositoryPort,
-        PostgresPoolProvider,
+        PostgresCardRepository,
+        CardTranslationRepositoryPort,
         Logger,
       ],
     },

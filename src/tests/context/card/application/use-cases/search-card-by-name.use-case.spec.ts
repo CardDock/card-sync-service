@@ -81,6 +81,7 @@ describe('SearchCardByNameUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
+      batchInsertStubs: jest.fn(),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),
@@ -97,6 +98,7 @@ describe('SearchCardByNameUseCase', () => {
       findCardIdsByName: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
+      batchUpsert: jest.fn(),
     };
     cardSyncDiscrepancyRepository = {
       upsert: jest.fn(),

@@ -52,6 +52,7 @@ describe('UpdateCardUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
+      batchInsertStubs: jest.fn(),
     };
   });
 

@@ -1,5 +1,12 @@
 import { CardTranslationData } from '../types/card-translation.types';
 
+export interface BatchTranslationRow {
+  cardId: string;
+  language: string;
+  name: string;
+  desc: string;
+}
+
 export abstract class CardTranslationRepositoryPort {
   abstract findByCardIdAndLanguage(
     cardId: string,
@@ -15,4 +22,6 @@ export abstract class CardTranslationRepositoryPort {
   ): Promise<void>;
 
   abstract deleteByCardId(cardId: string): Promise<void>;
+
+  abstract batchUpsert(rows: BatchTranslationRow[]): Promise<void>;
 }

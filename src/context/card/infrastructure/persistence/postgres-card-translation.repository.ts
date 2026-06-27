@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CardTranslationRepositoryPort } from '../../domain/ports/card-translation-repository.port';
+import {
+  CardTranslationRepositoryPort,
+  BatchTranslationRow,
+} from '../../domain/ports/card-translation-repository.port';
 import { CardTranslationData } from '../../domain/types/card-translation.types';
 import { PostgresPoolProvider } from './postgres-pool.provider';
 
@@ -106,6 +109,22 @@ export class PostgresCardTranslationRepository implements CardTranslationReposit
     await this.postgresPoolProvider.client.query(
       `DELETE FROM "card_translations" WHERE "card_id" = $1`,
       [cardId],
+    );
+  }
+
+  async batchUpsert(rows: BatchTranslationRow[]): Promise<void> {
+    const values: string[] = [];
+    const params: unknown[] = [];
+    let idx = 1;
+
+    for (const row of rows) {
+      values.push(`($${idx++}, $${idx++}, $${idx++}, $${idx++})`);
+      params.push(row.cardId, row.language, row.name, row.desc);
+    }
+
+    await this.postgresPoolProvider.client.query(
+      `INSERT INTO "card_translations" ("card_id", "language", "name", "desc") VALUES ${values.join(', ')} ON CONFLICT ("card_id", "language") DO UPDATE SET "name" = EXCLUDED."name", "desc" = EXCLUDED."desc"`,
+      params,
     );
   }
 }

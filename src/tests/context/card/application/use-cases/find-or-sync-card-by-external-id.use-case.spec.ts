@@ -85,6 +85,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
+      batchInsertStubs: jest.fn(),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),
@@ -101,6 +102,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       findCardIdsByName: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
+      batchUpsert: jest.fn(),
     };
     transactionManager = {
       transaction: jest.fn((fn: () => Promise<unknown>) => fn()),

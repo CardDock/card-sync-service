@@ -47,4 +47,6 @@ export interface CardRepositoryPort {
   clearManualEditFlag(id: string): Promise<void>;
   isManuallyEdited(id: string): Promise<boolean>;
   getManuallyEditedCardIds(): Promise<string[]>;
+
+  batchInsertStubs(rows: { cardId: string }[]): Promise<void>;
 }

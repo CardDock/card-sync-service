@@ -57,12 +57,14 @@ describe('DeleteCardUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
+      batchInsertStubs: jest.fn(),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),
       findCardIdsByName: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
+      batchUpsert: jest.fn(),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),

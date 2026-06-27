@@ -48,6 +48,7 @@ describe('SetCardTranslationUseCase', () => {
       findCardIdsByName: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
+      batchUpsert: jest.fn(),
     };
   });
 
