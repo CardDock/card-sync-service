@@ -5,7 +5,11 @@ export interface CardTranslationRow {
 }
 
 export abstract class SqliteCardSourcePort {
-  abstract readChunk(limit: number, offset: number): CardTranslationRow[];
-  abstract count(): number;
-  abstract close(): void;
+  abstract readChunk(
+    limit: number,
+    offset: number,
+    language: string,
+  ): CardTranslationRow[];
+  abstract count(language: string): number;
+  abstract close(language?: string): void;
 }

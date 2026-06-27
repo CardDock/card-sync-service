@@ -1,6 +1,7 @@
 export interface SyncJobRow {
   id: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'SUCCESS' | 'FAILED';
+  language: string;
   recordsProcessed: number;
   errorMessage: string | null;
   createdAt: Date;
@@ -8,7 +9,7 @@ export interface SyncJobRow {
 }
 
 export abstract class SyncJobRepositoryPort {
-  abstract create(): Promise<string>;
+  abstract create(language: string): Promise<string>;
   abstract update(
     id: string,
     partial: {
@@ -17,6 +18,6 @@ export abstract class SyncJobRepositoryPort {
       errorMessage?: string | null;
     },
   ): Promise<void>;
-  abstract findLast(): Promise<SyncJobRow | null>;
-  abstract findInProgress(): Promise<SyncJobRow | null>;
+  abstract findLast(language?: string): Promise<SyncJobRow | null>;
+  abstract findInProgress(language?: string): Promise<SyncJobRow | null>;
 }

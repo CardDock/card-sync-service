@@ -5,7 +5,6 @@ import { CardTranslationRepositoryPort } from '../../domain/ports/card-translati
 import { Logger } from '../../domain/ports/logger.port';
 
 const CHUNK_SIZE = 500;
-const LANGUAGE = 'es';
 
 export class SyncTranslationsUseCase {
   constructor(
@@ -16,24 +15,24 @@ export class SyncTranslationsUseCase {
     private readonly logger: Logger,
   ) {}
 
-  async execute(jobId: string): Promise<void> {
+  async execute(jobId: string, language: string): Promise<void> {
     let totalProcessed = 0;
 
     try {
-      this.logger.info({ jobId }, 'Sync translations: started');
+      this.logger.info({ jobId, language }, 'Sync translations: started');
 
       await this.syncJobRepository.update(jobId, { status: 'IN_PROGRESS' });
 
-      const total = this.sqliteSource.count();
+      const total = this.sqliteSource.count(language);
       this.logger.info(
-        { jobId, total },
+        { jobId, language, total },
         'Sync translations: total cards to process',
       );
 
       let offset = 0;
 
       while (offset < total) {
-        const rows = this.sqliteSource.readChunk(CHUNK_SIZE, offset);
+        const rows = this.sqliteSource.readChunk(CHUNK_SIZE, offset, language);
 
         if (rows.length === 0) break;
 
@@ -41,7 +40,7 @@ export class SyncTranslationsUseCase {
         await this.translationRepository.batchUpsert(
           rows.map((r) => ({
             cardId: r.cardId,
-            language: LANGUAGE,
+            language,
             name: r.name,
             desc: r.desc,
           })),
@@ -55,7 +54,13 @@ export class SyncTranslationsUseCase {
         });
 
         this.logger.info(
-          { jobId, processed: totalProcessed, total, chunk: rows.length },
+          {
+            jobId,
+            language,
+            processed: totalProcessed,
+            total,
+            chunk: rows.length,
+          },
           'Sync translations: chunk processed',
         );
       }
@@ -66,7 +71,7 @@ export class SyncTranslationsUseCase {
       });
 
       this.logger.info(
-        { jobId, totalProcessed },
+        { jobId, language, totalProcessed },
         'Sync translations: completed',
       );
     } catch (error) {
@@ -74,7 +79,7 @@ export class SyncTranslationsUseCase {
       const stack = error instanceof Error ? error.stack : undefined;
 
       this.logger.error(
-        { jobId, error: message, err: { message, stack } },
+        { jobId, language, error: message, err: { message, stack } },
         'Sync translations: failed',
       );
 

@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import Database from 'better-sqlite3';
+import * as fs from 'fs';
 import {
   SqliteCardSourcePort,
   CardTranslationRow,
@@ -9,31 +10,52 @@ import {
 export class SqliteCardSourceAdapter
   implements SqliteCardSourcePort, OnModuleDestroy
 {
-  private readonly db: Database.Database;
-  private readonly stmtCount: Database.Statement;
-  private readonly stmtChunk: Database.Statement<[number, number]>;
+  private readonly dbs = new Map<string, Database.Database>();
 
-  constructor() {
-    const dbPath =
-      process.env.EDOPRO_DB_PATH ?? process.cwd() + '/uploads/cards.cdb';
-    this.db = new Database(dbPath, { readonly: true });
-    this.stmtCount = this.db.prepare('SELECT COUNT(*) AS cnt FROM "texts"');
-    this.stmtChunk = this.db.prepare(
-      'SELECT "id", "name", "desc" FROM "texts" ORDER BY "id" LIMIT ? OFFSET ?',
-    );
+  private getDb(language: string): Database.Database {
+    let db = this.dbs.get(language);
+
+    if (!db) {
+      const dbPath =
+        process.env[`EDOPRO_DB_PATH_${language.toUpperCase()}`] ??
+        process.cwd() + `/uploads/language/${language}/cards.cdb`;
+
+      if (!fs.existsSync(dbPath)) {
+        this.dbs.set(language, null as unknown as Database.Database);
+        return null as unknown as Database.Database;
+      }
+
+      db = new Database(dbPath, { readonly: true });
+      this.dbs.set(language, db);
+    }
+
+    return db;
   }
 
-  count(): number {
-    const row = this.stmtCount.get() as { cnt: number };
+  count(language: string): number {
+    const db = this.getDb(language);
+    if (!db) return 0;
+
+    const row = db.prepare('SELECT COUNT(*) AS cnt FROM "texts"').get() as {
+      cnt: number;
+    };
     return row.cnt;
   }
 
-  readChunk(limit: number, offset: number): CardTranslationRow[] {
-    const rows = this.stmtChunk.all(limit, offset) as {
-      id: number;
-      name: string;
-      desc: string;
-    }[];
+  readChunk(
+    limit: number,
+    offset: number,
+    language: string,
+  ): CardTranslationRow[] {
+    const db = this.getDb(language);
+    if (!db) return [];
+
+    const rows = db
+      .prepare<
+        [number, number]
+      >('SELECT "id", "name", "desc" FROM "texts" ORDER BY "id" LIMIT ? OFFSET ?')
+      .all(limit, offset) as { id: number; name: string; desc: string }[];
+
     return rows.map((r) => ({
       cardId: String(r.id),
       name: r.name,
@@ -41,11 +63,22 @@ export class SqliteCardSourceAdapter
     }));
   }
 
-  close(): void {
-    this.db.close();
+  close(language?: string): void {
+    if (language) {
+      const db = this.dbs.get(language);
+      if (db) {
+        db.close();
+        this.dbs.delete(language);
+      }
+    } else {
+      for (const db of this.dbs.values()) {
+        if (db) db.close();
+      }
+      this.dbs.clear();
+    }
   }
 
   onModuleDestroy(): void {
-    this.db.close();
+    this.close();
   }
 }

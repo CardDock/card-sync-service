@@ -10,11 +10,11 @@ import { PostgresPoolProvider } from './postgres-pool.provider';
 export class PostgresSyncJobRepository implements SyncJobRepositoryPort {
   constructor(private readonly pool: PostgresPoolProvider) {}
 
-  async create(): Promise<string> {
+  async create(language: string = 'es'): Promise<string> {
     const id = uuidv4();
     await this.pool.client.query(
-      `INSERT INTO "sync_job_logs" ("id", "status") VALUES ($1, 'PENDING')`,
-      [id],
+      `INSERT INTO "sync_job_logs" ("id", "status", "language") VALUES ($1, 'PENDING', $2)`,
+      [id, language],
     );
     return id;
   }
@@ -53,16 +53,24 @@ export class PostgresSyncJobRepository implements SyncJobRepositoryPort {
     );
   }
 
-  async findLast(): Promise<SyncJobRow | null> {
+  async findLast(language?: string): Promise<SyncJobRow | null> {
+    const where = language ? `WHERE "language" = $1` : '';
+    const params = language ? [language] : [];
     const result = await this.pool.client.query<SyncJobRow>(
-      `SELECT "id", "status", "records_processed" AS "recordsProcessed", "error_message" AS "errorMessage", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "sync_job_logs" ORDER BY "created_at" DESC LIMIT 1`,
+      `SELECT "id", "status", "language", "records_processed" AS "recordsProcessed", "error_message" AS "errorMessage", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "sync_job_logs" ${where} ORDER BY "created_at" DESC LIMIT 1`,
+      params,
     );
     return result.rows[0] ?? null;
   }
 
-  async findInProgress(): Promise<SyncJobRow | null> {
+  async findInProgress(language?: string): Promise<SyncJobRow | null> {
+    const where = language
+      ? `WHERE "status" = 'IN_PROGRESS' AND "language" = $1`
+      : `WHERE "status" = 'IN_PROGRESS'`;
+    const params = language ? [language] : [];
     const result = await this.pool.client.query<SyncJobRow>(
-      `SELECT "id", "status", "records_processed" AS "recordsProcessed", "error_message" AS "errorMessage", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "sync_job_logs" WHERE "status" = 'IN_PROGRESS' ORDER BY "created_at" DESC LIMIT 1`,
+      `SELECT "id", "status", "language", "records_processed" AS "recordsProcessed", "error_message" AS "errorMessage", "created_at" AS "createdAt", "updated_at" AS "updatedAt" FROM "sync_job_logs" ${where} ORDER BY "created_at" DESC LIMIT 1`,
+      params,
     );
     return result.rows[0] ?? null;
   }

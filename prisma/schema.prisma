@@ -126,12 +126,14 @@ enum SyncJobStatus {
 model SyncJobLog {
   id               String        @id @default(uuid())
   status           SyncJobStatus @default(PENDING)
+  language         String        @default("es")
   recordsProcessed Int           @default(0) @map("records_processed")
   errorMessage     String?       @map("error_message")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @updatedAt @map("updated_at")
 
   @@index([status])
+  @@index([language])
   @@map("sync_job_logs")
 }
 
