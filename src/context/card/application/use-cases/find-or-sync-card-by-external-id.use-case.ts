@@ -143,7 +143,19 @@ export class FindOrSyncCardByExternalIdUseCase {
   }
 
   private async findStoredCard(id: string): Promise<Card | null> {
-    return this.cardQueryRepository.findById(id);
+    try {
+      return await this.cardQueryRepository.findById(id);
+    } catch (error) {
+      const domainError = error as { code?: string };
+      if (domainError.code === 'CARD_VALIDATION_ERROR') {
+        this.logger.warn(
+          { id },
+          'Find card: stored card has invalid data, will re-sync from API',
+        );
+        return null;
+      }
+      throw error;
+    }
   }
 
   private async syncMissingCardFromExternalSource(

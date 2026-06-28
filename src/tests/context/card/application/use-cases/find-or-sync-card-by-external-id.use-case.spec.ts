@@ -70,6 +70,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
   beforeEach(() => {
     cardQueryRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
     };
@@ -100,6 +101,7 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),
       findCardIdsByName: jest.fn(),
+      findByCardIdsAndLanguage: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
       batchUpsert: jest.fn(),
@@ -143,6 +145,33 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
     expect(
       cardTranslationRepository.findByCardIdAndLanguage,
     ).not.toHaveBeenCalled();
+  });
+
+  it('syncs from API when stored card has invalid data', async () => {
+    cardQueryRepository.findById.mockRejectedValue(
+      new CardDomainValidationError({
+        field: 'description',
+        message: 'Card description is required',
+        value: '',
+        source: 'CardDescription.normalizeRequiredText',
+        rule: 'required-trimmed-string',
+      }),
+    );
+
+    const sourceCard = buildSourceCard();
+    externalCardSource.findById.mockResolvedValue(sourceCard);
+    cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());
+    cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
+
+    const useCase = createUseCase();
+    const result = await useCase.execute({ id: '46986414' });
+
+    expect(result).not.toBeNull();
+    expect(result).toMatchObject({
+      id: '46986414',
+      name: 'Dark Magician',
+    });
+    expect(cardRepository.save).toHaveBeenCalledTimes(1);
   });
 
   it('returns the existing card with language=en without querying translations', async () => {

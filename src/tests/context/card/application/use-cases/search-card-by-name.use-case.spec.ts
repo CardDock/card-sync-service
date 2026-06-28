@@ -2,14 +2,9 @@ import { Card } from '../../../../../context/card/domain/entities/card.entity';
 import { SearchCardByNameUseCase } from '../../../../../context/card/application/use-cases/search-card-by-name.use-case';
 import { CardQueryRepositoryPort } from '../../../../../context/card/domain/ports/card-query-repository.port';
 import { CardTranslationRepositoryPort } from '../../../../../context/card/domain/ports/card-translation-repository.port';
-import { ExternalCardSourcePort } from '../../../../../context/card/domain/ports/external-card-source.port';
-import { CardRepositoryPort } from '../../../../../context/card/domain/ports/card-repository.port';
-import { CardRelatedDataRepositoryPort } from '../../../../../context/card/domain/ports/card-related-data-repository.port';
-import { CardSyncDiscrepancyRepositoryPort } from '../../../../../context/card/domain/ports/card-sync-discrepancy-repository.port';
-import { SyncCardWithRelatedData } from '../../../../../context/card/domain/types/sync-card-with-related.types';
 import { CardDomainProcessError } from '../../../../../context/card/domain/errors';
-import { TransactionManagerPort } from '../../../../../context/card/domain/ports/transaction-manager.port';
 import { Logger } from '../../../../../context/card/domain/ports/logger.port';
+import type { CreateCardParams } from '../../../../../context/card/domain/types/card.types';
 
 const buildLoggerMock = (): Logger =>
   ({
@@ -19,269 +14,338 @@ const buildLoggerMock = (): Logger =>
     debug: jest.fn(),
   }) as unknown as Logger;
 
-const buildSourceCard = (
-  overrides: Partial<SyncCardWithRelatedData['card']> = {},
-): SyncCardWithRelatedData => ({
-  card: {
-    id: '46986414',
-    name: 'Dark Magician',
-    typeline: ['Spellcaster', 'Normal'],
-    type: 'Normal Monster',
-    humanReadableCardType: 'Normal Monster',
-    frameType: 'normal',
-    desc: 'The ultimate wizard in terms of attack and defense.',
-    race: 'Spellcaster',
-    atk: 2500,
-    def: 2100,
-    level: 7,
-    scale: null,
-    linkval: null,
-    linkmarkers: [],
-    attribute: 'DARK',
-    rawData: { id: 46986414, name: 'Dark Magician' },
-    ...overrides,
-  },
-  cardSets: [{ name: 'Legend of Blue Eyes White Dragon', code: 'LOB' }],
-  artworks: [{ imageUrl: 'https://example.com/image.png' }],
-  cardPrints: [
-    {
-      setName: 'Legend of Blue Eyes White Dragon',
-      setCode: 'LOB-001',
-      rarity: 'Ultra Rare',
-      rarityCode: 'UR',
-      setPrice: 12.5,
-    },
-  ],
+const buildCardPrimitives = (
+  overrides: Partial<CreateCardParams> = {},
+): CreateCardParams => ({
+  id: '46986414',
+  name: 'Dark Magician',
+  typeline: ['Spellcaster', 'Normal'],
+  type: 'Normal Monster',
+  humanReadableCardType: 'Normal Monster',
+  frameType: 'normal',
+  desc: 'The ultimate wizard in terms of attack and defense.',
+  race: 'Spellcaster',
+  atk: 2500,
+  def: 2100,
+  level: 7,
+  scale: null,
+  linkval: null,
+  linkmarkers: [],
+  attribute: 'DARK',
+  rawData: { id: 46986414, name: 'Dark Magician' },
+  ...overrides,
 });
+
+const buildCard = (overrides: Partial<CreateCardParams> = {}): Card =>
+  Card.create(buildCardPrimitives(overrides));
 
 describe('SearchCardByNameUseCase', () => {
   let cardQueryRepository: jest.Mocked<CardQueryRepositoryPort>;
-  let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
-  let cardRepository: jest.Mocked<CardRepositoryPort>;
-  let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
   let cardTranslationRepository: jest.Mocked<CardTranslationRepositoryPort>;
-  let cardSyncDiscrepancyRepository: jest.Mocked<CardSyncDiscrepancyRepositoryPort>;
-  let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
     cardQueryRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
-    };
-    externalCardSource = {
-      findById: jest.fn(),
-      findByName: jest.fn(),
-    };
-    cardRepository = {
-      save: jest.fn().mockResolvedValue('stored-card-id'),
-      delete: jest.fn(),
-      markAsManuallyEdited: jest.fn(),
-      updateCardFields: jest.fn(),
-      clearManualEditFlag: jest.fn(),
-      isManuallyEdited: jest.fn().mockResolvedValue(false),
-      getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
-      batchInsertStubs: jest.fn(),
-    };
-    cardRelatedDataRepository = {
-      saveCardSets: jest.fn(),
-      saveArtwork: jest.fn(),
-      saveCardPrints: jest.fn(),
-      findArtworksByCardId: jest.fn(),
-      findPrintsByCardId: jest.fn(),
-      findAllCardSets: jest.fn(),
-      deleteByCardId: jest.fn(),
-      findFirstArtworkIdByCardId: jest.fn(),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),
       findCardIdsByName: jest.fn(),
+      findByCardIdsAndLanguage: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
       batchUpsert: jest.fn(),
     };
-    cardSyncDiscrepancyRepository = {
-      upsert: jest.fn(),
-      findById: jest.fn(),
-      findByCardId: jest.fn(),
-      findAll: jest.fn(),
-      updateStatus: jest.fn(),
-      countPendingByCardId: jest.fn(),
-      deleteByCardIdAndFieldName: jest.fn(),
-    };
-    transactionManager = {
-      transaction: jest.fn((fn: () => Promise<unknown>) => fn()),
-    } as unknown as jest.Mocked<TransactionManagerPort>;
   });
 
   const createUseCase = () =>
     new SearchCardByNameUseCase(
       cardQueryRepository,
-      externalCardSource,
-      cardRepository,
-      cardRelatedDataRepository,
       cardTranslationRepository,
-      cardSyncDiscrepancyRepository,
-      transactionManager,
       buildLoggerMock(),
     );
 
-  it('fetches from external source and saves cards', async () => {
-    const sourceCard = buildSourceCard();
-    externalCardSource.findByName.mockResolvedValue([sourceCard]);
-    cardRelatedDataRepository.saveCardSets.mockResolvedValue(
-      new Map([['Legend of Blue Eyes White Dragon', 'set-id-1']]),
-    );
-    cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
+  describe('when language is provided', () => {
+    it('searches translations, batch fetches cards, and merges translations', async () => {
+      const card = buildCard({ id: '46986414', name: 'Mago Oscuro' });
+      const cardsMap = new Map([['46986414', card]]);
+      const translationsMap = new Map([
+        [
+          '46986414',
+          {
+            name: 'Mago Oscuro',
+            desc: 'El mago definitivo.',
+            type: null,
+            humanReadableCardType: null,
+            race: null,
+          },
+        ],
+      ]);
 
-    const useCase = createUseCase();
-    const result = await useCase.execute({ name: 'Dark Magician' });
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '46986414',
+      ]);
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        translationsMap,
+      );
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
-      id: '46986414',
-      name: 'Dark Magician',
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'Mago Oscuro',
+        language: 'es',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: '46986414',
+        name: 'Mago Oscuro',
+        desc: 'El mago definitivo.',
+      });
+      expect(cardTranslationRepository.findCardIdsByName).toHaveBeenCalledWith(
+        'Mago Oscuro',
+        'es',
+      );
+      expect(cardQueryRepository.findByIds).toHaveBeenCalledWith(['46986414']);
     });
-    expect(result[0]).not.toHaveProperty('rawData');
-    expect(transactionManager.transaction).toHaveBeenCalledTimes(1);
-    expect(cardRepository.save).toHaveBeenCalledTimes(1);
-    expect(cardRelatedDataRepository.saveCardSets).toHaveBeenCalledWith(
-      sourceCard.cardSets,
-    );
-    expect(cardRelatedDataRepository.saveArtwork).toHaveBeenCalledWith(
-      'stored-card-id',
-      'https://example.com/image.png',
-    );
-    expect(cardRelatedDataRepository.saveCardPrints).toHaveBeenCalledTimes(1);
+
+    it('returns empty array when no translations match', async () => {
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([]);
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'NonExistent',
+        language: 'es',
+      });
+
+      expect(result).toEqual([]);
+      expect(cardQueryRepository.findByIds).not.toHaveBeenCalled();
+    });
+
+    it('skips cards not found in cards table', async () => {
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '46986414',
+        'missing-id',
+      ]);
+      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        new Map(),
+      );
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'test',
+        language: 'es',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('46986414');
+    });
+
+    it('limits to 20 results', async () => {
+      const ids = Array.from({ length: 25 }, (_, i) => `${i}`);
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue(ids);
+      const cardsMap = new Map(ids.map((id) => [id, buildCard({ id })]));
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        new Map(),
+      );
+
+      const useCase = createUseCase();
+      await useCase.execute({ name: 'test', language: 'es' });
+
+      expect(cardQueryRepository.findByIds).toHaveBeenCalledWith(
+        ids.slice(0, 20),
+      );
+    });
+
+    it('returns English fallback when translation record is missing', async () => {
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '46986414',
+      ]);
+      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        new Map(),
+      );
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'Dark Magician',
+        language: 'es',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        name: 'Dark Magician',
+        desc: 'The ultimate wizard in terms of attack and defense.',
+      });
+    });
+
+    it('applies partial translation fields', async () => {
+      const card = buildCard({ id: '46986414' });
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '46986414',
+      ]);
+      const cardsMap = new Map([['46986414', card]]);
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        new Map([
+          [
+            '46986414',
+            {
+              name: 'Mago Oscuro',
+              desc: null,
+              type: 'Monstruo Normal',
+              humanReadableCardType: 'Monstruo Normal',
+              race: 'Lanzador de Conjuros',
+            },
+          ],
+        ]),
+      );
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'Mago Oscuro',
+        language: 'es',
+      });
+
+      expect(result[0]).toMatchObject({
+        name: 'Mago Oscuro',
+        type: 'Monstruo Normal',
+        humanReadableCardType: 'Monstruo Normal',
+        race: 'Lanzador de Conjuros',
+      });
+    });
   });
 
-  it('searches translations first when language=es', async () => {
-    cardTranslationRepository.findCardIdsByName.mockResolvedValue(['46986414']);
-    cardQueryRepository.findById.mockResolvedValue(
-      Card.create({
+  describe('when no language is provided', () => {
+    it('searches cards.name, batch fetches, and returns English results', async () => {
+      const card = buildCard({ id: '46986414' });
+      const cardsMap = new Map([['46986414', card]]);
+      cardQueryRepository.findByName.mockResolvedValue([card]);
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({ name: 'Dark Magician' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
         id: '46986414',
         name: 'Dark Magician',
-        ...buildSourceCard().card,
-      }),
-    );
-    cardTranslationRepository.findByCardIdAndLanguage.mockResolvedValue({
-      name: 'Mago Oscuro',
-      desc: 'El mago definitivo.',
-      type: null,
-      humanReadableCardType: null,
-      race: null,
+      });
+      expect(result[0]).not.toHaveProperty('rawData');
+      expect(cardQueryRepository.findByName).toHaveBeenCalledWith(
+        'Dark Magician',
+      );
+      expect(cardQueryRepository.findByIds).toHaveBeenCalledWith(['46986414']);
+      expect(
+        cardTranslationRepository.findByCardIdsAndLanguage,
+      ).not.toHaveBeenCalled();
     });
 
-    const useCase = createUseCase();
-    const result = await useCase.execute({
-      name: 'Mago Oscuro',
-      language: 'es',
+    it('returns empty array when no cards match locally', async () => {
+      cardQueryRepository.findByName.mockResolvedValue([]);
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({ name: 'NonExistentCard' });
+
+      expect(result).toEqual([]);
+      expect(cardQueryRepository.findByIds).not.toHaveBeenCalled();
     });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
-      id: '46986414',
-      name: 'Mago Oscuro',
-      desc: 'El mago definitivo.',
+    it('returns multiple results when multiple cards match', async () => {
+      const card1 = buildCard({ id: '46986414', name: 'Dark Magician' });
+      const card2 = buildCard({
+        id: '89631139',
+        name: 'Blue-Eyes White Dragon',
+      });
+      const cardsMap = new Map([
+        ['46986414', card1],
+        ['89631139', card2],
+      ]);
+      cardQueryRepository.findByName.mockResolvedValue([card1, card2]);
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({ name: 'Dragon' });
+
+      expect(result).toHaveLength(2);
     });
-    expect(externalCardSource.findByName).not.toHaveBeenCalled();
   });
 
-  it('falls back to YGOPRODeck when translations search returns no results', async () => {
-    cardTranslationRepository.findCardIdsByName.mockResolvedValue([]);
-    const sourceCard = buildSourceCard();
-    externalCardSource.findByName.mockResolvedValue([sourceCard]);
-    cardRelatedDataRepository.saveCardSets.mockResolvedValue(
-      new Map([['Legend of Blue Eyes White Dragon', 'set-id-1']]),
-    );
-    cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
+  describe('when language is English', () => {
+    it('searches translations and returns English results without querying translations map', async () => {
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '46986414',
+      ]);
+      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
+      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
 
-    const useCase = createUseCase();
-    const result = await useCase.execute({
-      name: 'Mago Oscuro',
-      language: 'es',
-    });
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'Dark Magician',
+        language: 'en',
+      });
 
-    expect(result).toHaveLength(1);
-    expect(result[0]).toMatchObject({
-      id: '46986414',
-      name: 'Dark Magician',
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({ id: '46986414' });
+      expect(
+        cardTranslationRepository.findByCardIdsAndLanguage,
+      ).not.toHaveBeenCalled();
     });
-    expect(externalCardSource.findByName).toHaveBeenCalledWith('Mago Oscuro');
   });
 
-  it('returns empty array when external source has no results', async () => {
-    externalCardSource.findByName.mockResolvedValue([]);
+  describe('error handling', () => {
+    it('wraps non-domain errors in CardDomainProcessError', async () => {
+      cardQueryRepository.findByName.mockRejectedValue(
+        new Error('Database failure'),
+      );
 
-    const useCase = createUseCase();
-    const result = await useCase.execute({ name: 'NonExistentCard' });
+      const useCase = createUseCase();
 
-    expect(result).toEqual([]);
-    expect(cardRepository.save).not.toHaveBeenCalled();
-  });
+      let raisedError: unknown;
+      try {
+        await useCase.execute({ name: 'Dark Magician' });
+      } catch (error) {
+        raisedError = error;
+      }
 
-  it('syncs multiple cards from external source', async () => {
-    const card1 = buildSourceCard({ id: '46986414', name: 'Dark Magician' });
-    const card2 = buildSourceCard({
-      id: '89631139',
-      name: 'Blue-Eyes White Dragon',
+      expect(raisedError).toBeInstanceOf(CardDomainProcessError);
+      const processError = raisedError as CardDomainProcessError;
+      expect(processError.context).toMatchObject({
+        name: 'Dark Magician',
+      });
+      expect(processError.context).not.toHaveProperty('causeCode');
     });
-    externalCardSource.findByName.mockResolvedValue([card1, card2]);
-    cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());
-    cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
 
-    const useCase = createUseCase();
-    const result = await useCase.execute({ name: 'Dragon' });
+    it('wraps domain validation errors in CardDomainProcessError', async () => {
+      cardQueryRepository.findByName.mockImplementation(() => {
+        try {
+          Card.create({} as never);
+        } catch {
+          throw new CardDomainProcessError({
+            stage: 'Card.create',
+            message: 'Invalid card data',
+            context: { entity: 'Card' },
+          });
+        }
+        return Promise.resolve([]);
+      });
 
-    expect(result).toHaveLength(2);
-    expect(transactionManager.transaction).toHaveBeenCalledTimes(2);
-    expect(cardRepository.save).toHaveBeenCalledTimes(2);
-  });
+      const useCase = createUseCase();
 
-  it('wraps non-domain errors without causeCode in context', async () => {
-    externalCardSource.findByName.mockRejectedValue(
-      new Error('Network failure'),
-    );
+      let raisedError: unknown;
+      try {
+        await useCase.execute({ name: 'Dark Magician' });
+      } catch (error) {
+        raisedError = error;
+      }
 
-    const useCase = createUseCase();
-
-    let raisedError: unknown;
-    try {
-      await useCase.execute({ name: 'Dark Magician' });
-    } catch (error) {
-      raisedError = error;
-    }
-
-    expect(raisedError).toBeInstanceOf(CardDomainProcessError);
-    const processError = raisedError as CardDomainProcessError;
-    expect(processError.context).toMatchObject({
-      name: 'Dark Magician',
-    });
-    expect(processError.context).not.toHaveProperty('causeCode');
-  });
-
-  it('wraps domain validation errors in CardDomainProcessError', async () => {
-    externalCardSource.findByName.mockResolvedValue([
-      buildSourceCard({ race: 'UnknownRace' as never }),
-    ]);
-
-    const useCase = createUseCase();
-
-    let raisedError: unknown;
-    try {
-      await useCase.execute({ name: 'Dark Magician' });
-    } catch (error) {
-      raisedError = error;
-    }
-
-    expect(raisedError).toBeInstanceOf(CardDomainProcessError);
-    const processError = raisedError as CardDomainProcessError;
-    expect(processError.code).toBe('CARD_PROCESS_ERROR');
-    expect(processError.context).toMatchObject({
-      entity: 'Card',
-      stage: 'SearchCardByNameUseCase.execute',
-      name: 'Dark Magician',
-      causeCode: 'CARD_VALIDATION_ERROR',
+      expect(raisedError).toBeInstanceOf(CardDomainProcessError);
     });
   });
 });

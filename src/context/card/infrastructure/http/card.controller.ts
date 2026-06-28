@@ -176,7 +176,7 @@ export class CardController {
     type: String,
     required: false,
     description:
-      'Search cards by name (triggers auto-sync from YGOPRODeck if no local results)',
+      'Search cards by name (searches locally in cards and translations)',
     example: 'Dark Magician',
   })
   @ApiQuery({
