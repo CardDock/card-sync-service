@@ -40,12 +40,14 @@ describe('SetCardTranslationUseCase', () => {
   beforeEach(() => {
     cardQueryRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),
       findCardIdsByName: jest.fn(),
+      findByCardIdsAndLanguage: jest.fn(),
       save: jest.fn(),
       deleteByCardId: jest.fn(),
       batchUpsert: jest.fn(),

@@ -43,6 +43,7 @@ describe('ListCardsUseCase', () => {
   beforeEach(() => {
     cardQueryRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
     };
