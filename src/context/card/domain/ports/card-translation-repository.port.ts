@@ -15,6 +15,11 @@ export abstract class CardTranslationRepositoryPort {
 
   abstract findCardIdsByName(name: string, language: string): Promise<string[]>;
 
+  abstract findByCardIdsAndLanguage(
+    cardIds: string[],
+    language: string,
+  ): Promise<Map<string, CardTranslationData>>;
+
   abstract save(
     cardId: string,
     language: string,

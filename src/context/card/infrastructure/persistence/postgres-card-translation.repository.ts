@@ -70,6 +70,51 @@ export class PostgresCardTranslationRepository implements CardTranslationReposit
     return result.rows.map((row) => row.card_id);
   }
 
+  async findByCardIdsAndLanguage(
+    cardIds: string[],
+    language: string,
+  ): Promise<Map<string, CardTranslationData>> {
+    if (cardIds.length === 0) {
+      return new Map();
+    }
+
+    const result = await this.postgresPoolProvider.client.query<{
+      card_id: string;
+      name: string;
+      desc: string;
+      type: string | null;
+      human_readable_card_type: string | null;
+      race: string | null;
+    }>(
+      `
+        SELECT
+          "card_id",
+          "name",
+          "desc",
+          "type",
+          "human_readable_card_type",
+          "race"
+        FROM "card_translations"
+        WHERE "card_id" = ANY($1) AND "language" = $2
+      `,
+      [cardIds, language],
+    );
+
+    const translations = new Map<string, CardTranslationData>();
+
+    for (const row of result.rows) {
+      translations.set(row.card_id, {
+        name: row.name,
+        desc: row.desc,
+        type: row.type,
+        humanReadableCardType: row.human_readable_card_type,
+        race: row.race,
+      });
+    }
+
+    return translations;
+  }
+
   async save(
     cardId: string,
     language: string,

@@ -30,18 +30,6 @@ export class CardDescription {
       });
     }
 
-    const normalized = value.trim();
-
-    if (normalized.length === 0) {
-      throw new CardDomainValidationError({
-        field: fieldName,
-        value,
-        source: 'CardDescription.normalizeRequiredText',
-        rule: 'required-trimmed-string',
-        message: `Card ${fieldName} is required`,
-      });
-    }
-
-    return normalized;
+    return value.trim();
   }
 }

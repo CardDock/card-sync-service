@@ -21,16 +21,16 @@ describe('CardDescription', () => {
       expect(cardDescription.toPrimitives()).toBe('Special summon one token.');
     });
 
-    it('throws when value is an empty string', () => {
-      expect(() => CardDescription.create('')).toThrow(
-        new Error('Card description is required'),
-      );
+    it('allows empty string and returns empty', () => {
+      const cardDescription = CardDescription.create('');
+
+      expect(cardDescription.toPrimitives()).toBe('');
     });
 
-    it('throws when value is only whitespace', () => {
-      expect(() => CardDescription.create('   \n\t   ')).toThrow(
-        new Error('Card description is required'),
-      );
+    it('allows whitespace-only string and returns trimmed empty', () => {
+      const cardDescription = CardDescription.create('   \n\t   ');
+
+      expect(cardDescription.toPrimitives()).toBe('');
     });
 
     it.each([

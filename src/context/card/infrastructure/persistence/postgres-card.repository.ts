@@ -88,6 +88,48 @@ export class PostgresCardRepository
     return mapPostgresRowToCard(row);
   }
 
+  async findByIds(ids: string[]): Promise<Map<string, Card>> {
+    if (ids.length === 0) {
+      return new Map();
+    }
+
+    const result =
+      await this.postgresPoolProvider.client.query<PostgresCardRow>(
+        `
+        SELECT
+          "id",
+          "name",
+          "typeline",
+          "type",
+          "human_readable_card_type",
+          "frame_type",
+          "desc",
+          "race",
+          "atk",
+          "def",
+          "level",
+          "scale",
+          "linkval",
+          "linkmarkers",
+          "attribute",
+          "rawData" AS "raw_data",
+          "manually_edited",
+          "manually_edited_at"
+        FROM "cards"
+        WHERE "id" = ANY($1)
+      `,
+        [ids],
+      );
+
+    const cards = new Map<string, Card>();
+
+    for (const row of result.rows) {
+      cards.set(row.id, mapPostgresRowToCard(row));
+    }
+
+    return cards;
+  }
+
   async findByName(name: string): Promise<Card[]> {
     const result =
       await this.postgresPoolProvider.client.query<PostgresCardRow>(
