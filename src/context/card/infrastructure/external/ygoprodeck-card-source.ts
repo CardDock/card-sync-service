@@ -57,7 +57,7 @@ export class YgoProDeckExternalCardSource implements ExternalCardSourcePort {
       },
     });
 
-    if (response.status === 404 || response.status === 400) {
+    if (response.status === 404) {
       return [];
     }
 
