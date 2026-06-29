@@ -1,7 +1,7 @@
 module.exports = {
   default: {
-    require: ['test/features/step_definitions/**/*.ts'],
-    paths: ['test/features/**/*.feature'],
+    require: ['tests/bdd/step_definitions/**/*.ts'],
+    paths: ['tests/bdd/features/**/*.feature'],
     requireModule: ['ts-node/register'],
   },
 };

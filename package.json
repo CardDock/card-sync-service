@@ -18,7 +18,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r ts-node/register -r tsconfig-paths/register node_modules/jest/bin/jest.js --runInBand",
-    "test:e2e": "cross-env NODE_ENV=test jest --config ./test/jest-e2e.json --runInBand",
+    "test:e2e": "cross-env NODE_ENV=test jest --config ./tests/e2e/jest-e2e.json --runInBand",
     "test:bdd": "cucumber-js --format pretty",
     "validate": "npm run lint && npm run test && npm run build",
     "prepare": "husky install"
@@ -52,6 +52,7 @@
     "@types/supertest": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
+    "cross-env": "^10.1.0",
     "dotenv": "^17.4.2",
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.0.0",
@@ -75,24 +76,27 @@
       "json",
       "ts"
     ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
+    "rootDir": ".",
+    "testMatch": [
+      "<rootDir>/tests/unit/**/*.spec.ts"
+    ],
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s",
-      "!**/generated/**",
-      "!main.ts",
-      "!app/app.module.ts",
-      "!context/card/card.module.ts",
-      "!**/*.port.ts",
-      "!**/index.ts"
+      "src/**/*.(t|j)s",
+      "!src/**/generated/**",
+      "!src/main.ts",
+      "!src/app/app.module.ts",
+      "!src/context/card/card.module.ts",
+      "!src/**/*.port.ts",
+      "!src/**/index.ts"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "./coverage",
     "coveragePathIgnorePatterns": [
       "/node_modules/",
-      "/generated/"
+      "/generated/",
+      "/tests/"
     ],
     "testEnvironment": "node"
   }
