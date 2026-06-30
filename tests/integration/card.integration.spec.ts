@@ -93,9 +93,7 @@ describe('CardController Integration (real DB)', () => {
         .expect(200);
 
       expect(response.body.items.length).toBeGreaterThanOrEqual(1);
-      const item = response.body.items.find(
-        (item) => item.id === CARD_ID,
-      );
+      const item = response.body.items.find((item) => item.id === CARD_ID);
       expect(item).toMatchObject({
         id: CARD_ID,
         name: SPANISH_NAME,

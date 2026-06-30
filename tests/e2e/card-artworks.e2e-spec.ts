@@ -23,8 +23,9 @@ describe('GET /cards/:id/artworks (e2e)', () => {
   });
 
   it('returns 200 or 404 for artworks', async () => {
-    const response = await request(app.getHttpServer())
-      .get(`/cards/${CARD_ID}/artworks`);
+    const response = await request(app.getHttpServer()).get(
+      `/cards/${CARD_ID}/artworks`,
+    );
 
     expect([200, 404]).toContain(response.status);
   });

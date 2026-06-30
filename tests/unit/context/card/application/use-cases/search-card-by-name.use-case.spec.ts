@@ -274,8 +274,7 @@ describe('SearchCardByNameUseCase', () => {
       cardTranslationRepository.findCardIdsByName.mockResolvedValue([
         '46986414',
       ]);
-      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]])
-;
+      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
       cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
 
       const useCase = createUseCase();

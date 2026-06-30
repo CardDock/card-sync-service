@@ -127,13 +127,13 @@ class ApplicationError extends Error {
 
 class ValidationError extends ApplicationError {
   constructor(message: string, details?: Record<string, any>) {
-    super(message, "VALIDATION_ERROR", 400, details);
+    super(message, 'VALIDATION_ERROR', 400, details);
   }
 }
 
 class NotFoundError extends ApplicationError {
   constructor(resource: string, id: string) {
-    super(`${resource} not found`, "NOT_FOUND", 404, { resource, id });
+    super(`${resource} not found`, 'NOT_FOUND', 404, { resource, id });
   }
 }
 
@@ -141,7 +141,7 @@ class NotFoundError extends ApplicationError {
 function getUser(id: string): User {
   const user = users.find((u) => u.id === id);
   if (!user) {
-    throw new NotFoundError("User", id);
+    throw new NotFoundError('User', id);
   }
   return user;
 }
@@ -177,7 +177,7 @@ const result = parseJSON<User>(userJson);
 if (result.ok) {
   console.log(result.value.name);
 } else {
-  console.error("Parse failed:", result.error.message);
+  console.error('Parse failed:', result.error.message);
 }
 
 // Chaining Results
@@ -221,7 +221,7 @@ function fetchData(url: string): Promise<Data> {
       return response.json();
     })
     .catch((error) => {
-      console.error("Fetch failed:", error);
+      console.error('Fetch failed:', error);
       throw error;
     });
 }
@@ -449,17 +449,17 @@ function validateUser(data: any): User {
   const errors = new ErrorCollector();
 
   if (!data.email) {
-    errors.add(new ValidationError("Email is required"));
+    errors.add(new ValidationError('Email is required'));
   } else if (!isValidEmail(data.email)) {
-    errors.add(new ValidationError("Email is invalid"));
+    errors.add(new ValidationError('Email is invalid'));
   }
 
   if (!data.name || data.name.length < 2) {
-    errors.add(new ValidationError("Name must be at least 2 characters"));
+    errors.add(new ValidationError('Name must be at least 2 characters'));
   }
 
   if (!data.age || data.age < 18) {
-    errors.add(new ValidationError("Age must be 18 or older"));
+    errors.add(new ValidationError('Age must be 18 or older'));
   }
 
   if (errors.hasErrors()) {

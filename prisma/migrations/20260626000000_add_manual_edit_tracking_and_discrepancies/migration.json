@@ -4,7 +4,12 @@
     {
       "tag": "CreateEnum",
       "enum": "DiscrepancyStatus",
-      "values": ["PENDING", "REVIEWED_LOCAL_WINS", "REVIEWED_API_WINS", "RESOLVED"]
+      "values": [
+        "PENDING",
+        "REVIEWED_LOCAL_WINS",
+        "REVIEWED_API_WINS",
+        "RESOLVED"
+      ]
     },
     {
       "tag": "AlterTable",
@@ -33,13 +38,31 @@
         { "name": "field_name", "type": "String", "isRequired": true },
         { "name": "local_value", "type": "Json", "isRequired": true },
         { "name": "api_value", "type": "Json", "isRequired": true },
-        { "name": "status", "type": "DiscrepancyStatus", "isRequired": true, "default": "PENDING" },
-        { "name": "created_at", "type": "DateTime", "isRequired": true, "default": "now()" },
-        { "name": "updated_at", "type": "DateTime", "isRequired": true, "updatedAt": true }
+        {
+          "name": "status",
+          "type": "DiscrepancyStatus",
+          "isRequired": true,
+          "default": "PENDING"
+        },
+        {
+          "name": "created_at",
+          "type": "DateTime",
+          "isRequired": true,
+          "default": "now()"
+        },
+        {
+          "name": "updated_at",
+          "type": "DateTime",
+          "isRequired": true,
+          "updatedAt": true
+        }
       ],
       "primaryKey": { "columns": ["id"] },
       "uniqueConstraints": [
-        { "name": "card_sync_discrepancies_card_id_field_name_key", "columns": ["card_id", "field_name"] }
+        {
+          "name": "card_sync_discrepancies_card_id_field_name_key",
+          "columns": ["card_id", "field_name"]
+        }
       ],
       "foreignKeys": [
         {

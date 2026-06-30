@@ -1,17 +1,15 @@
 {
-	// Use IntelliSense para saber los atributos posibles.
-	// Mantenga el puntero para ver las descripciones de los existentes atributos.
-	// Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
-	"version": "0.2.0",
-	"configurations": [
-		{
+  // Use IntelliSense para saber los atributos posibles.
+  // Mantenga el puntero para ver las descripciones de los existentes atributos.
+  // Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
       "type": "node",
       "request": "launch",
       "name": "NestJS: Launch Debug",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "start:debug"
-      ],
+      "runtimeArgs": ["start:debug"],
       "console": "integratedTerminal",
       "restart": true,
       "skipFiles": [
@@ -19,9 +17,7 @@
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "sourceMaps": true,
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
-      ]
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     },
     {
       "type": "node",
@@ -34,9 +30,7 @@
         "${workspaceFolder}/node_modules/**/*.js"
       ],
       "sourceMaps": true,
-      "outFiles": [
-        "${workspaceFolder}/dist/**/*.js"
-      ]
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"]
     }
-	]
+  ]
 }

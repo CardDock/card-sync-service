@@ -41,8 +41,9 @@ describe('GET /cards/:id (e2e)', () => {
   };
 
   it('obtiene 200 si la carta está en caché, o 422 si YGOPRODeck devuelve datos inválidos (atk=-1)', async () => {
-    const response = await request(app.getHttpServer())
-      .get(`/cards/${CARD_ID}`);
+    const response = await request(app.getHttpServer()).get(
+      `/cards/${CARD_ID}`,
+    );
 
     expect([200, 422]).toContain(response.status);
 
@@ -54,8 +55,9 @@ describe('GET /cards/:id (e2e)', () => {
   });
 
   it('obtiene 200 o 422 con language=es', async () => {
-    const response = await request(app.getHttpServer())
-      .get(`/cards/${CARD_ID}?language=es`);
+    const response = await request(app.getHttpServer()).get(
+      `/cards/${CARD_ID}?language=es`,
+    );
 
     expect([200, 422]).toContain(response.status);
 
@@ -70,8 +72,9 @@ describe('GET /cards/:id (e2e)', () => {
   });
 
   it('obtiene 200 o 422 con language=en', async () => {
-    const response = await request(app.getHttpServer())
-      .get(`/cards/${CARD_ID}?language=en`);
+    const response = await request(app.getHttpServer()).get(
+      `/cards/${CARD_ID}?language=en`,
+    );
 
     expect([200, 422]).toContain(response.status);
 

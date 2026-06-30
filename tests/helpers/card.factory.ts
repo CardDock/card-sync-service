@@ -36,7 +36,9 @@ export const buildSourceCard = (
   ],
 });
 
-export const buildCard = (overrides: Partial<Record<string, unknown>> = {}): Card =>
+export const buildCard = (
+  overrides: Partial<Record<string, unknown>> = {},
+): Card =>
   Card.create({
     id: '23771716',
     name: 'Elemental HERO Neos',
