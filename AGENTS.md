@@ -4,60 +4,72 @@
 
 - NestJS 10, TypeScript 5, pnpm, PostgreSQL (Neon), Prisma 7 (schema/migrations only), raw `pg` for queries
 - Yu-Gi-Oh! card sync from YGOPRODeck API (`https://db.ygoprodeck.com/api/v7/cardinfo.php`)
+- Swagger at `/api`, Pino logger, Husky + commitlint, Cucumber for BDD
 
 ## Architecture
 
 - **DDD with Ports & Adapters**. All files under `src/context/card/`:
-  - `domain/` — pure TS entities (`Card`), value objects (18x), ports (4 abstract classes), errors (`CardDomainValidationError` / `CardDomainProcessError`), types
-  - `application/use-cases/` — `FindOrSyncCardByExternalIdUseCase`, `SearchCardByNameUseCase`, etc.
-  - `infrastructure/` — NestJS controller (`GET /cards/:id?language=es`), `pg` pool provider, repositories (implements query + write + translation ports), YGOPRODeck HTTP client, mappers, field normalizers
+  - `domain/` — `Card` entity, 25 value objects, 13 ports (abstract classes), errors (`CardDomainValidationError` / `CardDomainProcessError` / `DomainError`), types for artwork, prints, sets, translations, sync
+  - `application/use-cases/` — 15 use cases covering CRUD, sync, translations, artwork, prints, discrepancies
+  - `infrastructure/` — NestJS controllers (`CardController`, `MediaController`, `SyncController`), `pg` pool provider, 5 repositories, YGOPRODeck HTTP client, local image storage, SQLite source adapter, Pino logger, mappers, field normalizers, DTOs, exception filters, logging interceptor
 - `src/generated/prisma/` — Prisma client output (gitignored, regenerated on `prisma generate`)
 
 ## Commands
 
 ```
 pnpm install
-pnpm run start:dev          # nest start --watch
-pnpm run build                # nest build
-pnpm run lint                 # eslint with --fix
-pnpm run format               # prettier
-pnpm run test                 # jest (unit tests, rootDir=src, matches *.spec.ts)
-pnpm run test:cov             # with coverage
-pnpm run test:e2e             # jest --config ./test/jest-e2e.json (rootDir=test)
-pnpm run start:prod           # node dist/main
+pnpm run start:dev          # nest start --watch --preserveWatchOutput --debug 0.0.0.0:9229
+pnpm run build              # nest build
+pnpm run clean              # rimraf dist
+pnpm run lint               # eslint "{src,apps,libs,test}/**/*.ts" --cache
+pnpm run lint:fix           # eslint with --fix
+pnpm run format             # prettier --write .
+pnpm run test               # jest (testMatch: tests/unit/**/*.spec.ts)
+pnpm run test:cov           # with coverage
+pnpm run test:e2e           # jest --config ./tests/e2e/jest-e2e.json
+pnpm run test:bdd           # cucumber-js --format pretty
+pnpm run validate           # lint + test + build
+pnpm run start:prod         # cross-env NODE_ENV=production node dist/main.js
 ```
 
 ## Testing
 
-- Unit tests live in `src/tests/` mirroring source tree (not co-located). Jest config in `package.json`.
-- E2E tests in `test/` with separate jest config `test/jest-e2e.json`.
-- All tests are pure unit/integration — no real database or HTTP calls in CI.
-- Use case tests mock ports directly with `jest.fn()`.
+- **Unit tests** in `tests/unit/` mirroring source tree (not co-located). Jest config in `package.json`.
+- **E2E tests** in `tests/e2e/` with separate jest config `tests/e2e/jest-e2e.json`.
+- **BDD tests** in `tests/bdd/` using Cucumber (5 feature files, 1 step definitions file).
+- **Integration tests** in `tests/integration/`.
+- **Test helpers** in `tests/helpers/` (card factory, logger mock, transaction manager mock).
+- All unit tests are pure — no real database or HTTP calls. Use case tests mock ports with `jest.fn()`.
+- Coverage: ~77% statements, ~75% branches (233 tests, 41 suites).
 
-## DB / Prisma
+## DB / Prisma (6 models)
 
 - `DIRECT_URL` env var required (postgres://...). Copied from `.env.example`.
 - Prisma for schema & migrations only. Runtime queries use raw `pg` (node-postgres) via `PostgresPoolProvider`.
+- `prisma.config.ts` provides `DIRECT_URL` at runtime. **Datasource block has no URL**.
+- Models: `Card`, `CardTranslation` (no FK, unique on cardId+language), `CardSyncDiscrepancy`, `CardSet`, `Artwork`, `CardPrint`, `SyncJobLog`.
+- Enums: `Attribute` (7), `LinkMarker` (8), `FrameType` (11), `Race` (28), `DiscrepancyStatus` (4), `SyncJobStatus` (4).
 - Run `npx prisma generate` after schema changes to regenerate `src/generated/prisma/`.
-- Migrations: `npx prisma migrate dev` (create, view migration SQL, apply).
+- Migrations: `npx prisma migrate dev` (create, view migration SQL, apply). Currently 14 migrations.
 
 ## Env
 
 - `dotenv/config` loaded in `main.ts` and `prisma.config.ts`. `.env` is gitignored.
 - `DIRECT_URL` — DB connection string (required)
 - `YGOPRODECK_API_BASE_URL` — optional override for card API
-- `PORT` — defaults to 3000
+- `LOG_LEVEL` — error, warn, info, debug, trace (default: info)
+- `PORT` — defaults to 3001
 
 ## Quirks
 
 - `tsconfig.json`: `strictNullChecks: false`, `noImplicitAny: false`. Do not add strict mode types.
-- Prisma `datasource` block has **no URL** — the actual URL is provided at runtime via `prisma.config.ts` from `DIRECT_URL` env var.
-- `Card` entity uses 17 value objects — every field is validated on construction via `CardDomainValidationError`.
-- Repository uses `ON CONFLICT (id) DO UPDATE` — upsert semantics.
+- **25 value objects** — every `Card` field is validated on construction via `CardDomainValidationError`.
+- **13 ports** — `CardQueryRepository`, `CardRelatedDataRepository`, `CardRepository`, `CardSyncDiscrepancyRepository`, `CardTranslationRepository`, `ExternalCardSource`, `ExternalImageSource`, `ImageStorage`, `Logger`, `SqliteCardSource`, `SyncJobRepository`, `TransactionManager`.
+- **15 use cases** — add artwork, add print, delete card, find-or-sync, get artworks, get image, get prints, list card sets, list cards, search by name, set translation, sync card, sync translations, update card, list/resolve discrepancies.
+- Repositories use `ON CONFLICT (id) DO UPDATE` — upsert semantics.
 - Field normalizers convert between external API labels (e.g. `"Beast-Warrior"`) and domain types (`"BeastWarrior"`).
-- **i18n**: Cards are always synced from YGOPRODeck in English (canonical). Translations stored in `card_translations` table. `GET /cards/:id?language=es` and `GET /cards?name=...&language=es` merge translations at the application layer. If no translation exists, English is the fallback. Supported languages: `en`, `es`. `Language` value object validates this.
+- **i18n**: Cards synced from YGOPRODeck in English (canonical). Translations stored in `card_translations` table. `GET /cards/:id?language=es` and `GET /cards?name=...&language=es` merge at application layer. Fallback to English. Supported: `en`, `es`. `Language` value object validates.
 - pnpm workspace: `allowBuilds` set for `@nestjs/core`, `@prisma/engines`, `prisma`.
-- Coverage: ~77% statements, ~75% branches (233 tests, 41 suites). `src/generated/prisma/` excluido via `coveragePathIgnorePatterns` en Jest config.
-- `card.controller.ts`, `card-field-normalizers.ts`, `logging.interceptor.ts`, `domain-error.filter.ts`, `json-value.mapper.ts`, `language.value-object.ts` al 100%.
-- `postgres-card.mapper.ts` al 95.65% (solo línea 98 sin cubrir: `inner === ''`, caso borde de Postgres).
-- Capa de persistencia (repos, pool, logger) con 0-10% — no mockeada intencionalmente por bajo ROI. Business logic cubierta via use cases.
+- Husky hooks: `commit-msg` (commitlint), `pre-commit` (npm test), `pre-push` (pnpm run lint).
+- 100% coverage files: `card.controller.ts`, `card-field-normalizers.ts`, `logging.interceptor.ts`, `domain-error.filter.ts`, `json-value.mapper.ts`, `language.value-object.ts`.
+- Persistence layer (repos, pool, logger) at 0-10% — not mocked intentionally (low ROI). Business logic covered via use cases.
