@@ -28,7 +28,6 @@ model Card {
   manuallyEdited        Boolean      @default(false) @map("manually_edited")
   manuallyEditedAt      DateTime?    @map("manually_edited_at")
   artworks              Artwork[]
-  translations          CardTranslation[]
   syncDiscrepancies     CardSyncDiscrepancy[]
 
   @@index([name])
@@ -43,8 +42,6 @@ model CardTranslation {
   type                  String?
   humanReadableCardType String? @map("human_readable_card_type")
   race                  String?
-
-  card                  Card    @relation(fields: [cardId], references: [id], onDelete: Cascade)
 
   @@unique([cardId, language])
   @@map("card_translations")

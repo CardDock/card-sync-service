@@ -1,6 +1,5 @@
 import { SqliteCardSourcePort } from '../../domain/ports/sqlite-card-source.port';
 import { SyncJobRepositoryPort } from '../../domain/ports/sync-job-repository.port';
-import { CardRepositoryPort } from '../../domain/ports/card-repository.port';
 import { CardTranslationRepositoryPort } from '../../domain/ports/card-translation-repository.port';
 import { Logger } from '../../domain/ports/logger.port';
 
@@ -10,7 +9,6 @@ export class SyncTranslationsUseCase {
   constructor(
     private readonly sqliteSource: SqliteCardSourcePort,
     private readonly syncJobRepository: SyncJobRepositoryPort,
-    private readonly cardRepository: CardRepositoryPort,
     private readonly translationRepository: CardTranslationRepositoryPort,
     private readonly logger: Logger,
   ) {}
@@ -36,7 +34,6 @@ export class SyncTranslationsUseCase {
 
         if (rows.length === 0) break;
 
-        await this.cardRepository.batchInsertStubs(rows);
         await this.translationRepository.batchUpsert(
           rows.map((r) => ({
             cardId: r.cardId,

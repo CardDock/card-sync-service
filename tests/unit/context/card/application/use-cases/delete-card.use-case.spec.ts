@@ -6,7 +6,10 @@ import { CardRelatedDataRepositoryPort } from '../../../../../../src/context/car
 import { TransactionManagerPort } from '../../../../../../src/context/card/domain/ports/transaction-manager.port';
 import { Card } from '../../../../../../src/context/card/domain/entities/card.entity';
 import { CardDomainProcessError } from '../../../../../../src/context/card/domain/errors';
-import { buildLoggerMock, buildTransactionManagerMock } from '../../../../../helpers';
+import {
+  buildLoggerMock,
+  buildTransactionManagerMock,
+} from '../../../../../helpers';
 
 const buildCard = (): Card =>
   Card.create({
@@ -50,7 +53,6 @@ describe('DeleteCardUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
-      batchInsertStubs: jest.fn(),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),

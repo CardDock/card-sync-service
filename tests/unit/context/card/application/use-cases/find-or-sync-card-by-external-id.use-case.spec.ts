@@ -10,10 +10,13 @@ import {
   CardDomainValidationError,
 } from '../../../../../../src/context/card/domain/errors';
 import { TransactionManagerPort } from '../../../../../../src/context/card/domain/ports/transaction-manager.port';
-import { buildLoggerMock, buildSourceCard, buildTransactionManagerMock } from '../../../../../helpers';
+import {
+  buildLoggerMock,
+  buildSourceCard,
+  buildTransactionManagerMock,
+} from '../../../../../helpers';
 
 describe('FindOrSyncCardByExternalIdUseCase', () => {
-
   let cardQueryRepository: jest.Mocked<CardQueryRepositoryPort>;
   let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
   let cardRepository: jest.Mocked<CardRepositoryPort>;
@@ -40,7 +43,6 @@ describe('FindOrSyncCardByExternalIdUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
-      batchInsertStubs: jest.fn(),
     };
     cardRelatedDataRepository = {
       saveCardSets: jest.fn(),

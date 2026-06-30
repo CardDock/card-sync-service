@@ -7,7 +7,11 @@ import { CardRelatedDataRepositoryPort } from '../../../../../../src/context/car
 import { CardDomainProcessError } from '../../../../../../src/context/card/domain/errors';
 import { TransactionManagerPort } from '../../../../../../src/context/card/domain/ports/transaction-manager.port';
 import { CardSyncDiscrepancyRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-sync-discrepancy-repository.port';
-import { buildLoggerMock, buildSourceCard, buildTransactionManagerMock } from '../../../../../helpers';
+import {
+  buildLoggerMock,
+  buildSourceCard,
+  buildTransactionManagerMock,
+} from '../../../../../helpers';
 describe('SyncCardUseCase', () => {
   let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
   let cardRepository: jest.Mocked<CardRepositoryPort>;
@@ -28,7 +32,6 @@ describe('SyncCardUseCase', () => {
       clearManualEditFlag: jest.fn(),
       isManuallyEdited: jest.fn().mockResolvedValue(false),
       getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
-      batchInsertStubs: jest.fn(),
     };
     cardQueryRepository = {
       findById: jest.fn(),

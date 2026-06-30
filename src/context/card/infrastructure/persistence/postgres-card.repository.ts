@@ -519,34 +519,6 @@ export class PostgresCardRepository
       [id],
     );
   }
-
-  async batchInsertStubs(rows: { cardId: string }[]): Promise<void> {
-    const values: string[] = [];
-    const params: unknown[] = [];
-    let idx = 1;
-
-    for (const { cardId } of rows) {
-      values.push(
-        `($${idx++}, $${idx++}, $${idx++}::text[], $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}, $${idx++}::jsonb)`,
-      );
-      params.push(
-        cardId,
-        `__CARD_${cardId}__`,
-        [],
-        'Stub',
-        'Stub',
-        'normal',
-        '',
-        'Normal',
-        {},
-      );
-    }
-
-    await this.postgresPoolProvider.client.query(
-      `INSERT INTO "cards" ("id", "name", "typeline", "type", "human_readable_card_type", "frame_type", "desc", "race", "rawData") VALUES ${values.join(', ')} ON CONFLICT ("id") DO NOTHING`,
-      params,
-    );
-  }
 }
 
 function buildFieldUpdateClauses(
