@@ -1,0 +1,315 @@
+{
+  "info": {
+    "name": "Card Sync Service",
+    "description": "API para sincronización y consulta de cartas de Yu-Gi-Oh! desde YGOPRODeck API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "opencode"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "card_id",
+      "value": "10000",
+      "type": "string"
+    },
+    {
+      "key": "language",
+      "value": "es",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Cards",
+      "item": [
+        {
+          "name": "Get card by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}?language={{language}}",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}"],
+              "query": [
+                { "key": "language", "value": "{{language}}" }
+              ]
+            },
+            "description": "Find a card by its YGOPRODeck ID (auto-syncs from API if not in local DB)"
+          }
+        },
+        {
+          "name": "Search / list cards",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cards?name={{card_name}}&language={{language}}&page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["cards"],
+              "query": [
+                { "key": "name", "value": "{{card_name}}", "description": "Search by name" },
+                { "key": "language", "value": "{{language}}" },
+                { "key": "type", "value": "", "description": "Filter: Normal Monster, Effect Monster, etc." },
+                { "key": "race", "value": "", "description": "Filter: Spellcaster, Warrior, etc." },
+                { "key": "attribute", "value": "", "description": "Filter: DARK, LIGHT, etc." },
+                { "key": "frameType", "value": "", "description": "Filter: normal, effect, etc." },
+                { "key": "atkMin", "value": "", "description": "Minimum ATK" },
+                { "key": "atkMax", "value": "", "description": "Maximum ATK" },
+                { "key": "defMin", "value": "", "description": "Minimum DEF" },
+                { "key": "defMax", "value": "", "description": "Maximum DEF" },
+                { "key": "level", "value": "", "description": "Filter by level/rank" },
+                { "key": "linkval", "value": "", "description": "Filter by link value" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "List or search cards with optional filters and pagination. If `name` is provided, other filters are ignored."
+          }
+        },
+        {
+          "name": "Get card prints",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/prints",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "prints"]
+            },
+            "description": "Get all print variants for a card"
+          }
+        },
+        {
+          "name": "Get card artworks",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/artworks",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "artworks"]
+            },
+            "description": "Get all artworks for a card"
+          }
+        },
+        {
+          "name": "Get discrepancies (all)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cards/discrepancies?page=1&limit=20",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "discrepancies"],
+              "query": [
+                { "key": "status", "value": "", "description": "PENDING, REVIEWED_LOCAL_WINS, REVIEWED_API_WINS, RESOLVED" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "List all sync discrepancies across cards (paginated)"
+          }
+        },
+        {
+          "name": "Get discrepancies (by card)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/discrepancies",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "discrepancies"]
+            },
+            "description": "Get all sync discrepancies for a specific card"
+          }
+        },
+        {
+          "name": "Force sync card from API",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/cards/sync",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "sync"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{card_id}}\"\n}"
+            },
+            "description": "Force sync a card from YGOPRODeck API"
+          }
+        },
+        {
+          "name": "Update card (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dark Magician (edited)\",\n  \"desc\": \"Updated description\"\n}"
+            },
+            "description": "Partially update a card (manual edit)"
+          }
+        },
+        {
+          "name": "Set translation",
+          "request": {
+            "method": "PUT",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/translations/{{language}}",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "translations", "{{language}}"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mago Oscuro\",\n  \"desc\": \"El mago más poderoso en la historia del Duelo de Monstruos.\"\n}"
+            },
+            "description": "Set or update a translation for a card"
+          }
+        },
+        {
+          "name": "Add artwork",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/artworks",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "artworks"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrl\": \"https://images.ygoprodeck.com/images/cards/{{card_id}}.jpg\"\n}"
+            },
+            "description": "Add an alternative artwork to a card"
+          }
+        },
+        {
+          "name": "Add print variant",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/prints",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "prints"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setName\": \"Legend of Blue Eyes White Dragon\",\n  \"setCode\": \"LOB-001\",\n  \"rarity\": \"Ultra Rare\",\n  \"rarityCode\": \"UR\"\n}"
+            },
+            "description": "Add a missing print variant to a card"
+          }
+        },
+        {
+          "name": "Delete card",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}"]
+            },
+            "description": "Delete a card and all its related data"
+          }
+        },
+        {
+          "name": "Resolve discrepancy",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{base_url}}/cards/{{card_id}}/discrepancies/{{discrepancy_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["cards", "{{card_id}}", "discrepancies", "{{discrepancy_id}}"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"REVIEWED_API_WINS\"\n}"
+            },
+            "description": "Resolve a sync discrepancy. Actions: REVIEWED_LOCAL_WINS, REVIEWED_API_WINS, RESOLVED"
+          }
+        },
+        {
+          "name": "List card sets",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/card-sets",
+              "host": ["{{base_url}}"],
+              "path": ["card-sets"]
+            },
+            "description": "List all card sets"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        {
+          "name": "Get card image",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/media/cards/{{card_id}}.jpg?variant=normal",
+              "host": ["{{base_url}}"],
+              "path": ["media", "cards", "{{card_id}}.jpg"],
+              "query": [
+                { "key": "variant", "value": "normal", "description": "normal, small, cropped" }
+              ]
+            },
+            "description": "Get a card image, downloading and caching it locally on first request"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sync",
+      "item": [
+        {
+          "name": "Start translation sync",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/sync-cards/{{language}}",
+              "host": ["{{base_url}}"],
+              "path": ["sync-cards", "{{language}}"]
+            },
+            "description": "Start async translation sync for a language from EDOPro SQLite"
+          }
+        },
+        {
+          "name": "Get sync status",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/sync-cards/status/{{language}}",
+              "host": ["{{base_url}}"],
+              "path": ["sync-cards", "status", "{{language}}"]
+            },
+            "description": "Get the status of the last sync job for a language"
+          }
+        }
+      ]
+    }
+  ]
+}
