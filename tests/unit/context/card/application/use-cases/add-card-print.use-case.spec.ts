@@ -42,6 +42,7 @@ describe('AddCardPrintUseCase', () => {
       saveCardPrints: jest.fn(),
       findArtworksByCardId: jest.fn(),
       findPrintsByCardId: jest.fn(),
+      findPrintsWithArtworkByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
       deleteByCardId: jest.fn(),
       findFirstArtworkIdByCardId: jest.fn(),

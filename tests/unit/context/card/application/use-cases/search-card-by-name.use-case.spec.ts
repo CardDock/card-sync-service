@@ -2,6 +2,7 @@ import { Card } from '../../../../../../src/context/card/domain/entities/card.en
 import { SearchCardByNameUseCase } from '../../../../../../src/context/card/application/use-cases/search-card-by-name.use-case';
 import { CardQueryRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-query-repository.port';
 import { CardTranslationRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-translation-repository.port';
+import { CardRelatedDataRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-related-data-repository.port';
 import { CardDomainProcessError } from '../../../../../../src/context/card/domain/errors';
 import type { CreateCardParams } from '../../../../../../src/context/card/domain/types/card.types';
 import { buildLoggerMock } from '../../../../../helpers';
@@ -33,6 +34,7 @@ const buildCard = (overrides: Partial<CreateCardParams> = {}): Card =>
 
 describe('SearchCardByNameUseCase', () => {
   let cardQueryRepository: jest.Mocked<CardQueryRepositoryPort>;
+  let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
   let cardTranslationRepository: jest.Mocked<CardTranslationRepositoryPort>;
 
   beforeEach(() => {
@@ -41,6 +43,17 @@ describe('SearchCardByNameUseCase', () => {
       findByIds: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
+    };
+    cardRelatedDataRepository = {
+      saveCardSets: jest.fn(),
+      saveArtwork: jest.fn(),
+      saveCardPrints: jest.fn(),
+      findArtworksByCardId: jest.fn(),
+      findPrintsByCardId: jest.fn(),
+      findPrintsWithArtworkByCardId: jest.fn().mockResolvedValue([]),
+      findAllCardSets: jest.fn(),
+      deleteByCardId: jest.fn(),
+      findFirstArtworkIdByCardId: jest.fn(),
     };
     cardTranslationRepository = {
       findByCardIdAndLanguage: jest.fn(),
@@ -55,6 +68,7 @@ describe('SearchCardByNameUseCase', () => {
   const createUseCase = () =>
     new SearchCardByNameUseCase(
       cardQueryRepository,
+      cardRelatedDataRepository,
       cardTranslationRepository,
       buildLoggerMock(),
     );

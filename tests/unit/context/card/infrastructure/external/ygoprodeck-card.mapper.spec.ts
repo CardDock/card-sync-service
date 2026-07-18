@@ -40,8 +40,10 @@ const darkMagicianDto = {
     {
       id: 1,
       image_url: 'https://images.ygoprodeck.com/images/cards/46986414.jpg',
-      image_url_small: '',
-      image_url_cropped: '',
+      image_url_small:
+        'https://images.ygoprodeck.com/images/cards_small/46986414.jpg',
+      image_url_cropped:
+        'https://images.ygoprodeck.com/images/cards_cropped/46986414.jpg',
     },
   ],
 };
@@ -119,7 +121,7 @@ describe('mapYgoProDeckResponseToSyncCardParams', () => {
     });
   });
 
-  it('collects artworks from card_images', () => {
+  it('collects artworks from card_images with all 3 url variants', () => {
     const result = mapYgoProDeckResponseToSyncCardParams({
       data: [darkMagicianDto],
     });
@@ -127,6 +129,10 @@ describe('mapYgoProDeckResponseToSyncCardParams', () => {
     expect(result!.artworks).toHaveLength(1);
     expect(result!.artworks[0]).toMatchObject({
       imageUrl: 'https://images.ygoprodeck.com/images/cards/46986414.jpg',
+      imageUrlSmall:
+        'https://images.ygoprodeck.com/images/cards_small/46986414.jpg',
+      imageUrlCropped:
+        'https://images.ygoprodeck.com/images/cards_cropped/46986414.jpg',
     });
   });
 

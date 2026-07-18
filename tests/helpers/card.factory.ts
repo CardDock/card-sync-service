@@ -24,7 +24,13 @@ export const buildSourceCard = (
     ...overrides,
   },
   cardSets: [{ name: 'Legend of Blue Eyes White Dragon', code: 'LOB' }],
-  artworks: [{ imageUrl: 'https://example.com/image.png' }],
+  artworks: [
+    {
+      imageUrl: 'https://example.com/image.png',
+      imageUrlSmall: 'https://example.com/image_small.png',
+      imageUrlCropped: 'https://example.com/image_cropped.png',
+    },
+  ],
   cardPrints: [
     {
       setName: 'Legend of Blue Eyes White Dragon',

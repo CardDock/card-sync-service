@@ -8,6 +8,7 @@ import {
 } from '../../domain/ports/card-related-data-repository.port';
 import { CardSetData } from '../../domain/types/card-set.types';
 import { CardPrintData } from '../../domain/types/card-print.types';
+import { CardPrintWithArtwork } from '../../domain/types/card.types';
 import { PostgresPoolProvider } from './postgres-pool.provider';
 
 @Injectable()
@@ -44,16 +45,23 @@ export class PostgresCardRelatedDataRepository implements CardRelatedDataReposit
     return setIds;
   }
 
-  async saveArtwork(cardId: string, imageUrl: string): Promise<string> {
+  async saveArtwork(
+    cardId: string,
+    imageUrl: string,
+    imageUrlSmall: string,
+    imageUrlCropped: string,
+  ): Promise<string> {
     const result = await this.postgresPoolProvider.client.query<{ id: string }>(
       `
-      INSERT INTO "artworks" ("id", "card_id", "image_url")
-      VALUES (gen_random_uuid(), $1, $2)
+      INSERT INTO "artworks" ("id", "card_id", "image_url", "image_url_small", "image_url_cropped")
+      VALUES (gen_random_uuid(), $1, $2, $3, $4)
       ON CONFLICT ("card_id", "image_url") DO UPDATE SET
-        "image_url" = EXCLUDED."image_url"
+        "image_url" = EXCLUDED."image_url",
+        "image_url_small" = EXCLUDED."image_url_small",
+        "image_url_cropped" = EXCLUDED."image_url_cropped"
       RETURNING "id"
       `,
-      [cardId, imageUrl],
+      [cardId, imageUrl, imageUrlSmall, imageUrlCropped],
     );
 
     return result.rows[0].id;
@@ -93,9 +101,11 @@ export class PostgresCardRelatedDataRepository implements CardRelatedDataReposit
     const result = await this.postgresPoolProvider.client.query<{
       id: string;
       image_url: string;
+      image_url_small: string | null;
+      image_url_cropped: string | null;
     }>(
       `
-      SELECT a."id", a."image_url"
+      SELECT a."id", a."image_url", a."image_url_small", a."image_url_cropped"
       FROM "artworks" a
       WHERE a."card_id" = $1
       ORDER BY a."id"
@@ -106,6 +116,8 @@ export class PostgresCardRelatedDataRepository implements CardRelatedDataReposit
     return result.rows.map((row) => ({
       id: row.id,
       imageUrl: row.image_url,
+      imageUrlSmall: row.image_url_small ?? row.image_url,
+      imageUrlCropped: row.image_url_cropped ?? row.image_url,
     }));
   }
 
@@ -148,6 +160,55 @@ export class PostgresCardRelatedDataRepository implements CardRelatedDataReposit
       rarity: row.rarity,
       rarityCode: row.rarity_code,
       setPrice: row.set_price,
+    }));
+  }
+
+  async findPrintsWithArtworkByCardId(
+    cardId: string,
+  ): Promise<CardPrintWithArtwork[]> {
+    const result = await this.postgresPoolProvider.client.query<{
+      id: string;
+      card_set_id: string;
+      card_set_name: string;
+      card_set_code: string | null;
+      set_code: string;
+      rarity: string;
+      rarity_code: string | null;
+      set_price: number | null;
+    }>(
+      `
+      SELECT
+        cp."id",
+        cp."card_set_id",
+        cs."name" AS "card_set_name",
+        cs."code" AS "card_set_code",
+        cp."set_code",
+        cp."rarity",
+        cp."rarity_code",
+        cp."set_price"
+      FROM "card_prints" cp
+      JOIN "card_sets" cs ON cs."id" = cp."card_set_id"
+      JOIN "artworks" a ON a."id" = cp."artwork_id"
+      WHERE a."card_id" = $1
+      ORDER BY cs."name", cp."rarity"
+    `,
+      [cardId],
+    );
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      cardSetId: row.card_set_id,
+      cardSetName: row.card_set_name,
+      cardSetCode: row.card_set_code,
+      setCode: row.set_code,
+      rarity: row.rarity,
+      rarityCode: row.rarity_code,
+      setPrice: row.set_price,
+      imageUrls: {
+        full: `media/cards/${cardId}.jpg?variant=normal`,
+        small: `media/cards/${cardId}.jpg?variant=small`,
+        cropped: `media/cards/${cardId}.jpg?variant=cropped`,
+      },
     }));
   }
 

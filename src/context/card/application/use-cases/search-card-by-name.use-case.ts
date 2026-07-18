@@ -1,4 +1,5 @@
 import { CardQueryRepositoryPort } from '../../domain/ports/card-query-repository.port';
+import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { CardTranslationRepositoryPort } from '../../domain/ports/card-translation-repository.port';
 import { CardDomainProcessError, DomainError } from '../../domain/errors';
 import { Logger } from '../../domain/ports/logger.port';
@@ -18,6 +19,7 @@ export type SearchCardByNameCommand = SearchCardByNameInput;
 export class SearchCardByNameUseCase {
   constructor(
     private readonly cardQueryRepository: CardQueryRepositoryPort,
+    private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
     private readonly cardTranslationRepository: CardTranslationRepositoryPort,
     private readonly logger: Logger,
   ) {}
@@ -66,20 +68,24 @@ export class SearchCardByNameUseCase {
         }
 
         const primitives = card.toPrimitives();
+        const prints =
+          await this.cardRelatedDataRepository.findPrintsWithArtworkByCardId(
+            id,
+          );
 
         if (language === 'en') {
-          results.push(this.stripRawData(primitives));
+          results.push({ ...this.stripRawData(primitives), prints });
           continue;
         }
 
         const translation = translationsMap.get(id);
 
         if (!translation) {
-          results.push(this.stripRawData(primitives));
+          results.push({ ...this.stripRawData(primitives), prints });
           continue;
         }
 
-        results.push(this.mergeTranslation(primitives, translation));
+        results.push(this.mergeTranslation(primitives, translation, prints));
       }
 
       this.logger.info(
@@ -118,6 +124,7 @@ export class SearchCardByNameUseCase {
       humanReadableCardType?: string | null;
       race?: string | null;
     },
+    prints: CardResponse['prints'],
   ): CardResponse {
     const response = this.stripRawData(primitives);
 
@@ -129,10 +136,13 @@ export class SearchCardByNameUseCase {
       humanReadableCardType:
         translation.humanReadableCardType ?? response.humanReadableCardType,
       race: (translation.race ?? response.race) as CardRace,
+      prints,
     };
   }
 
-  private stripRawData(primitives: CardPrimitives): CardResponse {
+  private stripRawData(
+    primitives: CardPrimitives,
+  ): Omit<CardResponse, 'prints'> {
     const { rawData: _, ...response } = primitives;
     return response;
   }

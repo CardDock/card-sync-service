@@ -15,6 +15,7 @@ describe('GetCardArtworksUseCase', () => {
       saveCardPrints: jest.fn(),
       findArtworksByCardId: jest.fn(),
       findPrintsByCardId: jest.fn(),
+      findPrintsWithArtworkByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
       deleteByCardId: jest.fn(),
       findFirstArtworkIdByCardId: jest.fn(),
@@ -23,7 +24,12 @@ describe('GetCardArtworksUseCase', () => {
 
   it('returns artworks from the repository', async () => {
     const artworks: ArtworkResult[] = [
-      { id: 'art-1', imageUrl: 'https://example.com/card.jpg' },
+      {
+        id: 'art-1',
+        imageUrl: 'https://example.com/card.jpg',
+        imageUrlSmall: 'https://example.com/card_small.jpg',
+        imageUrlCropped: 'https://example.com/card_cropped.jpg',
+      },
     ];
     cardRelatedDataRepository.findArtworksByCardId.mockResolvedValue(artworks);
 
@@ -55,8 +61,18 @@ describe('GetCardArtworksUseCase', () => {
 
   it('returns multiple artworks', async () => {
     const artworks: ArtworkResult[] = [
-      { id: 'art-1', imageUrl: 'https://example.com/1.jpg' },
-      { id: 'art-2', imageUrl: 'https://example.com/2.jpg' },
+      {
+        id: 'art-1',
+        imageUrl: 'https://example.com/1.jpg',
+        imageUrlSmall: 'https://example.com/1_small.jpg',
+        imageUrlCropped: 'https://example.com/1_cropped.jpg',
+      },
+      {
+        id: 'art-2',
+        imageUrl: 'https://example.com/2.jpg',
+        imageUrlSmall: 'https://example.com/2_small.jpg',
+        imageUrlCropped: 'https://example.com/2_cropped.jpg',
+      },
     ];
     cardRelatedDataRepository.findArtworksByCardId.mockResolvedValue(artworks);
 
