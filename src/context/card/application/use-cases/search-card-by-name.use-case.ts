@@ -140,7 +140,9 @@ export class SearchCardByNameUseCase {
     };
   }
 
-  private stripRawData(primitives: CardPrimitives): Omit<CardResponse, 'prints'> {
+  private stripRawData(
+    primitives: CardPrimitives,
+  ): Omit<CardResponse, 'prints'> {
     const { rawData: _, ...response } = primitives;
     return response;
   }

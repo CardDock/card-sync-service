@@ -1,6 +1,6 @@
 import { CardSetData } from '../types/card-set.types';
 import { CardPrintData } from '../types/card-print.types';
-import { CardImageUrls, CardPrintWithArtwork } from '../types/card.types';
+import { CardPrintWithArtwork } from '../types/card.types';
 
 export interface ArtworkResult {
   id: string;
@@ -46,7 +46,5 @@ export abstract class CardRelatedDataRepositoryPort {
   ): Promise<CardPrintWithArtwork[]>;
   abstract findAllCardSets(): Promise<CardSetResult[]>;
   abstract deleteByCardId(cardId: string): Promise<void>;
-  abstract findFirstArtworkIdByCardId(
-    cardId: string,
-  ): Promise<string | null>;
+  abstract findFirstArtworkIdByCardId(cardId: string): Promise<string | null>;
 }
