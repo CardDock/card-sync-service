@@ -69,7 +69,27 @@ export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 export type JsonObject = { [key: string]: JsonValue };
 export type JsonArray = JsonValue[];
 
-export type CardResponse = Omit<CardPrimitives, 'rawData'>;
+export interface CardImageUrls {
+  full: string;
+  small: string;
+  cropped: string;
+}
+
+export interface CardPrintWithArtwork {
+  id: string;
+  cardSetId: string;
+  cardSetName: string;
+  cardSetCode: string | null;
+  setCode: string;
+  rarity: string;
+  rarityCode: string | null;
+  setPrice: number | null;
+  imageUrls: CardImageUrls;
+}
+
+export type CardResponse = Omit<CardPrimitives, 'rawData'> & {
+  prints: CardPrintWithArtwork[];
+};
 
 export interface CardPrimitives {
   id: string;
