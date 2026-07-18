@@ -80,6 +80,8 @@ export class SyncCardUseCase {
           const artworkId = await this.cardRelatedDataRepository.saveArtwork(
             storedId,
             artwork.imageUrl,
+            artwork.imageUrlSmall,
+            artwork.imageUrlCropped,
           );
 
           if (index === 0) {

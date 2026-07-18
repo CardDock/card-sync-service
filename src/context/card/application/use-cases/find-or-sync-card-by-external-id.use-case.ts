@@ -84,9 +84,13 @@ export class FindOrSyncCardByExternalIdUseCase {
     language: string,
   ): Promise<CardResponse> {
     const primitives = card.toPrimitives();
+    const prints =
+      await this.cardRelatedDataRepository.findPrintsWithArtworkByCardId(
+        primitives.id,
+      );
 
     if (language === 'en') {
-      return this.stripRawData(primitives);
+      return { ...this.stripRawData(primitives), prints };
     }
 
     const translation =
@@ -96,7 +100,7 @@ export class FindOrSyncCardByExternalIdUseCase {
       );
 
     if (!translation) {
-      return this.stripRawData(primitives);
+      return { ...this.stripRawData(primitives), prints };
     }
 
     const response = this.stripRawData(primitives);
@@ -109,10 +113,11 @@ export class FindOrSyncCardByExternalIdUseCase {
       humanReadableCardType:
         translation.humanReadableCardType ?? response.humanReadableCardType,
       race: (translation.race ?? response.race) as CardRace,
+      prints,
     };
   }
 
-  private stripRawData(primitives: CardPrimitives): CardResponse {
+  private stripRawData(primitives: CardPrimitives): Omit<CardResponse, 'prints'> {
     const { rawData: _, ...response } = primitives;
     return response;
   }
@@ -190,7 +195,11 @@ export class FindOrSyncCardByExternalIdUseCase {
     card: Card,
     externalData: {
       cardSets: { name: string; code: string | null }[];
-      artworks: { imageUrl: string }[];
+      artworks: {
+        imageUrl: string;
+        imageUrlSmall: string;
+        imageUrlCropped: string;
+      }[];
       cardPrints: {
         setName: string;
         setCode: string;
@@ -210,6 +219,8 @@ export class FindOrSyncCardByExternalIdUseCase {
       const artworkId = await this.cardRelatedDataRepository.saveArtwork(
         storedId,
         artwork.imageUrl,
+        artwork.imageUrlSmall,
+        artwork.imageUrlCropped,
       );
 
       if (index === 0) {

@@ -45,6 +45,8 @@ export class AddCardArtworkUseCase {
       const artworkId = await this.cardRelatedDataRepository.saveArtwork(
         command.cardId,
         imageUrl.toPrimitives(),
+        imageUrl.toPrimitives(),
+        imageUrl.toPrimitives(),
       );
 
       this.logger.info(
