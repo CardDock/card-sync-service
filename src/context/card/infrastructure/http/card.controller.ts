@@ -40,6 +40,7 @@ import { AddCardPrintUseCase } from '../../application/use-cases/add-card-print.
 import { DeleteCardUseCase } from '../../application/use-cases/delete-card.use-case';
 import { ListCardDiscrepanciesUseCase } from '../../application/use-cases/list-card-discrepancies.use-case';
 import { ResolveCardDiscrepancyUseCase } from '../../application/use-cases/resolve-card-discrepancy.use-case';
+import { CardRelatedDataRepositoryPort } from '../../domain/ports/card-related-data-repository.port';
 import { DomainErrorFilter } from './domain-error.filter';
 import { NotFoundExceptionFilter } from './not-found-exception.filter';
 import { CardResponseDto } from './dto/card-response.dto';
@@ -76,6 +77,7 @@ export class CardController {
     private readonly deleteCardUseCase: DeleteCardUseCase,
     private readonly listCardDiscrepanciesUseCase: ListCardDiscrepanciesUseCase,
     private readonly resolveCardDiscrepancyUseCase: ResolveCardDiscrepancyUseCase,
+    private readonly cardRelatedDataRepository: CardRelatedDataRepositoryPort,
     private readonly logger: Logger,
   ) {}
 
@@ -348,10 +350,16 @@ export class CardController {
     });
 
     return {
-      items: result.items.map((card) => {
-        const { rawData: _, ...rest } = card.toPrimitives();
-        return rest;
-      }),
+      items: await Promise.all(
+        result.items.map(async (card) => {
+          const { rawData: _, ...rest } = card.toPrimitives();
+          const prints =
+            await this.cardRelatedDataRepository.findPrintsWithArtworkByCardId(
+              rest.id,
+            );
+          return { ...rest, prints };
+        }),
+      ),
       total: result.total,
       page: result.page,
       limit: result.limit,
@@ -457,7 +465,11 @@ export class CardController {
       'Sync card: completed',
     );
     const { rawData: _, ...response } = card.toPrimitives();
-    return response;
+    const prints =
+      await this.cardRelatedDataRepository.findPrintsWithArtworkByCardId(
+        response.id,
+      );
+    return { ...response, prints };
   }
 
   @Patch('cards/:id')
@@ -486,7 +498,11 @@ export class CardController {
     });
 
     const { rawData: _, ...response } = card.toPrimitives();
-    return response;
+    const prints =
+      await this.cardRelatedDataRepository.findPrintsWithArtworkByCardId(
+        response.id,
+      );
+    return { ...response, prints };
   }
 
   @Put('cards/:id/translations/:language')

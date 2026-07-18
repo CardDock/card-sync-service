@@ -6,6 +6,7 @@ import { LoggingInterceptor } from './infrastructure/http/logging.interceptor';
 import { TransactionManagerPort } from './domain/ports/transaction-manager.port';
 import { CardTranslationRepositoryPort } from './domain/ports/card-translation-repository.port';
 import { CardSyncDiscrepancyRepositoryPort } from './domain/ports/card-sync-discrepancy-repository.port';
+import { CardRelatedDataRepositoryPort } from './domain/ports/card-related-data-repository.port';
 import { FindOrSyncCardByExternalIdUseCase } from './application/use-cases/find-or-sync-card-by-external-id.use-case';
 import { SearchCardByNameUseCase } from './application/use-cases/search-card-by-name.use-case';
 import { ListCardsUseCase } from './application/use-cases/list-cards.use-case';
@@ -57,6 +58,10 @@ import { SyncTranslationsUseCase } from './application/use-cases/sync-translatio
     {
       provide: CardSyncDiscrepancyRepositoryPort,
       useClass: PostgresCardSyncDiscrepancyRepository,
+    },
+    {
+      provide: CardRelatedDataRepositoryPort,
+      useClass: PostgresCardRelatedDataRepository,
     },
     YgoProDeckExternalCardSource,
     YgoProDeckImageSourceAdapter,
@@ -131,15 +136,22 @@ import { SyncTranslationsUseCase } from './application/use-cases/sync-translatio
       provide: SearchCardByNameUseCase,
       useFactory: (
         cardQueryRepository: PostgresCardRepository,
+        cardRelatedDataRepository: CardRelatedDataRepositoryPort,
         cardTranslationRepository: CardTranslationRepositoryPort,
         logger: Logger,
       ) =>
         new SearchCardByNameUseCase(
           cardQueryRepository,
+          cardRelatedDataRepository,
           cardTranslationRepository,
           logger,
         ),
-      inject: [PostgresCardRepository, CardTranslationRepositoryPort, Logger],
+      inject: [
+        PostgresCardRepository,
+        CardRelatedDataRepositoryPort,
+        CardTranslationRepositoryPort,
+        Logger,
+      ],
     },
     {
       provide: ListCardsUseCase,

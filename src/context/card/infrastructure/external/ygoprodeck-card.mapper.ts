@@ -100,7 +100,9 @@ function collectCardPrints(
 function collectArtworks(
   cardImages: YgoProDeckCardImageDto[] | undefined,
 ): ArtworkData[] {
-  return (cardImages ?? []).map((ci) => createArtworkData(ci.image_url));
+  return (cardImages ?? []).map((ci) =>
+    createArtworkData(ci.image_url, ci.image_url_small, ci.image_url_cropped),
+  );
 }
 
 export function mapYgoProDeckResponseToSyncCardParams(
