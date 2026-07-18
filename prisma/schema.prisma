@@ -82,9 +82,11 @@ model CardSet {
 }
 
 model Artwork {
-  id       String @id @default(uuid())
-  cardId   String @map("card_id")
-  imageUrl String @map("image_url")
+  id             String  @id @default(uuid())
+  cardId         String  @map("card_id")
+  imageUrl       String  @map("image_url")
+  imageUrlSmall  String? @map("image_url_small")
+  imageUrlCropped String? @map("image_url_cropped")
 
   card          Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
   cardPrints    CardPrint[]
