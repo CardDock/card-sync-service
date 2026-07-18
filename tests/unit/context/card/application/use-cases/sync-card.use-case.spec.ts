@@ -45,6 +45,7 @@ describe('SyncCardUseCase', () => {
       saveCardPrints: jest.fn(),
       findArtworksByCardId: jest.fn(),
       findPrintsByCardId: jest.fn(),
+      findPrintsWithArtworkByCardId: jest.fn(),
       findAllCardSets: jest.fn(),
       deleteByCardId: jest.fn(),
       findFirstArtworkIdByCardId: jest.fn(),
@@ -90,6 +91,8 @@ describe('SyncCardUseCase', () => {
     expect(cardRelatedDataRepository.saveArtwork).toHaveBeenCalledWith(
       'stored-card-id',
       'https://example.com/image.png',
+      'https://example.com/image_small.png',
+      'https://example.com/image_cropped.png',
     );
     expect(cardRelatedDataRepository.saveCardPrints).toHaveBeenCalledTimes(1);
   });
@@ -112,8 +115,16 @@ describe('SyncCardUseCase', () => {
   it('saves prints only for the first artwork', async () => {
     const sourceCard = buildSourceCard();
     sourceCard.artworks = [
-      { imageUrl: 'https://example.com/1.jpg' },
-      { imageUrl: 'https://example.com/2.jpg' },
+      {
+        imageUrl: 'https://example.com/1.jpg',
+        imageUrlSmall: 'https://example.com/1_small.jpg',
+        imageUrlCropped: 'https://example.com/1_cropped.jpg',
+      },
+      {
+        imageUrl: 'https://example.com/2.jpg',
+        imageUrlSmall: 'https://example.com/2_small.jpg',
+        imageUrlCropped: 'https://example.com/2_cropped.jpg',
+      },
     ];
     externalCardSource.findById.mockResolvedValue(sourceCard);
     cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());

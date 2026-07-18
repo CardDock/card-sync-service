@@ -14,6 +14,7 @@ import { AddCardPrintUseCase } from '../../../../../../src/context/card/applicat
 import { DeleteCardUseCase } from '../../../../../../src/context/card/application/use-cases/delete-card.use-case';
 import { ListCardDiscrepanciesUseCase } from '../../../../../../src/context/card/application/use-cases/list-card-discrepancies.use-case';
 import { ResolveCardDiscrepancyUseCase } from '../../../../../../src/context/card/application/use-cases/resolve-card-discrepancy.use-case';
+import { CardRelatedDataRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-related-data-repository.port';
 import { Card } from '../../../../../../src/context/card/domain/entities/card.entity';
 import { PaginatedResult } from '../../../../../../src/context/card/domain/ports/card-query-repository.port';
 import type { CardResponse } from '../../../../../../src/context/card/domain/types/card.types';
@@ -47,7 +48,7 @@ describe('CardController', () => {
 
   const buildCardResponse = (): CardResponse => {
     const { rawData: _, ...rest } = buildCard().toPrimitives();
-    return rest;
+    return { ...rest, prints: [] };
   };
 
   const buildUseCaseMock = () => ({
@@ -77,6 +78,17 @@ describe('CardController', () => {
         .mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 }),
     },
     resolveDiscrepancy: { execute: jest.fn() },
+    cardRelatedDataRepository: {
+      saveCardSets: jest.fn(),
+      saveArtwork: jest.fn(),
+      saveCardPrints: jest.fn(),
+      findArtworksByCardId: jest.fn(),
+      findPrintsByCardId: jest.fn(),
+      findPrintsWithArtworkByCardId: jest.fn().mockResolvedValue([]),
+      findAllCardSets: jest.fn(),
+      deleteByCardId: jest.fn(),
+      findFirstArtworkIdByCardId: jest.fn(),
+    },
   });
 
   const createController = (mocks: ReturnType<typeof buildUseCaseMocks>) =>
@@ -95,6 +107,7 @@ describe('CardController', () => {
       mocks.deleteCard as unknown as DeleteCardUseCase,
       mocks.listDiscrepancies as unknown as ListCardDiscrepanciesUseCase,
       mocks.resolveDiscrepancy as unknown as ResolveCardDiscrepancyUseCase,
+      mocks.cardRelatedDataRepository as unknown as CardRelatedDataRepositoryPort,
       buildLoggerMock(),
     );
 
