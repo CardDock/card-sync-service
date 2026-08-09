@@ -3,9 +3,16 @@ import { SearchCardByNameUseCase } from '../../../../../../src/context/card/appl
 import { CardQueryRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-query-repository.port';
 import { CardTranslationRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-translation-repository.port';
 import { CardRelatedDataRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-related-data-repository.port';
+import { CardRepositoryPort } from '../../../../../../src/context/card/domain/ports/card-repository.port';
+import { ExternalCardSourcePort } from '../../../../../../src/context/card/domain/ports/external-card-source.port';
 import { CardDomainProcessError } from '../../../../../../src/context/card/domain/errors';
+import { TransactionManagerPort } from '../../../../../../src/context/card/domain/ports/transaction-manager.port';
 import type { CreateCardParams } from '../../../../../../src/context/card/domain/types/card.types';
-import { buildLoggerMock } from '../../../../../helpers';
+import {
+  buildLoggerMock,
+  buildSourceCard,
+  buildTransactionManagerMock,
+} from '../../../../../helpers';
 
 const buildCardPrimitives = (
   overrides: Partial<CreateCardParams> = {},
@@ -36,6 +43,9 @@ describe('SearchCardByNameUseCase', () => {
   let cardQueryRepository: jest.Mocked<CardQueryRepositoryPort>;
   let cardRelatedDataRepository: jest.Mocked<CardRelatedDataRepositoryPort>;
   let cardTranslationRepository: jest.Mocked<CardTranslationRepositoryPort>;
+  let cardRepository: jest.Mocked<CardRepositoryPort>;
+  let externalCardSource: jest.Mocked<ExternalCardSourcePort>;
+  let transactionManager: jest.Mocked<TransactionManagerPort>;
 
   beforeEach(() => {
     cardQueryRepository = {
@@ -63,6 +73,20 @@ describe('SearchCardByNameUseCase', () => {
       deleteByCardId: jest.fn(),
       batchUpsert: jest.fn(),
     };
+    cardRepository = {
+      save: jest.fn().mockResolvedValue('stored-card-id'),
+      delete: jest.fn(),
+      markAsManuallyEdited: jest.fn(),
+      updateCardFields: jest.fn(),
+      clearManualEditFlag: jest.fn(),
+      isManuallyEdited: jest.fn().mockResolvedValue(false),
+      getManuallyEditedCardIds: jest.fn().mockResolvedValue([]),
+    };
+    externalCardSource = {
+      findById: jest.fn(),
+      findByName: jest.fn(),
+    };
+    transactionManager = buildTransactionManagerMock();
   });
 
   const createUseCase = () =>
@@ -70,13 +94,15 @@ describe('SearchCardByNameUseCase', () => {
       cardQueryRepository,
       cardRelatedDataRepository,
       cardTranslationRepository,
+      cardRepository,
+      externalCardSource,
+      transactionManager,
       buildLoggerMock(),
     );
 
   describe('when language is provided', () => {
     it('searches translations, batch fetches cards, and merges translations', async () => {
       const card = buildCard({ id: '46986414', name: 'Mago Oscuro' });
-      const cardsMap = new Map([['46986414', card]]);
       const translationsMap = new Map([
         [
           '46986414',
@@ -93,7 +119,7 @@ describe('SearchCardByNameUseCase', () => {
       cardTranslationRepository.findCardIdsByName.mockResolvedValue([
         '46986414',
       ]);
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById.mockResolvedValue(card);
       cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
         translationsMap,
       );
@@ -114,7 +140,7 @@ describe('SearchCardByNameUseCase', () => {
         'Mago Oscuro',
         'es',
       );
-      expect(cardQueryRepository.findByIds).toHaveBeenCalledWith(['46986414']);
+      expect(cardQueryRepository.findById).toHaveBeenCalledWith('46986414');
     });
 
     it('returns empty array when no translations match', async () => {
@@ -127,16 +153,19 @@ describe('SearchCardByNameUseCase', () => {
       });
 
       expect(result).toEqual([]);
-      expect(cardQueryRepository.findByIds).not.toHaveBeenCalled();
+      expect(cardQueryRepository.findById).not.toHaveBeenCalled();
+      expect(externalCardSource.findById).not.toHaveBeenCalled();
     });
 
-    it('skips cards not found in cards table', async () => {
+    it('skips cards not found in cards table and not available on external API', async () => {
       cardTranslationRepository.findCardIdsByName.mockResolvedValue([
         '46986414',
         'missing-id',
       ]);
-      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById
+        .mockResolvedValueOnce(buildCard({ id: '46986414' }))
+        .mockResolvedValueOnce(null);
+      externalCardSource.findById.mockResolvedValue(null);
       cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
         new Map(),
       );
@@ -151,11 +180,107 @@ describe('SearchCardByNameUseCase', () => {
       expect(result[0].id).toBe('46986414');
     });
 
+    it('syncs from YGOPRODeck API when card is not in local cache', async () => {
+      const sourceCard = buildSourceCard({
+        id: '24224830',
+        name: 'Called by the Grave',
+      });
+
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '24224830',
+      ]);
+      cardQueryRepository.findById.mockResolvedValue(null);
+      externalCardSource.findById.mockResolvedValue(sourceCard);
+      cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());
+      cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        new Map(),
+      );
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'Called by the Grave',
+        language: 'en',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: '24224830',
+        name: 'Called by the Grave',
+      });
+      expect(externalCardSource.findById).toHaveBeenCalledWith('24224830');
+      expect(cardRepository.save).toHaveBeenCalledTimes(1);
+      expect(transactionManager.transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it('syncs from YGOPRODeck API and merges Spanish translation', async () => {
+      const sourceCard = buildSourceCard({
+        id: '24224830',
+        name: 'Called by the Grave',
+      });
+
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        '24224830',
+      ]);
+      cardQueryRepository.findById.mockResolvedValue(null);
+      externalCardSource.findById.mockResolvedValue(sourceCard);
+      cardRelatedDataRepository.saveCardSets.mockResolvedValue(new Map());
+      cardRelatedDataRepository.saveArtwork.mockResolvedValue('artwork-id-1');
+      cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
+        new Map([
+          [
+            '24224830',
+            {
+              name: 'Llamado por la Tumba',
+              desc: 'Carta de trampa.',
+              type: 'Carta de Trampa',
+              humanReadableCardType: 'Carta de Trampa',
+              race: null,
+            },
+          ],
+        ]),
+      );
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'Llamado por la Tumba',
+        language: 'es',
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: '24224830',
+        name: 'Llamado por la Tumba',
+        desc: 'Carta de trampa.',
+        type: 'Carta de Trampa',
+      });
+      expect(externalCardSource.findById).toHaveBeenCalledWith('24224830');
+      expect(cardRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('returns empty when external API does not have the card either', async () => {
+      cardTranslationRepository.findCardIdsByName.mockResolvedValue([
+        'unknown-id',
+      ]);
+      cardQueryRepository.findById.mockResolvedValue(null);
+      externalCardSource.findById.mockResolvedValue(null);
+
+      const useCase = createUseCase();
+      const result = await useCase.execute({
+        name: 'ghost',
+        language: 'es',
+      });
+
+      expect(result).toEqual([]);
+      expect(cardRepository.save).not.toHaveBeenCalled();
+    });
+
     it('limits to 20 results', async () => {
       const ids = Array.from({ length: 25 }, (_, i) => `${i}`);
       cardTranslationRepository.findCardIdsByName.mockResolvedValue(ids);
-      const cardsMap = new Map(ids.map((id) => [id, buildCard({ id })]));
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById.mockImplementation((id) =>
+        Promise.resolve(buildCard({ id })),
+      );
       cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
         new Map(),
       );
@@ -163,17 +288,15 @@ describe('SearchCardByNameUseCase', () => {
       const useCase = createUseCase();
       await useCase.execute({ name: 'test', language: 'es' });
 
-      expect(cardQueryRepository.findByIds).toHaveBeenCalledWith(
-        ids.slice(0, 20),
-      );
+      expect(cardQueryRepository.findById).toHaveBeenCalledTimes(20);
     });
 
     it('returns English fallback when translation record is missing', async () => {
+      const card = buildCard({ id: '46986414', name: 'Dark Magician' });
       cardTranslationRepository.findCardIdsByName.mockResolvedValue([
         '46986414',
       ]);
-      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById.mockResolvedValue(card);
       cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
         new Map(),
       );
@@ -196,7 +319,7 @@ describe('SearchCardByNameUseCase', () => {
       cardTranslationRepository.findCardIdsByName.mockResolvedValue([
         '46986414',
       ]);
-      const cardsMap = new Map([['46986414', card]]);
+      cardQueryRepository.findById.mockResolvedValue(card);
       cardTranslationRepository.findByCardIdsAndLanguage.mockResolvedValue(
         new Map([
           [
@@ -211,7 +334,6 @@ describe('SearchCardByNameUseCase', () => {
           ],
         ]),
       );
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
 
       const useCase = createUseCase();
       const result = await useCase.execute({
@@ -229,11 +351,10 @@ describe('SearchCardByNameUseCase', () => {
   });
 
   describe('when no language is provided', () => {
-    it('searches cards.name, batch fetches, and returns English results', async () => {
+    it('searches cards.name, fetches each by id, and returns English results', async () => {
       const card = buildCard({ id: '46986414' });
-      const cardsMap = new Map([['46986414', card]]);
       cardQueryRepository.findByName.mockResolvedValue([card]);
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById.mockResolvedValue(card);
 
       const useCase = createUseCase();
       const result = await useCase.execute({ name: 'Dark Magician' });
@@ -247,7 +368,7 @@ describe('SearchCardByNameUseCase', () => {
       expect(cardQueryRepository.findByName).toHaveBeenCalledWith(
         'Dark Magician',
       );
-      expect(cardQueryRepository.findByIds).toHaveBeenCalledWith(['46986414']);
+      expect(cardQueryRepository.findById).toHaveBeenCalledWith('46986414');
       expect(
         cardTranslationRepository.findByCardIdsAndLanguage,
       ).not.toHaveBeenCalled();
@@ -260,7 +381,7 @@ describe('SearchCardByNameUseCase', () => {
       const result = await useCase.execute({ name: 'NonExistentCard' });
 
       expect(result).toEqual([]);
-      expect(cardQueryRepository.findByIds).not.toHaveBeenCalled();
+      expect(cardQueryRepository.findById).not.toHaveBeenCalled();
     });
 
     it('returns multiple results when multiple cards match', async () => {
@@ -269,12 +390,10 @@ describe('SearchCardByNameUseCase', () => {
         id: '89631139',
         name: 'Blue-Eyes White Dragon',
       });
-      const cardsMap = new Map([
-        ['46986414', card1],
-        ['89631139', card2],
-      ]);
       cardQueryRepository.findByName.mockResolvedValue([card1, card2]);
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById.mockImplementation((id) =>
+        Promise.resolve(id === '46986414' ? card1 : card2),
+      );
 
       const useCase = createUseCase();
       const result = await useCase.execute({ name: 'Dragon' });
@@ -285,11 +404,11 @@ describe('SearchCardByNameUseCase', () => {
 
   describe('when language is English', () => {
     it('searches translations and returns English results without querying translations map', async () => {
+      const card = buildCard({ id: '46986414' });
       cardTranslationRepository.findCardIdsByName.mockResolvedValue([
         '46986414',
       ]);
-      const cardsMap = new Map([['46986414', buildCard({ id: '46986414' })]]);
-      cardQueryRepository.findByIds.mockResolvedValue(cardsMap);
+      cardQueryRepository.findById.mockResolvedValue(card);
 
       const useCase = createUseCase();
       const result = await useCase.execute({

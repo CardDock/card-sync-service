@@ -10,7 +10,7 @@ datasource db {
 
 model Card {
   id                    String       @id
-  name                  String       @unique
+  name                  String
   typeline              String[]
   type                  String
   humanReadableCardType String       @map("human_readable_card_type")
