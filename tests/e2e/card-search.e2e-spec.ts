@@ -3,12 +3,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
+import { API_PREFIX } from '../../src/app/api-prefix';
 
 const EXISTING_CARD_ID = '46986414';
 const EXISTING_CARD_NAME = 'Dark Magician';
 const EXISTING_SPANISH_NAME = 'Mago Oscuro';
 
-describe('GET /cards (e2e)', () => {
+describe('GET /api/v1/cards (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -17,6 +18,7 @@ describe('GET /cards (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });
 
@@ -27,7 +29,7 @@ describe('GET /cards (e2e)', () => {
   describe('search by name', () => {
     it('returns 200 with English results when searching by name', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards?name=${encodeURIComponent(EXISTING_CARD_NAME)}`)
+        .get(`/api/v1/cards?name=${encodeURIComponent(EXISTING_CARD_NAME)}`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -43,7 +45,7 @@ describe('GET /cards (e2e)', () => {
 
     it('returns 200 with Spanish translations when language=es (si existen)', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards?name=${encodeURIComponent('Mago Oscuro')}&language=es`)
+        .get(`/api/v1/cards?name=${encodeURIComponent('Mago Oscuro')}&language=es`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -66,7 +68,7 @@ describe('GET /cards (e2e)', () => {
 
     it('returns empty items for non-matching name', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?name=NonExistentCardXYZ')
+        .get('/api/v1/cards?name=NonExistentCardXYZ')
         .expect(200);
 
       expect(response.body).toEqual({
@@ -81,7 +83,7 @@ describe('GET /cards (e2e)', () => {
   describe('list with filters', () => {
     it('returns 200 with paginated results when no filters', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards')
+        .get('/api/v1/cards')
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -97,7 +99,7 @@ describe('GET /cards (e2e)', () => {
     it('returns 200 filtered by type and attribute', async () => {
       const response = await request(app.getHttpServer())
         .get(
-          `/cards?type=${encodeURIComponent('Normal Monster')}&attribute=DARK`,
+          `/api/v1/cards?type=${encodeURIComponent('Normal Monster')}&attribute=DARK`,
         )
         .expect(200);
 
@@ -110,7 +112,7 @@ describe('GET /cards (e2e)', () => {
 
     it('returns 200 filtered by race', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?race=Spellcaster')
+        .get('/api/v1/cards?race=Spellcaster')
         .expect(200);
 
       expect(response.body.items.length).toBeGreaterThanOrEqual(1);
@@ -121,7 +123,7 @@ describe('GET /cards (e2e)', () => {
 
     it('returns 200 with paginated results respecting page and limit', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?page=1&limit=5')
+        .get('/api/v1/cards?page=1&limit=5')
         .expect(200);
 
       expect(response.body.items.length).toBeLessThanOrEqual(5);
@@ -130,7 +132,7 @@ describe('GET /cards (e2e)', () => {
 
     it('caps limit at 100', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?limit=200')
+        .get('/api/v1/cards?limit=200')
         .expect(200);
 
       expect(response.body.limit).toBe(100);

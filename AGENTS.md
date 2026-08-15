@@ -4,7 +4,7 @@
 
 - NestJS 10, TypeScript 5, pnpm, PostgreSQL (Neon), Prisma 7 (schema/migrations only), raw `pg` for queries
 - Yu-Gi-Oh! card sync from YGOPRODeck API (`https://db.ygoprodeck.com/api/v7/cardinfo.php`)
-- Swagger at `/api`, Pino logger, Husky + commitlint, Cucumber for BDD
+- Swagger at `/api`, API global prefix `api/v1` (set via `app.setGlobalPrefix` in `main.ts`), Pino logger, Husky + commitlint, Cucumber for BDD
 
 ## Architecture
 
@@ -68,7 +68,7 @@ pnpm run start:prod         # cross-env NODE_ENV=production node dist/main.js
 - **15 use cases** — add artwork, add print, delete card, find-or-sync, get artworks, get image, get prints, list card sets, list cards, search by name, set translation, sync card, sync translations, update card, list/resolve discrepancies.
 - Repositories use `ON CONFLICT (id) DO UPDATE` — upsert semantics.
 - Field normalizers convert between external API labels (e.g. `"Beast-Warrior"`) and domain types (`"BeastWarrior"`).
-- **i18n**: Cards synced from YGOPRODeck in English (canonical). Translations stored in `card_translations` table. `GET /cards/:id?language=es` and `GET /cards?name=...&language=es` merge at application layer. Fallback to English. Supported: `en`, `es`. `Language` value object validates.
+- **i18n**: Cards synced from YGOPRODeck in English (canonical). Translations stored in `card_translations` table. `GET /api/v1/cards/:id?language=es` and `GET /api/v1/cards?name=...&language=es` merge at application layer. Fallback to English. Supported: `en`, `es`. `Language` value object validates.
 - pnpm workspace: `allowBuilds` set for `@nestjs/core`, `@prisma/engines`, `prisma`.
 - Husky hooks: `commit-msg` (commitlint), `pre-commit` (npm test), `pre-push` (pnpm run lint).
 - 100% coverage files: `card.controller.ts`, `card-field-normalizers.ts`, `logging.interceptor.ts`, `domain-error.filter.ts`, `json-value.mapper.ts`, `language.value-object.ts`.

@@ -3,10 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
+import { API_PREFIX } from '../../src/app/api-prefix';
 
 const CARD_ID = '10000';
 
-describe('POST /cards/sync (e2e)', () => {
+describe('POST /api/v1/cards/sync (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -15,6 +16,7 @@ describe('POST /cards/sync (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });
 
@@ -24,7 +26,7 @@ describe('POST /cards/sync (e2e)', () => {
 
   it('retorna 201 o 404 según exista la carta en YGOPRODeck', async () => {
     const response = await request(app.getHttpServer())
-      .post('/cards/sync')
+      .post('/api/v1/cards/sync')
       .send({ id: CARD_ID });
 
     expect([201, 404, 422]).toContain(response.status);

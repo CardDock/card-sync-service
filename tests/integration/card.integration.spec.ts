@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
+import { API_PREFIX } from '../../src/app/api-prefix';
 
 describe('CardController Integration (real DB)', () => {
   let app: INestApplication;
@@ -18,6 +19,7 @@ describe('CardController Integration (real DB)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });
 
@@ -25,10 +27,10 @@ describe('CardController Integration (real DB)', () => {
     await app.close();
   });
 
-  describe('GET /cards/:id', () => {
+  describe('GET /api/v1/cards/:id', () => {
     it('returns 200 with card data for existing card', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards/${CARD_ID}`)
+        .get(`/api/v1/cards/${CARD_ID}`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -46,10 +48,10 @@ describe('CardController Integration (real DB)', () => {
     });
   });
 
-  describe('GET /cards/:id with language', () => {
+  describe('GET /api/v1/cards/:id with language', () => {
     it('returns 200 with Spanish translation when language=es', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards/${CARD_ID}?language=es`)
+        .get(`/api/v1/cards/${CARD_ID}?language=es`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -60,7 +62,7 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 200 with English data when language=en', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards/${CARD_ID}?language=en`)
+        .get(`/api/v1/cards/${CARD_ID}?language=en`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -70,10 +72,10 @@ describe('CardController Integration (real DB)', () => {
     });
   });
 
-  describe('GET /cards?name= (search by name)', () => {
+  describe('GET /api/v1/cards?name= (search by name)', () => {
     it('returns 200 with English results when no language specified', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards?name=${encodeURIComponent(CARD_NAME)}`)
+        .get(`/api/v1/cards?name=${encodeURIComponent(CARD_NAME)}`)
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -89,7 +91,7 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 200 with Spanish translations when language=es', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards?name=${encodeURIComponent(SPANISH_NAME)}&language=es`)
+        .get(`/api/v1/cards?name=${encodeURIComponent(SPANISH_NAME)}&language=es`)
         .expect(200);
 
       expect(response.body.items.length).toBeGreaterThanOrEqual(1);
@@ -102,7 +104,7 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 200 when language=en', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards?name=${encodeURIComponent(CARD_NAME)}&language=en`)
+        .get(`/api/v1/cards?name=${encodeURIComponent(CARD_NAME)}&language=en`)
         .expect(200);
 
       expect(response.body.items.length).toBeGreaterThanOrEqual(1);
@@ -115,7 +117,7 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns empty items for non-matching name', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?name=NonExistentCardXYZ')
+        .get('/api/v1/cards?name=NonExistentCardXYZ')
         .expect(200);
 
       expect(response.body).toEqual({
@@ -127,10 +129,10 @@ describe('CardController Integration (real DB)', () => {
     });
   });
 
-  describe('GET /cards (list with filters)', () => {
+  describe('GET /api/v1/cards (list with filters)', () => {
     it('returns 200 with paginated results when no filters', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards')
+        .get('/api/v1/cards')
         .expect(200);
 
       expect(response.body).toMatchObject({
@@ -146,7 +148,7 @@ describe('CardController Integration (real DB)', () => {
     it('returns 200 filtered by type and attribute', async () => {
       const response = await request(app.getHttpServer())
         .get(
-          `/cards?type=${encodeURIComponent('Effect Monster')}&attribute=DARK`,
+          `/api/v1/cards?type=${encodeURIComponent('Effect Monster')}&attribute=DARK`,
         )
         .expect(200);
 
@@ -159,7 +161,7 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 200 filtered by race', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?race=Dragon')
+        .get('/api/v1/cards?race=Dragon')
         .expect(200);
 
       expect(response.body.items.length).toBeGreaterThanOrEqual(1);
@@ -170,7 +172,7 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 200 with paginated results respecting page and limit', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?page=1&limit=5')
+        .get('/api/v1/cards?page=1&limit=5')
         .expect(200);
 
       expect(response.body.items.length).toBeLessThanOrEqual(5);
@@ -179,17 +181,17 @@ describe('CardController Integration (real DB)', () => {
 
     it('caps limit at 100', async () => {
       const response = await request(app.getHttpServer())
-        .get('/cards?limit=200')
+        .get('/api/v1/cards?limit=200')
         .expect(200);
 
       expect(response.body.limit).toBe(100);
     });
   });
 
-  describe('GET /cards/:id/prints', () => {
+  describe('GET /api/v1/cards/:id/prints', () => {
     it('returns 200 with prints for a card that has prints', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards/${CARD_ID}/prints`)
+        .get(`/api/v1/cards/${CARD_ID}/prints`)
         .expect(200);
 
       expect(response.body.length).toBeGreaterThanOrEqual(1);
@@ -204,15 +206,15 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 404 for non-existent card prints', async () => {
       await request(app.getHttpServer())
-        .get(`/cards/${NONEXISTENT_CARD_ID}/prints`)
+        .get(`/api/v1/cards/${NONEXISTENT_CARD_ID}/prints`)
         .expect(404);
     });
   });
 
-  describe('GET /cards/:id/artworks', () => {
+  describe('GET /api/v1/cards/:id/artworks', () => {
     it('returns 200 with artworks for a card that has artworks', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/cards/${CARD_ID}/artworks`)
+        .get(`/api/v1/cards/${CARD_ID}/artworks`)
         .expect(200);
 
       expect(response.body.length).toBeGreaterThanOrEqual(1);
@@ -224,15 +226,15 @@ describe('CardController Integration (real DB)', () => {
 
     it('returns 404 for non-existent card artworks', async () => {
       await request(app.getHttpServer())
-        .get(`/cards/${NONEXISTENT_CARD_ID}/artworks`)
+        .get(`/api/v1/cards/${NONEXISTENT_CARD_ID}/artworks`)
         .expect(404);
     });
   });
 
-  describe('GET /card-sets', () => {
+  describe('GET /api/v1/card-sets', () => {
     it('returns 200 with an array of card sets', async () => {
       const response = await request(app.getHttpServer())
-        .get('/card-sets')
+        .get('/api/v1/card-sets')
         .expect(200);
 
       expect(response.body.length).toBeGreaterThanOrEqual(1);

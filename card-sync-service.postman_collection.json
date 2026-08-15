@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "base_url",
-      "value": "http://localhost:3000",
+      "value": "http://localhost:3001",
       "type": "string"
     },
     {
@@ -31,9 +31,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}?language={{language}}",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}?language={{language}}",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}"],
+              "path": ["api", "v1", "cards", "{{card_id}}"],
               "query": [
                 { "key": "language", "value": "{{language}}" }
               ]
@@ -46,9 +46,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/cards?name={{card_name}}&language={{language}}&page=1&limit=20",
+              "raw": "{{base_url}}/api/v1/cards?name={{card_name}}&language={{language}}&page=1&limit=20",
               "host": ["{{base_url}}"],
-              "path": ["cards"],
+              "path": ["api", "v1", "cards"],
               "query": [
                 { "key": "name", "value": "{{card_name}}", "description": "Search by name" },
                 { "key": "language", "value": "{{language}}" },
@@ -74,9 +74,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/prints",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/prints",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "prints"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "prints"]
             },
             "description": "Get all print variants for a card"
           }
@@ -86,9 +86,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/artworks",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/artworks",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "artworks"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "artworks"]
             },
             "description": "Get all artworks for a card"
           }
@@ -98,9 +98,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/cards/discrepancies?page=1&limit=20",
+              "raw": "{{base_url}}/api/v1/cards/discrepancies?page=1&limit=20",
               "host": ["{{base_url}}"],
-              "path": ["cards", "discrepancies"],
+              "path": ["api", "v1", "cards", "discrepancies"],
               "query": [
                 { "key": "status", "value": "", "description": "PENDING, REVIEWED_LOCAL_WINS, REVIEWED_API_WINS, RESOLVED" },
                 { "key": "page", "value": "1" },
@@ -115,9 +115,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/discrepancies",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/discrepancies",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "discrepancies"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "discrepancies"]
             },
             "description": "Get all sync discrepancies for a specific card"
           }
@@ -127,9 +127,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/cards/sync",
+              "raw": "{{base_url}}/api/v1/cards/sync",
               "host": ["{{base_url}}"],
-              "path": ["cards", "sync"]
+              "path": ["api", "v1", "cards", "sync"]
             },
             "header": [
               { "key": "Content-Type", "value": "application/json" }
@@ -146,9 +146,9 @@
           "request": {
             "method": "PATCH",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}"]
+              "path": ["api", "v1", "cards", "{{card_id}}"]
             },
             "header": [
               { "key": "Content-Type", "value": "application/json" }
@@ -165,9 +165,9 @@
           "request": {
             "method": "PUT",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/translations/{{language}}",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/translations/{{language}}",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "translations", "{{language}}"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "translations", "{{language}}"]
             },
             "header": [
               { "key": "Content-Type", "value": "application/json" }
@@ -184,9 +184,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/artworks",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/artworks",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "artworks"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "artworks"]
             },
             "header": [
               { "key": "Content-Type", "value": "application/json" }
@@ -203,9 +203,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/prints",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/prints",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "prints"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "prints"]
             },
             "header": [
               { "key": "Content-Type", "value": "application/json" }
@@ -222,9 +222,9 @@
           "request": {
             "method": "DELETE",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}"]
+              "path": ["api", "v1", "cards", "{{card_id}}"]
             },
             "description": "Delete a card and all its related data"
           }
@@ -234,9 +234,9 @@
           "request": {
             "method": "PATCH",
             "url": {
-              "raw": "{{base_url}}/cards/{{card_id}}/discrepancies/{{discrepancy_id}}",
+              "raw": "{{base_url}}/api/v1/cards/{{card_id}}/discrepancies/{{discrepancy_id}}",
               "host": ["{{base_url}}"],
-              "path": ["cards", "{{card_id}}", "discrepancies", "{{discrepancy_id}}"]
+              "path": ["api", "v1", "cards", "{{card_id}}", "discrepancies", "{{discrepancy_id}}"]
             },
             "header": [
               { "key": "Content-Type", "value": "application/json" }
@@ -253,9 +253,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/card-sets",
+              "raw": "{{base_url}}/api/v1/card-sets",
               "host": ["{{base_url}}"],
-              "path": ["card-sets"]
+              "path": ["api", "v1", "card-sets"]
             },
             "description": "List all card sets"
           }
@@ -270,9 +270,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/media/cards/{{card_id}}.jpg?variant=normal",
+              "raw": "{{base_url}}/api/v1/media/cards/{{card_id}}.jpg?variant=normal",
               "host": ["{{base_url}}"],
-              "path": ["media", "cards", "{{card_id}}.jpg"],
+              "path": ["api", "v1", "media", "cards", "{{card_id}}.jpg"],
               "query": [
                 { "key": "variant", "value": "normal", "description": "normal, small, cropped" }
               ]
@@ -290,9 +290,9 @@
           "request": {
             "method": "POST",
             "url": {
-              "raw": "{{base_url}}/sync-cards/{{language}}",
+              "raw": "{{base_url}}/api/v1/sync-cards/{{language}}",
               "host": ["{{base_url}}"],
-              "path": ["sync-cards", "{{language}}"]
+              "path": ["api", "v1", "sync-cards", "{{language}}"]
             },
             "description": "Start async translation sync for a language from EDOPro SQLite"
           }
@@ -302,9 +302,9 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{base_url}}/sync-cards/status/{{language}}",
+              "raw": "{{base_url}}/api/v1/sync-cards/status/{{language}}",
               "host": ["{{base_url}}"],
-              "path": ["sync-cards", "status", "{{language}}"]
+              "path": ["api", "v1", "sync-cards", "status", "{{language}}"]
             },
             "description": "Get the status of the last sync job for a language"
           }

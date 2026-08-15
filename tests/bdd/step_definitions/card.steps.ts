@@ -10,6 +10,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import { AppModule } from '../../../src/app/app.module';
+import { API_PREFIX } from '../../../src/app/api-prefix';
 import { Logger } from '../../../src/context/card/domain/ports/logger.port';
 import request from 'supertest';
 
@@ -41,6 +42,7 @@ BeforeAll(async function () {
     .compile();
 
   app = moduleFixture.createNestApplication();
+  app.setGlobalPrefix(API_PREFIX);
   await app.init();
 });
 
