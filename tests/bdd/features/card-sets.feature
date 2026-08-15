@@ -4,7 +4,7 @@ Feature: Card sets
   So that users can see which sets exist
 
   Scenario: List all card sets
-    When I send a GET request to "/card-sets"
+    When I send a GET request to "/api/v1/card-sets"
     Then the response status should be 200
     And at least one card set should be returned
     And each card set should have an id and name

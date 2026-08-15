@@ -3,10 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
+import { API_PREFIX } from '../../src/app/api-prefix';
 
 const CARD_ID = '10000';
 
-describe('GET /cards/:id/artworks (e2e)', () => {
+describe('GET /api/v1/cards/:id/artworks (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -15,6 +16,7 @@ describe('GET /cards/:id/artworks (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });
 
@@ -24,7 +26,7 @@ describe('GET /cards/:id/artworks (e2e)', () => {
 
   it('returns 200 or 404 for artworks', async () => {
     const response = await request(app.getHttpServer()).get(
-      `/cards/${CARD_ID}/artworks`,
+      `/api/v1/cards/${CARD_ID}/artworks`,
     );
 
     expect([200, 404]).toContain(response.status);

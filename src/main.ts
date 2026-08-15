@@ -2,10 +2,12 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
+import { API_PREFIX } from './app/api-prefix';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
+  app.setGlobalPrefix(API_PREFIX);
 
   const config = new DocumentBuilder()
     .setTitle('Card Sync Service')

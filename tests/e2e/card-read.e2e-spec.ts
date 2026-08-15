@@ -3,10 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
+import { API_PREFIX } from '../../src/app/api-prefix';
 
 const CARD_ID = '10000';
 
-describe('GET /cards/:id (e2e)', () => {
+describe('GET /api/v1/cards/:id (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -15,6 +16,7 @@ describe('GET /cards/:id (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });
 
@@ -42,7 +44,7 @@ describe('GET /cards/:id (e2e)', () => {
 
   it('obtiene 200 si la carta está en caché, o 422 si YGOPRODeck devuelve datos inválidos (atk=-1)', async () => {
     const response = await request(app.getHttpServer()).get(
-      `/cards/${CARD_ID}`,
+      `/api/v1/cards/${CARD_ID}`,
     );
 
     expect([200, 422]).toContain(response.status);
@@ -56,7 +58,7 @@ describe('GET /cards/:id (e2e)', () => {
 
   it('obtiene 200 o 422 con language=es', async () => {
     const response = await request(app.getHttpServer()).get(
-      `/cards/${CARD_ID}?language=es`,
+      `/api/v1/cards/${CARD_ID}?language=es`,
     );
 
     expect([200, 422]).toContain(response.status);
@@ -73,7 +75,7 @@ describe('GET /cards/:id (e2e)', () => {
 
   it('obtiene 200 o 422 con language=en', async () => {
     const response = await request(app.getHttpServer()).get(
-      `/cards/${CARD_ID}?language=en`,
+      `/api/v1/cards/${CARD_ID}?language=en`,
     );
 
     expect([200, 422]).toContain(response.status);

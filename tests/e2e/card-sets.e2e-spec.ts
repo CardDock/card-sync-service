@@ -3,8 +3,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
+import { API_PREFIX } from '../../src/app/api-prefix';
 
-describe('GET /card-sets (e2e)', () => {
+describe('GET /api/v1/card-sets (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -13,6 +14,7 @@ describe('GET /card-sets (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });
 
@@ -22,7 +24,7 @@ describe('GET /card-sets (e2e)', () => {
 
   it('returns 200 with an array of card sets', async () => {
     const response = await request(app.getHttpServer())
-      .get('/card-sets')
+      .get('/api/v1/card-sets')
       .expect(200);
 
     expect(response.body.length).toBeGreaterThanOrEqual(1);
