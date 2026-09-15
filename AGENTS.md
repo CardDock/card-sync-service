@@ -2,7 +2,7 @@
 
 ## Stack
 
-- NestJS 10, TypeScript 5, pnpm, PostgreSQL (Neon), Prisma 7 (schema/migrations only), raw `pg` for queries
+- NestJS 10 (Fastify HTTP adapter via `@nestjs/platform-fastify`), TypeScript 5, pnpm, PostgreSQL (Neon), Prisma 7 (schema/migrations only), raw `pg` for queries
 - Yu-Gi-Oh! card sync from YGOPRODeck API (`https://db.ygoprodeck.com/api/v7/cardinfo.php`)
 - Swagger at `/api`, API global prefix `api/v1` (set via `app.setGlobalPrefix` in `main.ts`), Pino logger, Husky + commitlint, Cucumber for BDD
 
@@ -48,7 +48,7 @@ pnpm run start:prod         # cross-env NODE_ENV=production node dist/main.js
 - Prisma for schema & migrations only. Runtime queries use raw `pg` (node-postgres) via `PostgresPoolProvider`.
 - `prisma.config.ts` provides `DIRECT_URL` at runtime. **Datasource block has no URL**.
 - Models: `Card`, `CardTranslation` (no FK, unique on cardId+language), `CardSyncDiscrepancy`, `CardSet`, `Artwork`, `CardPrint`, `SyncJobLog`.
-- Enums: `Attribute` (7), `LinkMarker` (8), `FrameType` (11), `Race` (28), `DiscrepancyStatus` (4), `SyncJobStatus` (4).
+- Enums: `Attribute` (7), `LinkMarker` (8), `FrameType` (17), `Race` (28), `DiscrepancyStatus` (4), `SyncJobStatus` (4).
 - Run `npx prisma generate` after schema changes to regenerate `src/generated/prisma/`.
 - Migrations: `npx prisma migrate dev` (create, view migration SQL, apply). Currently 14 migrations.
 
@@ -58,7 +58,7 @@ pnpm run start:prod         # cross-env NODE_ENV=production node dist/main.js
 - `DIRECT_URL` — DB connection string (required)
 - `YGOPRODECK_API_BASE_URL` — optional override for card API
 - `LOG_LEVEL` — error, warn, info, debug, trace (default: info)
-- `PORT` — defaults to 3001
+- `PORT` — defaults to 80 (behind API gateway; TLS handled there)
 
 ## Quirks
 

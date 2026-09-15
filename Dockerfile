@@ -27,6 +27,6 @@ RUN pnpm install --frozen-lockfile
 
 COPY --chown=node:node . .
 
-EXPOSE 3001 9229
+EXPOSE 80
 
 CMD ["sh", "-c", "pnpm prisma generate && pnpm start"]
