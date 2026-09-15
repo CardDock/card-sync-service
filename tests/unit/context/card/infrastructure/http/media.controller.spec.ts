@@ -37,19 +37,19 @@ describe('MediaController', () => {
     useCase.execute.mockResolvedValue({ filePath: '/some/path.jpg' });
 
     const controller = createController(useCase);
-    const res = { set: jest.fn() };
+    const reply = { headers: jest.fn() };
 
     const result = await controller.getCardImage(
       '46986414',
       undefined,
-      res as any,
+      reply as any,
     );
 
     expect(useCase.execute).toHaveBeenCalledWith({
       cardId: '46986414',
       variant: undefined,
     });
-    expect(res.set).toHaveBeenCalledWith({
+    expect(reply.headers).toHaveBeenCalledWith({
       'Content-Type': 'image/jpeg',
       'Cache-Control': 'public, max-age=31536000',
     });
@@ -61,9 +61,9 @@ describe('MediaController', () => {
     useCase.execute.mockResolvedValue({ filePath: '/some/path.jpg' });
 
     const controller = createController(useCase);
-    const res = { set: jest.fn() };
+    const reply = { headers: jest.fn() };
 
-    await controller.getCardImage('46986414', 'small', res as any);
+    await controller.getCardImage('46986414', 'small', reply as any);
 
     expect(useCase.execute).toHaveBeenCalledWith({
       cardId: '46986414',
@@ -76,12 +76,12 @@ describe('MediaController', () => {
     useCase.execute.mockResolvedValue(null);
 
     const controller = createController(useCase);
-    const res = { set: jest.fn() };
+    const reply = { headers: jest.fn() };
 
     let raisedError: unknown;
 
     try {
-      await controller.getCardImage('99999999', undefined, res as any);
+      await controller.getCardImage('99999999', undefined, reply as any);
     } catch (error) {
       raisedError = error;
     }

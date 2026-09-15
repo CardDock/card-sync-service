@@ -9,6 +9,10 @@ import {
 } from '@cucumber/cucumber';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { AppModule } from '../../../src/app/app.module';
 import { API_PREFIX } from '../../../src/app/api-prefix';
 import { Logger } from '../../../src/context/card/domain/ports/logger.port';
@@ -41,7 +45,10 @@ BeforeAll(async function () {
     .useValue(silentLogger)
     .compile();
 
-  app = moduleFixture.createNestApplication();
+  app =
+    moduleFixture.createNestApplication<NestFastifyApplication>(
+      new FastifyAdapter(),
+    );
   app.setGlobalPrefix(API_PREFIX);
   await app.init();
 });
