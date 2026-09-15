@@ -6,9 +6,9 @@ import {
 } from '../../../../../../src/context/card/domain/errors';
 
 const buildResponseMock = () => {
-  const json = jest.fn();
-  const status = jest.fn().mockReturnValue({ json });
-  return { status, json };
+  const send = jest.fn();
+  const status = jest.fn().mockReturnValue({ send });
+  return { status, send };
 };
 
 const buildHostMock = (response: ReturnType<typeof buildResponseMock>) => ({
@@ -33,7 +33,7 @@ describe('DomainErrorFilter', () => {
     expect(response.status).toHaveBeenCalledWith(
       HttpStatus.UNPROCESSABLE_ENTITY,
     );
-    expect(response.json).toHaveBeenCalledWith(
+    expect(response.send).toHaveBeenCalledWith(
       expect.objectContaining({
         statusCode: 422,
         error: 'DomainError',
@@ -62,8 +62,8 @@ describe('DomainErrorFilter', () => {
 
     filter.catch(outer, host);
 
-    const jsonArg = response.json.mock.calls[0][0];
-    expect(jsonArg.cause).toMatchObject({
+    const sendArg = response.send.mock.calls[0][0];
+    expect(sendArg.cause).toMatchObject({
       name: 'CardDomainValidationError',
       code: 'CARD_VALIDATION_ERROR',
       message: 'Invalid race',
@@ -84,8 +84,8 @@ describe('DomainErrorFilter', () => {
 
     filter.catch(error, host);
 
-    const jsonArg = response.json.mock.calls[0][0];
-    expect(jsonArg.cause).toMatchObject({
+    const sendArg = response.send.mock.calls[0][0];
+    expect(sendArg.cause).toMatchObject({
       name: 'Error',
       message: 'Underlying error',
     });
@@ -104,8 +104,8 @@ describe('DomainErrorFilter', () => {
 
     filter.catch(error, host);
 
-    const jsonArg = response.json.mock.calls[0][0];
-    expect(jsonArg.cause).toBe('raw string cause');
+    const sendArg = response.send.mock.calls[0][0];
+    expect(sendArg.cause).toBe('raw string cause');
   });
 
   it('recursively serializes nested DomainError causes', () => {
@@ -130,12 +130,12 @@ describe('DomainErrorFilter', () => {
 
     filter.catch(top, host);
 
-    const jsonArg = response.json.mock.calls[0][0];
-    expect(jsonArg.cause).toMatchObject({
+    const sendArg = response.send.mock.calls[0][0];
+    expect(sendArg.cause).toMatchObject({
       name: 'CardDomainProcessError',
       message: 'Mid error',
     });
-    expect(jsonArg.cause.cause).toMatchObject({
+    expect(sendArg.cause.cause).toMatchObject({
       name: 'CardDomainValidationError',
       message: 'Invalid ATK',
     });

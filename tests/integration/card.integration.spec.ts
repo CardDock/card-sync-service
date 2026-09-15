@@ -1,6 +1,10 @@
 import 'dotenv/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { AppModule } from '../../src/app/app.module';
 import { API_PREFIX } from '../../src/app/api-prefix';
@@ -18,7 +22,10 @@ describe('CardController Integration (real DB)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication();
+    app =
+      moduleFixture.createNestApplication<NestFastifyApplication>(
+        new FastifyAdapter(),
+      );
     app.setGlobalPrefix(API_PREFIX);
     await app.init();
   });

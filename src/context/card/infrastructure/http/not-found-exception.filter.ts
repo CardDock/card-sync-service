@@ -4,7 +4,7 @@ import {
   ExceptionFilter,
   NotFoundException,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { FastifyReply } from 'fastify';
 import { Logger } from '../../domain/ports/logger.port';
 
 @Catch(NotFoundException)
@@ -12,7 +12,7 @@ export class NotFoundExceptionFilter implements ExceptionFilter {
   constructor(private readonly logger: Logger) {}
 
   catch(exception: NotFoundException, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+    const reply = host.switchToHttp().getResponse<FastifyReply>();
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
     const message =
@@ -36,7 +36,7 @@ export class NotFoundExceptionFilter implements ExceptionFilter {
       'Not found',
     );
 
-    response.status(status).json({
+    reply.status(status).send({
       statusCode: status,
       error: 'ResourceNotFound',
       code: 'CARD_NOT_FOUND',

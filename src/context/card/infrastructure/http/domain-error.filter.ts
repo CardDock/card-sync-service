@@ -4,7 +4,7 @@ import {
   ExceptionFilter,
   HttpStatus,
 } from '@nestjs/common';
-import { Response } from 'express';
+import type { FastifyReply } from 'fastify';
 import { DomainError } from '../../domain/errors';
 
 function serializeErrorCause(cause: unknown): unknown {
@@ -31,9 +31,9 @@ function serializeErrorCause(cause: unknown): unknown {
 @Catch(DomainError)
 export class DomainErrorFilter implements ExceptionFilter {
   catch(exception: DomainError, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+    const reply = host.switchToHttp().getResponse<FastifyReply>();
 
-    response.status(HttpStatus.UNPROCESSABLE_ENTITY).json({
+    reply.status(HttpStatus.UNPROCESSABLE_ENTITY).send({
       statusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       error: 'DomainError',
       code: exception.code,

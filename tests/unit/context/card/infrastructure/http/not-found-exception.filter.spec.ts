@@ -3,9 +3,9 @@ import { NotFoundExceptionFilter } from '../../../../../../src/context/card/infr
 import { buildLoggerMock } from '../../../../../helpers';
 
 const buildResponseMock = () => {
-  const json = jest.fn();
-  const status = jest.fn().mockReturnValue({ json });
-  return { status, json };
+  const send = jest.fn();
+  const status = jest.fn().mockReturnValue({ send });
+  return { status, send };
 };
 
 const buildRequestMock = (overrides = {}) => ({
@@ -38,7 +38,7 @@ describe('NotFoundExceptionFilter', () => {
     filter.catch(exception, host);
 
     expect(response.status).toHaveBeenCalledWith(404);
-    expect(response.json).toHaveBeenCalledWith(
+    expect(response.send).toHaveBeenCalledWith(
       expect.objectContaining({
         statusCode: 404,
         error: 'ResourceNotFound',
@@ -62,7 +62,7 @@ describe('NotFoundExceptionFilter', () => {
     filter.catch(exception, host);
 
     expect(response.status).toHaveBeenCalledWith(404);
-    expect(response.json).toHaveBeenCalledWith(
+    expect(response.send).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'Card with id 123 not found',
       }),
@@ -79,7 +79,7 @@ describe('NotFoundExceptionFilter', () => {
     const exception = new NotFoundException({ code: 'SOME_CODE' });
     filter.catch(exception, host);
 
-    expect(response.json).toHaveBeenCalledWith(
+    expect(response.send).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'Not Found',
       }),

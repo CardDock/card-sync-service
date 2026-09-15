@@ -16,7 +16,7 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { createReadStream } from 'fs';
-import type { Response } from 'express';
+import type { FastifyReply } from 'fastify';
 import { Logger } from '../../domain/ports/logger.port';
 import { GetCardImageUseCase } from '../../application/use-cases/get-card-image.use-case';
 
@@ -51,7 +51,7 @@ export class MediaController {
   async getCardImage(
     @Param('id') id: string,
     @Query('variant') variant: string | undefined,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<StreamableFile> {
     this.logger.info(
       { cardId: id, variant },
@@ -73,7 +73,7 @@ export class MediaController {
 
     const stream = createReadStream(result.filePath);
 
-    res.set({
+    reply.headers({
       'Content-Type': 'image/jpeg',
       'Cache-Control': 'public, max-age=31536000',
     });

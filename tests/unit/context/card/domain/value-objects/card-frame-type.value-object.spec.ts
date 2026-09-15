@@ -7,6 +7,12 @@ describe('CardFrameType', () => {
     expect(cardFrameType.toPrimitives()).toBe('normal');
   });
 
+  it('creates a valid pendulum frameType', () => {
+    const cardFrameType = CardFrameType.create('effect_pendulum');
+
+    expect(cardFrameType.toPrimitives()).toBe('effect_pendulum');
+  });
+
   it('throws when frameType is invalid', () => {
     expect(() => CardFrameType.create('invalid' as never)).toThrow(
       new Error('Card frameType is invalid'),
