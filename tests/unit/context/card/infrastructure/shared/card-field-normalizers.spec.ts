@@ -93,6 +93,28 @@ describe('card-field-normalizers', () => {
       expect(normalizeFrameTypeLabel('xyz')).toBe('xyz');
     });
 
+    it('normalizes effect_pendulum', () => {
+      expect(normalizeFrameTypeLabel('effect_pendulum')).toBe(
+        'effect_pendulum',
+      );
+    });
+
+    it('normalizes every pendulum frame type', () => {
+      expect(normalizeFrameTypeLabel('normal_pendulum')).toBe(
+        'normal_pendulum',
+      );
+      expect(normalizeFrameTypeLabel('ritual_pendulum')).toBe(
+        'ritual_pendulum',
+      );
+      expect(normalizeFrameTypeLabel('fusion_pendulum')).toBe(
+        'fusion_pendulum',
+      );
+      expect(normalizeFrameTypeLabel('synchro_pendulum')).toBe(
+        'synchro_pendulum',
+      );
+      expect(normalizeFrameTypeLabel('xyz_pendulum')).toBe('xyz_pendulum');
+    });
+
     it('throws for unsupported frame type', () => {
       expect(() => normalizeFrameTypeLabel('ritual_equip')).toThrow(
         new Error('Unsupported card frame type: ritual_equip'),
