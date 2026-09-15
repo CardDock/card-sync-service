@@ -7,11 +7,12 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
     volumes:
       - .:/app
       - node_modules:/app/node_modules
-    command: ["sh", "-c", "pnpm prisma generate && pnpm start"]
+    command:
+      ["sh", "-c", "pnpm prisma generate && pnpm build && exec pnpm start:prod"]
     expose:
       - "80"
     networks:
