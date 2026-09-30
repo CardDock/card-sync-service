@@ -1,6 +1,6 @@
 FROM node:24.16-bookworm-slim
 
-ENV NODE_ENV=development \
+ENV NODE_ENV=production \
     HUSKY=0 \
     PNPM_HOME=/usr/local/share/pnpm \
     PATH=/usr/local/share/pnpm:$PATH
@@ -29,4 +29,4 @@ COPY --chown=node:node . .
 
 EXPOSE 80
 
-CMD ["sh", "-c", "pnpm prisma generate && pnpm start"]
+CMD ["sh", "-c", "pnpm prisma generate && pnpm build && exec pnpm start:prod"]
