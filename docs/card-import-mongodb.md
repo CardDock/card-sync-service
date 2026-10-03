@@ -2,9 +2,9 @@
 
 ## Propósito
 
-El bounded context `card-import` importa el contenido de `data/cards.json` en la base de datos MongoDB `yugioh-cards`. Está aislado del contexto de cartas existente y no depende de PostgreSQL, SQLite, Prisma ni de sus repositorios.
+El bounded context `card-import` descarga las cartas de YGOPRODeck, conserva un snapshot histórico y migra ese snapshot a MongoDB `yugioh-cards`. Está aislado del contexto de cartas existente y no depende de PostgreSQL, SQLite, Prisma ni de sus repositorios.
 
-La importación está diseñada para procesar desde unas pocas cartas hasta miles de documentos sin mantener abierta la petición HTTP durante todo el trabajo.
+La importación está diseñada para ficheros de cientos de megabytes: descarga y lee el JSON en streaming, por lotes, sin cargarlo completo en memoria.
 
 ## API
 
@@ -15,6 +15,25 @@ La importación está diseñada para procesar desde unas pocas cartas hasta mile
 Devuelve `202 Accepted` inmediatamente con el identificador y el estado inicial del proceso. El trabajo se ejecuta de forma asíncrona dentro del proceso de la aplicación.
 
 Si ya existe una importación activa, devuelve `409 Conflict`. Solo se permite una importación activa a la vez.
+
+### Listar snapshots
+
+`GET /api/v1/card-imports/snapshots`
+
+Devuelve los snapshots fechados disponibles en `data/card-snapshots`.
+
+### Restaurar un snapshot
+
+`POST /api/v1/card-imports/rollback`
+
+Body:
+
+```json
+{ "snapshotId": "cards-2026-10-03T13-57-43-731Z" }
+```
+
+Inicia una importación asíncrona desde el fichero histórico, sin llamar a
+YGOPRODeck. Al completarse, ese snapshot pasa a ser `data/cards.json`.
 
 ### Consultar el estado
 
@@ -36,7 +55,7 @@ El contexto sigue un modelo hexagonal:
 - **Dominio**: `ImportProcess` representa el proceso de importación y controla sus transiciones y contadores.
 - **Aplicación**: los casos de uso coordinan el inicio, la ejecución y la consulta del proceso mediante puertos.
 - **Adaptadores de entrada**: `CardImportController` expone los endpoints HTTP.
-- **Adaptadores de salida**: el lector de archivo, los repositorios MongoDB y el worker en memoria implementan los puertos de aplicación.
+- **Adaptadores de salida**: el cliente HTTP/snapshot streaming, el repositorio MongoDB y el worker en memoria implementan los puertos de aplicación.
 - **Composición**: `CardImportModule` conecta los puertos con sus implementaciones concretas.
 
 El dominio y los casos de uso no conocen NestJS, MongoDB ni detalles HTTP.
@@ -49,7 +68,11 @@ Crea un proceso con un identificador único, adquiere el bloqueo de importación
 
 ### RunCardImportUseCase
 
-Ejecuta el proceso fuera de la petición HTTP. Lee el archivo fuente, registra el total, persiste las cartas en lotes mediante upsert y actualiza el progreso después de cada lote. Al terminar marca el proceso como completado o fallido y libera el bloqueo.
+Ejecuta el proceso fuera de la petición HTTP. En una sincronización descarga y
+publica un snapshot fechado; en un rollback abre el snapshot seleccionado. En
+ambos casos recorre `data.*` incrementalmente, persiste lotes mediante upsert y
+actualiza el progreso después de cada lote. Al terminar marca el proceso como
+completado o fallido y libera el bloqueo.
 
 ### GetCardImportStatusUseCase
 
@@ -76,6 +99,26 @@ Se utilizan tres colecciones:
 
 La conexión se configura mediante `MONGODB_URI` y la base de datos mediante `MONGODB_DATABASE`. Docker utiliza `yugioh-cards` como base de datos.
 
+La URL de origen se configura mediante `YGOPRODECK_API_BASE_URL` y el directorio
+de snapshots mediante `CARD_IMPORT_DATA_DIRECTORY` (por defecto, `data`).
+
+Cada sincronización crea `data/card-snapshots/cards-<timestamp>.json` con
+`migrationDate`, `sourceUrl` y `data`. Los snapshots anteriores no se sobrescriben.
+`data/cards.json` es una copia atómica del último snapshot publicado.
+
+### Recargar el contenedor Docker
+
+Para probar cambios actuales sin activar el modo desarrollo:
+
+```bash
+pnpm run docker:reload
+```
+
+El script detiene y elimina únicamente el contenedor `app`, lo reconstruye con
+Docker Compose y lo inicia usando el comando de producción configurado en
+`docker-compose.yml`. No recrea MongoDB ni elimina sus volúmenes. Requiere que
+exista el fichero `.env` en la raíz del proyecto.
+
 ## Ciclo de vida operativo
 
 1. Un cliente llama al endpoint de inicio.
@@ -89,4 +132,7 @@ El worker actual es local al proceso NestJS. Si la aplicación se reinicia, el t
 
 ## Configuración y alcance actual
 
-Esta entrega no incluye autenticación específica del endpoint, reanudación de procesos interrumpidos, reintentos por carta ni tests, según el alcance solicitado. La colección y los documentos se preparan para que esas capacidades puedan añadirse en una evolución posterior.
+El worker actual es local al proceso NestJS. Si la aplicación se reinicia, el
+trabajo en memoria no se reanuda automáticamente; el puerto `ImportWorkerPort`
+permite sustituirlo posteriormente por una cola duradera sin mover las reglas de
+dominio ni los casos de uso.

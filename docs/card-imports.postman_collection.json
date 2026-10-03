@@ -12,6 +12,10 @@
     {
       "key": "processId",
       "value": ""
+    },
+    {
+      "key": "snapshotId",
+      "value": ""
     }
   ],
   "item": [
@@ -39,6 +43,43 @@
           "raw": "{{baseUrl}}/api/v1/card-imports/{{processId}}",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-imports", "{{processId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Listar snapshots",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Lista los snapshots historicos disponibles para restauracion.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-imports/snapshots",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-imports", "snapshots"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Restaurar snapshot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"snapshotId\": \"{{snapshotId}}\"\n}"
+        },
+        "description": "Restaura un snapshot historico en MongoDB sin volver a llamar a YGOPRODeck.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-imports/rollback",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-imports", "rollback"]
         }
       },
       "response": []
