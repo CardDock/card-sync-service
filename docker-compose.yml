@@ -8,20 +8,36 @@ services:
       - .env
     environment:
       - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DATABASE=yugioh-cards
     volumes:
       - .:/app
       - node_modules:/app/node_modules
     command:
       ["sh", "-c", "pnpm prisma generate && pnpm build && exec pnpm start:prod"]
+    ports:
+      - "127.0.0.1:8080:80"
     expose:
       - "80"
     networks:
       - default
+      - mongodb-network
+
+  mongodb:
+    image: mongo:8
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - mongodb-network
 
 volumes:
   node_modules:
+  mongodb_data:
 
 networks:
   default:
     external: true
     name: carddock-network
+  mongodb-network:

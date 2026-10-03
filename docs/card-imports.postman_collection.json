@@ -1,0 +1,88 @@
+{
+  "info": {
+    "name": "Card Imports",
+    "description": "Coleccion Postman para iniciar una importacion de cartas y consultar su progreso.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:80"
+    },
+    {
+      "key": "processId",
+      "value": ""
+    },
+    {
+      "key": "snapshotId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Iniciar importacion",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Inicia una importacion asincrona. Devuelve 202 Accepted con el snapshot inicial del proceso o 409 Conflict si ya hay una importacion activa.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-imports",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-imports"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar estado de importacion",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta el estado, progreso, contadores, fechas y posible error del proceso. Devuelve 404 Not Found si el processId no existe.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-imports/{{processId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-imports", "{{processId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Listar snapshots",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Lista los snapshots historicos disponibles para restauracion.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-imports/snapshots",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-imports", "snapshots"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Restaurar snapshot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"snapshotId\": \"{{snapshotId}}\"\n}"
+        },
+        "description": "Restaura un snapshot historico en MongoDB sin volver a llamar a YGOPRODeck.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-imports/rollback",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-imports", "rollback"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
