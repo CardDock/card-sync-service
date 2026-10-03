@@ -33,3 +33,4 @@ lerna-debug.log*
 # files
 /uploads
 .eslintcache
+/data/card-snapshots
