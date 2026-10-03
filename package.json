@@ -19,6 +19,7 @@
     "test:debug": "node --inspect-brk -r ts-node/register -r tsconfig-paths/register node_modules/jest/bin/jest.js --runInBand",
     "test:e2e": "cross-env NODE_ENV=test jest --config ./tests/e2e/jest-e2e.json --runInBand",
     "test:bdd": "cucumber-js --format pretty",
+    "docker:reload": "bash ./scripts/reload-docker.sh",
     "validate": "npm run lint && npm run test && npm run build",
     "prepare": "husky install"
   },
