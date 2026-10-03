@@ -11,14 +11,14 @@ export class StartCardImportUseCase {
     private readonly worker: ImportWorkerPort,
   ) {}
 
-  async execute() {
+  async execute(snapshotId?: string) {
     const process = ImportProcess.pending(randomUUID());
     const acquired = await this.processRepository.acquireActiveLock(process.id);
 
     if (!acquired) return null;
 
     await this.processRepository.save(process);
-    this.worker.enqueue(process.id);
+    this.worker.enqueue(process.id, snapshotId);
     return process.snapshot();
   }
 }

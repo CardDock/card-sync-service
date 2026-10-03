@@ -12,7 +12,7 @@ export class RunCardImportUseCase {
     private readonly processRepository: ImportProcessRepositoryPort,
   ) {}
 
-  async execute(processId: string): Promise<void> {
+  async execute(processId: string, snapshotId?: string): Promise<void> {
     const snapshot = await this.processRepository.findById(processId);
     if (!snapshot) return;
 
@@ -23,20 +23,29 @@ export class RunCardImportUseCase {
     process.start();
 
     try {
-      const cards = await this.source.read();
-      process.setTotal(cards.length);
-      await this.processRepository.save(process);
-
+      const selectedSnapshot = snapshotId ?? (await this.source.download()).id;
       const batchSize = 100;
-      for (let index = 0; index < cards.length; index += batchSize) {
-        const result = await this.cardRepository.upsertMany(
-          cards.slice(index, index + batchSize),
-        );
+      let batch = [];
+      let total = 0;
+      for await (const card of this.source.read(selectedSnapshot)) {
+        batch.push(card);
+        total += 1;
+        if (batch.length < batchSize) continue;
+        const result = await this.cardRepository.upsertMany(batch);
+        process.setTotal(total);
+        process.recordBatch(result.succeeded, result.failed);
+        await this.processRepository.save(process);
+        batch = [];
+      }
+      if (batch.length > 0) {
+        const result = await this.cardRepository.upsertMany(batch);
+        process.setTotal(total);
         process.recordBatch(result.succeeded, result.failed);
         await this.processRepository.save(process);
       }
 
       process.complete();
+      if (snapshotId) await this.source.publish(snapshotId);
       await this.processRepository.save(process);
     } catch (error) {
       process.fail(

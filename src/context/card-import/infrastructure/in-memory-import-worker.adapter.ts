@@ -6,7 +6,7 @@ import { RunCardImportUseCase } from '../application/use-cases/run-card-import.u
 export class InMemoryImportWorkerAdapter implements ImportWorkerPort {
   constructor(private readonly runImport: RunCardImportUseCase) {}
 
-  enqueue(processId: string): void {
-    setImmediate(() => void this.runImport.execute(processId));
+  enqueue(processId: string, snapshotId?: string): void {
+    setImmediate(() => void this.runImport.execute(processId, snapshotId));
   }
 }
