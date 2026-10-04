@@ -33,6 +33,18 @@ services:
     networks:
       - mongodb-network
 
+  docs:
+    build:
+      context: .
+      dockerfile: docusaurus/Dockerfile
+    container_name: card-sync-service-docs
+    volumes:
+      - ./docs:/site/docs
+    ports:
+      - "127.0.0.1:3800:3000"
+    networks:
+      - default
+
 volumes:
   node_modules:
   mongodb_data:
