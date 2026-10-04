@@ -136,3 +136,120 @@ El worker actual es local al proceso NestJS. Si la aplicación se reinicia, el
 trabajo en memoria no se reanuda automáticamente; el puerto `ImportWorkerPort`
 permite sustituirlo posteriormente por una cola duradera sin mover las reglas de
 dominio ni los casos de uso.
+
+## Bounded context `card-sets`
+
+`card-sets` es un bounded context independiente de `card-import`. No importa
+ni reutiliza sus casos de uso, puertos o repositorios. Su responsabilidad es
+consultar los sets disponibles para una carta mediante la API de CardTrader y
+mantener una caché persistida en MongoDB.
+
+Aunque actualmente ambos contextos viven en la misma aplicación, `card-sets`
+dispone de sus propios puertos, adaptadores, caso de uso, controlador y
+proveedores de MongoDB. El único dato que lee de la colección `cards` es el
+identificador y el nombre de la carta necesarios para realizar la consulta
+externa.
+
+### Consultar los sets de una carta
+
+```text
+GET /api/v1/card-sets/:cardId
+```
+
+Ejemplo:
+
+```bash
+curl --location \
+  'http://localhost:8080/api/v1/card-sets/17217034'
+```
+
+El flujo es:
+
+1. Busca la carta por su identificador en la colección MongoDB `cards`.
+2. Obtiene su nombre.
+3. Busca una entrada para la carta en `card_sets_cache`.
+4. Si la entrada tiene menos de 24 horas, devuelve la respuesta cacheada.
+5. Si no existe o tiene 24 horas o más, consulta CardTrader.
+6. Si la consulta tiene éxito, actualiza la entrada y su fecha `cachedAt`.
+7. Si CardTrader falla y existe una entrada antigua, devuelve esa entrada sin
+   modificarla.
+
+La respuesta contiene el identificador, el nombre, la fecha de caché y la
+respuesta completa de CardTrader:
+
+```json
+{
+  "cardId": 17217034,
+  "cardName": "Combined Maneuver - Engage Zero!",
+  "cachedAt": "2026-10-04T00:01:14.652Z",
+  "data": []
+}
+```
+
+El campo `data` se muestra vacío en el ejemplo, pero contiene los blueprints
+devueltos por CardTrader en una respuesta real. La API no indica si los datos
+son recientes o proceden de una caché antigua utilizada como fallback.
+
+### Colección de caché
+
+La colección utilizada es:
+
+```text
+card_sets_cache
+```
+
+Cada carta tiene una única entrada, identificada por su `cardId`:
+
+```json
+{
+  "_id": 17217034,
+  "cardId": 17217034,
+  "cardName": "Combined Maneuver - Engage Zero!",
+  "response": [],
+  "cachedAt": "2026-10-04T00:01:14.652Z"
+}
+```
+
+La respuesta de CardTrader se conserva sin transformación destructiva. Las
+actualizaciones utilizan un upsert para que la renovación de una carta no cree
+duplicados.
+
+### Autenticación de CardTrader
+
+CardTrader requiere un token Bearer. El adaptador envía:
+
+```http
+Authorization: Bearer <CARDTRADER_API_TOKEN>
+```
+
+El token nunca debe escribirse en el código, en Postman ni en un fichero
+versionado. Debe configurarse en `.env` o en el gestor de secretos del entorno:
+
+```env
+CARDTRADER_API_BASE_URL="https://api.cardtrader.com/api/v2"
+CARDTRADER_API_TOKEN="tu-token-de-cardtrader"
+```
+
+Si la variable no está configurada, o CardTrader devuelve un error y no existe
+una caché previa, el endpoint responde con `502 Bad Gateway`. Si existe una
+entrada anterior, se devuelve esa información y no se sobrescribe.
+
+### Configuración de `card-sets`
+
+Variables disponibles:
+
+```env
+CARD_SETS_MONGODB_URI="mongodb://localhost:27017"
+CARD_SETS_MONGODB_DATABASE="yugioh-cards"
+CARD_SETS_CACHE_TTL_HOURS=24
+```
+
+En Docker Compose, la URI de MongoDB se sobrescribe para utilizar el nombre del
+servicio:
+
+```text
+mongodb://mongodb:27017
+```
+
+Después de cambiar variables de entorno es necesario recrear o reiniciar la
+aplicación para que NestJS vuelva a cargar el token y la configuración.

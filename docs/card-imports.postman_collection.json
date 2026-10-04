@@ -16,6 +16,10 @@
     {
       "key": "snapshotId",
       "value": ""
+    },
+    {
+      "key": "cardId",
+      "value": "80181649"
     }
   ],
   "item": [
@@ -80,6 +84,20 @@
           "raw": "{{baseUrl}}/api/v1/card-imports/rollback",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-imports", "rollback"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar sets de carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta los sets de una carta mediante CardTrader. Usa la respuesta cacheada durante 24 horas y devuelve la cache anterior si CardTrader no esta disponible.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "{{cardId}}"]
         }
       },
       "response": []
