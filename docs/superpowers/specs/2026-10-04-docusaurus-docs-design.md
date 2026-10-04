@@ -23,7 +23,7 @@ La documentación fuente seguirá viviendo en el directorio raíz `docs/`.
 
 ### Incluido
 
-- Sitio Docusaurus aislado en `docs-site/`.
+- Sitio Docusaurus aislado en `docusaurus/`.
 - Manifest y configuración propios para Docusaurus.
 - Dockerfile propio para el sitio.
 - Servicio `docs` en `docker-compose.yml`.
@@ -57,7 +57,7 @@ docs/
   ...
 .postman/
   card-imports.postman_collection.json
-docs-site/
+docusaurus/
   Dockerfile
   package.json
   docusaurus.config.js
@@ -87,12 +87,12 @@ El fichero conservará exactamente su formato y contenido funcional.
 El sitio utilizará Docusaurus 3 con React y una configuración independiente
 del servicio principal. Todas las dependencias de Docusaurus se instalarán
 exclusivamente dentro del contenedor y se declararán en el manifest de
-`docs-site/`. No se modificarán el `package.json`, el lockfile ni el
+`docusaurus/`. No se modificarán el `package.json`, el lockfile ni el
 `node_modules` del proyecto NestJS.
 
 El plugin de documentación usará:
 
-- `path: '../docs'` desde la configuración ubicada en `docs-site/`;
+- `path: '../docs'` desde la configuración ubicada en `docusaurus/`;
 - `routeBasePath: '/'` para que la documentación sea la página principal;
 - `sidebarPath` apuntando a `sidebars.js`;
 - enlaces Markdown relativos al documento cuando se necesiten referencias a
@@ -114,12 +114,11 @@ El servicio se llamará `docs` y tendrá estas propiedades:
 docs:
   build:
     context: .
-    dockerfile: docs-site/Dockerfile
+    dockerfile: docusaurus/Dockerfile
   ports:
     - "127.0.0.1:3800:3000"
   volumes:
     - ./docs:/site/docs
-    - ./docs-site:/site/docs-site
 ```
 
 El volumen de `docs/` permitirá editar documentación desde el host y verla
