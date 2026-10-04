@@ -14,7 +14,7 @@ El sitio se ejecutará como un servicio independiente de Docker Compose y estar�
 disponible en:
 
 ```text
-http://localhost:3000
+http://localhost:3800
 ```
 
 La documentación fuente seguirá viviendo en el directorio raíz `docs/`.
@@ -85,7 +85,10 @@ El fichero conservará exactamente su formato y contenido funcional.
 ## Configuración de Docusaurus
 
 El sitio utilizará Docusaurus 3 con React y una configuración independiente
-del servicio principal.
+del servicio principal. Todas las dependencias de Docusaurus se instalarán
+exclusivamente dentro del contenedor y se declararán en el manifest de
+`docs-site/`. No se modificarán el `package.json`, el lockfile ni el
+`node_modules` del proyecto NestJS.
 
 El plugin de documentación usará:
 
@@ -113,7 +116,7 @@ docs:
     context: .
     dockerfile: docs-site/Dockerfile
   ports:
-    - "127.0.0.1:3000:3000"
+    - "127.0.0.1:3800:3000"
   volumes:
     - ./docs:/site/docs
     - ./docs-site:/site/docs-site
@@ -124,7 +127,8 @@ actualizada en el sitio de desarrollo. No se montará `.postman/` dentro del
 sitio.
 
 El contenedor ejecutará el servidor de desarrollo de Docusaurus escuchando en
-`0.0.0.0`, para que sea accesible desde el puerto publicado por Docker.
+`0.0.0.0:3000`, para que sea accesible desde el puerto host `3800` publicado
+por Docker.
 
 El servicio utilizará una red independiente de la aplicación salvo que sea
 necesario compartirla; Docusaurus no necesita acceder a NestJS, MongoDB ni
@@ -181,7 +185,7 @@ La implementación se considerará correcta cuando:
 
 1. `docker compose config` acepte el Compose actualizado.
 2. `docker compose up docs` inicie el sitio sin errores.
-3. `http://localhost:3000` responda y muestre la portada.
+3. `http://localhost:3800` responda y muestre la portada.
 4. La navegación permita abrir `card-import-mongodb.md`.
 5. La navegación permita abrir la especificación de `card-sets`.
 6. El directorio `.postman/` contenga la colección y `docs/` ya no contenga el
