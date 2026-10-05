@@ -16,6 +16,14 @@
     {
       "key": "snapshotId",
       "value": ""
+    },
+    {
+      "key": "cardId",
+      "value": "80181649"
+    },
+    {
+      "key": "blueprintId",
+      "value": "380475"
     }
   ],
   "item": [
@@ -80,6 +88,48 @@
           "raw": "{{baseUrl}}/api/v1/card-imports/rollback",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-imports", "rollback"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar sets de carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta los sets de una carta mediante CardTrader. Usa la respuesta cacheada durante 24 horas y devuelve la cache anterior si CardTrader no esta disponible.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar carta desde catalogo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta la informacion completa de una carta por su ID directamente desde la coleccion MongoDB yugioh-cards.cards. Devuelve 400 si el ID no es valido y 404 si la carta no existe.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/legacy/cards/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "legacy", "cards", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar precios de marketplace",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta los productos de marketplace de un blueprint mediante CardTrader. Usa la respuesta cacheada durante 24 horas, revalida al caducar y conserva la cache anterior si CardTrader no esta disponible.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/prices/{{blueprintId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "prices", "{{blueprintId}}"]
         }
       },
       "response": []

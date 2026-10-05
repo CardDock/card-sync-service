@@ -2,8 +2,9 @@
 
 ## Estado
 
-Diseño aprobado por el usuario el 2026-10-04. Esta especificación precede al
-plan de implementación y no modifica todavía el código de producción.
+Diseño aprobado por el usuario el 2026-10-04. La implementación inicial de
+sets ya existe. La caché adicional de precios se especifica en
+[2026-10-04-card-marketplace-prices-design.md](./2026-10-04-card-marketplace-prices-design.md).
 
 ## Objetivo
 
@@ -206,8 +207,10 @@ comillas al parámetro. El adaptador:
 - producirá un error explícito ante respuestas no válidas;
 - respetará una configuración de URL base para pruebas y despliegues.
 
-No se incorporará autenticación ni reintentos automáticos hasta que exista un
-requisito específico de CardTrader para ello.
+La autenticación utilizará la variable `CARDTRADER_API_TOKEN` y el encabezado
+`Authorization: Bearer <token>`. Si el token no está configurado, el adaptador
+producirá un error explícito sin realizar una petición externa. No se
+incorporarán reintentos automáticos.
 
 ## Caché y concurrencia
 

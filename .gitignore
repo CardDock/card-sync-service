@@ -34,3 +34,7 @@ lerna-debug.log*
 /uploads
 .eslintcache
 /data/card-snapshots
+
+# Docusaurus
+/docusaurus/node_modules
+/docusaurus/build
