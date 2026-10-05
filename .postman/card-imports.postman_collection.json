@@ -107,6 +107,20 @@
       "response": []
     },
     {
+      "name": "Consultar carta desde catalogo",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta la informacion completa de una carta por su ID directamente desde la coleccion MongoDB yugioh-cards.cards. Devuelve 400 si el ID no es valido y 404 si la carta no existe.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/legacy/cards/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "legacy", "cards", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Consultar precios de marketplace",
       "request": {
         "method": "GET",
