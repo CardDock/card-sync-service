@@ -2,11 +2,16 @@ import { Module } from '@nestjs/common';
 import { CardReaderPort } from './application/ports/card-reader.port';
 import { CardSetCacheRepositoryPort } from './application/ports/card-set-cache-repository.port';
 import { CardTraderSourcePort } from './application/ports/card-trader-source.port';
+import { CardMarketplacePriceCacheRepositoryPort } from './application/ports/card-marketplace-price-cache-repository.port';
+import { CardTraderMarketplaceSourcePort } from './application/ports/card-trader-marketplace-source.port';
+import { GetCardMarketplacePricesUseCase } from './application/use-cases/get-card-marketplace-prices.use-case';
 import { GetCardSetsUseCase } from './application/use-cases/get-card-sets.use-case';
 import { CardSetsController } from './infrastructure/card-sets.controller';
 import { CardTraderHttpAdapter } from './infrastructure/card-trader-http.adapter';
+import { CardTraderMarketplaceHttpAdapter } from './infrastructure/card-trader-marketplace-http.adapter';
 import { MongoDbCardReaderAdapter } from './infrastructure/mongodb-card-reader.adapter';
 import { MongoDbCardSetCacheRepositoryAdapter } from './infrastructure/mongodb-card-set-cache-repository.adapter';
+import { MongoDbCardMarketplacePriceCacheRepositoryAdapter } from './infrastructure/mongodb-card-marketplace-price-cache-repository.adapter';
 import {
   cardSetsMongoClientProvider,
   cardSetsMongoDatabaseProvider,
@@ -24,6 +29,14 @@ import {
     },
     { provide: CardTraderSourcePort, useClass: CardTraderHttpAdapter },
     {
+      provide: CardMarketplacePriceCacheRepositoryPort,
+      useClass: MongoDbCardMarketplacePriceCacheRepositoryAdapter,
+    },
+    {
+      provide: CardTraderMarketplaceSourcePort,
+      useClass: CardTraderMarketplaceHttpAdapter,
+    },
+    {
       provide: GetCardSetsUseCase,
       useFactory: (
         cardReader: CardReaderPort,
@@ -40,6 +53,22 @@ import {
         CardReaderPort,
         CardSetCacheRepositoryPort,
         CardTraderSourcePort,
+      ],
+    },
+    {
+      provide: GetCardMarketplacePricesUseCase,
+      useFactory: (
+        cacheRepository: CardMarketplacePriceCacheRepositoryPort,
+        cardTrader: CardTraderMarketplaceSourcePort,
+      ) =>
+        new GetCardMarketplacePricesUseCase(
+          cacheRepository,
+          cardTrader,
+          parseCacheTtl(),
+        ),
+      inject: [
+        CardMarketplacePriceCacheRepositoryPort,
+        CardTraderMarketplaceSourcePort,
       ],
     },
   ],
