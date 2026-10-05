@@ -253,3 +253,49 @@ mongodb://mongodb:27017
 
 Después de cambiar variables de entorno es necesario recrear o reiniciar la
 aplicación para que NestJS vuelva a cargar el token y la configuración.
+
+### Consultar precios de marketplace por blueprint
+
+El mismo bounded context expone una caché separada para los productos de
+marketplace asociados a un blueprint de CardTrader:
+
+```text
+GET /api/v1/card-sets/prices/:blueprintId
+```
+
+Ejemplo:
+
+```bash
+curl --location \
+  'http://localhost:8080/api/v1/card-sets/prices/380475'
+```
+
+El `blueprintId` se recibe directamente del cliente. El flujo no busca una
+carta ni depende del bounded context `card`:
+
+1. Busca el blueprint en `card_marketplace_prices_cache`.
+2. Si la entrada tiene menos de 24 horas, devuelve la respuesta guardada.
+3. Si no existe o está caducada, consulta
+   `GET /api/v2/marketplace/products?blueprint_id=<id>` en CardTrader.
+4. Si la respuesta es correcta, reemplaza la entrada mediante upsert.
+5. Si la renovación falla y ya existía una entrada, devuelve la última
+   respuesta sin modificarla.
+
+La antigüedad se controla en la aplicación mediante `cachedAt`. MongoDB no
+utiliza un índice TTL, por lo que una entrada caducada no se elimina y puede
+servir como fallback:
+
+```json
+{
+  "blueprintId": 380475,
+  "cachedAt": "2026-10-04T00:35:01.198Z",
+  "data": []
+}
+```
+
+`data` conserva el JSON completo devuelto por CardTrader. La colección de
+precios es independiente de `card_sets_cache`:
+
+```text
+card_marketplace_prices_cache
+```

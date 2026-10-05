@@ -14,8 +14,8 @@ del servicio de sincronización de cartas de Yu-Gi-Oh!
 
 - [Card import](./card-import-mongodb): importación asíncrona de cartas y
   snapshots en MongoDB.
-- [Card sets](./superpowers/specs/2026-10-04-card-sets-design): consulta y
-  caché de sets mediante CardTrader.
+- [Card sets](./card-import-mongodb#bounded-context-card-sets): consulta y
+  caché de sets y precios de marketplace mediante CardTrader.
 
 La colección de Postman está fuera del sitio de documentación, en
 `.postman/card-imports.postman_collection.json`.

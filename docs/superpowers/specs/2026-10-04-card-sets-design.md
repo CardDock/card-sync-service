@@ -2,8 +2,9 @@
 
 ## Estado
 
-Diseño aprobado por el usuario el 2026-10-04. Esta especificación precede al
-plan de implementación y no modifica todavía el código de producción.
+Diseño aprobado por el usuario el 2026-10-04. La implementación inicial de
+sets ya existe. La caché adicional de precios se especifica en
+[2026-10-04-card-marketplace-prices-design.md](./2026-10-04-card-marketplace-prices-design.md).
 
 ## Objetivo
 

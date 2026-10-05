@@ -20,6 +20,10 @@
     {
       "key": "cardId",
       "value": "80181649"
+    },
+    {
+      "key": "blueprintId",
+      "value": "380475"
     }
   ],
   "item": [
@@ -98,6 +102,20 @@
           "raw": "{{baseUrl}}/api/v1/card-sets/{{cardId}}",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-sets", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar precios de marketplace",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Consulta los productos de marketplace de un blueprint mediante CardTrader. Usa la respuesta cacheada durante 24 horas, revalida al caducar y conserva la cache anterior si CardTrader no esta disponible.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/prices/{{blueprintId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "prices", "{{blueprintId}}"]
         }
       },
       "response": []
