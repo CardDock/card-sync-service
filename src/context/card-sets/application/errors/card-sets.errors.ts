@@ -18,3 +18,10 @@ export class CardTraderUnavailableError extends Error {
     this.name = CardTraderUnavailableError.name;
   }
 }
+
+export class InvalidBlueprintIdError extends Error {
+  constructor() {
+    super('Blueprint id must be a positive integer');
+    this.name = InvalidBlueprintIdError.name;
+  }
+}
