@@ -4,6 +4,7 @@
 /build
 /tmp
 /.pnpm-store
+/data/
 
 # Logs
 logs
@@ -33,7 +34,6 @@ lerna-debug.log*
 # files
 /uploads
 .eslintcache
-/data/card-snapshots
 
 # Docusaurus
 /docusaurus/node_modules
