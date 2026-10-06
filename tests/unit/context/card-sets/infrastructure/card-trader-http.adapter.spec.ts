@@ -40,6 +40,30 @@ describe('CardTraderHttpAdapter', () => {
     expect(options.headers).toEqual({ Authorization: 'Bearer test-token' });
   });
 
+  it('requests available expansions without mutating their payload', async () => {
+    const response = [
+      { id: 1, game_id: 1, code: 'gnt', name: 'Game Night' },
+      { id: 2, game_id: 1, code: 'dane', name: 'Dark Neostorm' },
+    ];
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue(response),
+    });
+
+    await expect(new CardTraderHttpAdapter().findExpansions()).resolves.toEqual(
+      response,
+    );
+
+    const [requestUrl, options] = (global.fetch as jest.Mock).mock.calls[0] as [
+      URL,
+      RequestInit,
+    ];
+    expect(requestUrl.toString()).toBe(
+      'https://api.cardtrader.com/api/v2/expansions',
+    );
+    expect(options.headers).toEqual({ Authorization: 'Bearer test-token' });
+  });
+
   it('turns HTTP failures into CardTrader errors', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,

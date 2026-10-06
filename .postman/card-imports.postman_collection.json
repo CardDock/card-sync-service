@@ -24,6 +24,10 @@
     {
       "key": "blueprintId",
       "value": "380475"
+    },
+    {
+      "key": "expansionId",
+      "value": "1"
     }
   ],
   "item": [
@@ -88,6 +92,34 @@
           "raw": "{{baseUrl}}/api/v1/card-imports/rollback",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-imports", "rollback"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar expansiones de CardTrader",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Sincroniza la lista de expansiones de Yu-Gi-Oh! desde CardTrader y las guarda en MongoDB en la coleccion card_trader_expansions.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/expansions/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "expansions", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar expansion por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Busca una expansion de Yu-Gi-Oh! por id dentro de la coleccion MongoDB card_trader_expansions.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/expansions/{{expansionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "expansions", "{{expansionId}}"]
         }
       },
       "response": []

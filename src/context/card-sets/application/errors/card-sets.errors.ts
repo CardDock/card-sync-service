@@ -19,6 +19,20 @@ export class CardTraderUnavailableError extends Error {
   }
 }
 
+export class InvalidExpansionIdError extends Error {
+  constructor() {
+    super('Expansion id must be a positive integer');
+    this.name = InvalidExpansionIdError.name;
+  }
+}
+
+export class ExpansionNotFoundError extends Error {
+  constructor(id: number) {
+    super(`Expansion ${id} was not found`);
+    this.name = ExpansionNotFoundError.name;
+  }
+}
+
 export class InvalidBlueprintIdError extends Error {
   constructor() {
     super('Blueprint id must be a positive integer');
