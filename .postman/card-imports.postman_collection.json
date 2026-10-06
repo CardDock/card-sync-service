@@ -7,7 +7,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:80"
+      "value": "http://localhost:8080"
     },
     {
       "key": "processId",
@@ -162,6 +162,34 @@
           "raw": "{{baseUrl}}/api/v1/card-sets/prices/{{blueprintId}}",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-sets", "prices", "{{blueprintId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar puntos Genesys",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga la lista oficial de puntos Genesys y la guarda en la coleccion Mongo genesys_points.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/genesys-points/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "genesys-points", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar puntos Genesys por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Recibe el ID local de la carta, resuelve su konami_id y devuelve la cantidad de puntos Genesys. Si no hay coincidencia devuelve 0.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/genesys-points/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "genesys-points", "{{cardId}}"]
         }
       },
       "response": []
