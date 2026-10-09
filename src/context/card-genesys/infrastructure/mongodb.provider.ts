@@ -2,8 +2,7 @@ import { Provider } from '@nestjs/common';
 import { MongoClient } from 'mongodb';
 
 export const GENESYS_POINTS_MONGO_CLIENT = 'GENESYS_POINTS_MONGO_CLIENT';
-export const GENESYS_POINTS_MONGO_DATABASE =
-  'GENESYS_POINTS_MONGO_DATABASE';
+export const GENESYS_POINTS_MONGO_DATABASE = 'GENESYS_POINTS_MONGO_DATABASE';
 
 export const cardGenesysMongoClientProvider: Provider = {
   provide: GENESYS_POINTS_MONGO_CLIENT,

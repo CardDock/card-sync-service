@@ -7,9 +7,7 @@ import {
 import { GENESYS_POINTS_MONGO_DATABASE } from './mongodb.provider';
 
 @Injectable()
-export class MongoDbGenesysPointsRepository
-  implements GenesysPointsRepositoryPort
-{
+export class MongoDbGenesysPointsRepository implements GenesysPointsRepositoryPort {
   constructor(
     @Inject(GENESYS_POINTS_MONGO_DATABASE)
     private readonly database: Db,
