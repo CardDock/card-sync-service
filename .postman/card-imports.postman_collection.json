@@ -193,6 +193,34 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Sincronizar cartas formato Edison",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga las cartas del formato Edison desde YGOPRODeck y guarda solo sus IDs en la coleccion Mongo edison_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/edison/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "edison", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar formato Edison por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Indica si el ID de la carta esta incluido en la lista sincronizada del formato Edison.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/edison/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "edison", "{{cardId}}"]
+        }
+      },
+      "response": []
     }
   ]
 }
