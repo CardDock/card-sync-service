@@ -6,9 +6,7 @@ import { CardTraderExpansionRepositoryPort } from '../ports/card-trader-expansio
 import { CardTraderExpansion } from '../ports/card-trader-source.port';
 
 export class GetCardTraderExpansionUseCase {
-  constructor(
-    private readonly repository: CardTraderExpansionRepositoryPort,
-  ) {}
+  constructor(private readonly repository: CardTraderExpansionRepositoryPort) {}
 
   async execute(rawId: string | number): Promise<CardTraderExpansion> {
     const expansionId = this.parseExpansionId(rawId);

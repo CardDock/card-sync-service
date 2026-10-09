@@ -7,9 +7,7 @@ import { CARD_SETS_MONGO_DATABASE } from './mongodb.provider';
 type CardTraderExpansionDocument = CardTraderExpansion & { _id: number };
 
 @Injectable()
-export class MongoDbCardTraderExpansionRepositoryAdapter
-  implements CardTraderExpansionRepositoryPort
-{
+export class MongoDbCardTraderExpansionRepositoryAdapter implements CardTraderExpansionRepositoryPort {
   constructor(
     @Inject(CARD_SETS_MONGO_DATABASE) private readonly database: Db,
   ) {}
