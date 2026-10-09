@@ -249,6 +249,62 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Sincronizar cartas formato GOAT",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga las cartas del formato GOAT desde YGOPRODeck y guarda solo sus IDs en la coleccion Mongo goat_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/goat/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "goat", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar formato GOAT por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Indica si el ID de la carta esta incluido en la lista sincronizada del formato GOAT.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/goat/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "goat", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar cartas formato HAT",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga las cartas del formato HAT desde YGOPRODeck (rango de fechas tcg 2002-02-28 a 2014-07-08) y guarda solo sus IDs en la coleccion Mongo hat_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/hat/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "hat", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar formato HAT por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Indica si el ID de la carta esta incluido en la lista sincronizada del formato HAT.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/hat/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "hat", "{{cardId}}"]
+        }
+      },
+      "response": []
     }
   ]
 }
