@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { GetCardForbiddenPointsUseCase } from '../../application/use-cases/get-card-forbidden-points.use-case';
 import { SyncForbiddenCardsUseCase } from '../../application/use-cases/sync-forbidden-cards.use-case';

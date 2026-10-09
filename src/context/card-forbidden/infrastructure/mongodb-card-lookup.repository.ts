@@ -1,6 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Db } from 'mongodb';
-import { CardLookupDocument, CardLookupPort } from '../application/ports/card-lookup.port';
+import {
+  CardLookupDocument,
+  CardLookupPort,
+} from '../application/ports/card-lookup.port';
 import { FORBIDDEN_CARDS_MONGO_DATABASE } from './mongodb.provider';
 
 @Injectable()

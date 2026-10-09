@@ -2,8 +2,7 @@ import { Provider } from '@nestjs/common';
 import { MongoClient } from 'mongodb';
 
 export const FORBIDDEN_CARDS_MONGO_CLIENT = 'FORBIDDEN_CARDS_MONGO_CLIENT';
-export const FORBIDDEN_CARDS_MONGO_DATABASE =
-  'FORBIDDEN_CARDS_MONGO_DATABASE';
+export const FORBIDDEN_CARDS_MONGO_DATABASE = 'FORBIDDEN_CARDS_MONGO_DATABASE';
 
 export const forbiddenCardsMongoClientProvider: Provider = {
   provide: FORBIDDEN_CARDS_MONGO_CLIENT,

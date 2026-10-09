@@ -7,9 +7,7 @@ import {
 import { FORBIDDEN_CARDS_MONGO_DATABASE } from './mongodb.provider';
 
 @Injectable()
-export class MongoDbForbiddenCardsRepository
-  implements ForbiddenCardsRepositoryPort
-{
+export class MongoDbForbiddenCardsRepository implements ForbiddenCardsRepositoryPort {
   constructor(
     @Inject(FORBIDDEN_CARDS_MONGO_DATABASE)
     private readonly database: Db,
