@@ -4,6 +4,7 @@ import { CardCatalogModule } from '../context/card-catalog/card-catalog.module';
 import { CardImportModule } from '../context/card-import/card-import.module';
 import { CardSetsModule } from '../context/card-sets/card-sets.module';
 import { CardGenesysModule } from '../context/card-genesys/card-genesys.module';
+import { CardForbiddenModule } from '../context/card-forbidden/card-forbidden.module';
 import { AlternativeFormatModule } from '../context/alternative-format/alternative-format.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { AlternativeFormatModule } from '../context/alternative-format/alternati
     CardSetsModule,
     CardCatalogModule,
     CardGenesysModule,
+    CardForbiddenModule,
     AlternativeFormatModule,
   ],
   controllers: [],

@@ -195,6 +195,34 @@
       "response": []
     },
     {
+      "name": "Sincronizar cartas prohibidas TCG",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga la regulacion actual de cartas prohibidas del formato TCG y la guarda en la coleccion Mongo forbidden_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/forbidden-cards/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "forbidden-cards", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar limit value de carta prohibida",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Recibe el ID local de la carta, resuelve su konami_id y devuelve el valor de limitacion. Si no esta en la regulacion devuelve 3.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/forbidden-cards/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "forbidden-cards", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Sincronizar cartas formato Edison",
       "request": {
         "method": "POST",
