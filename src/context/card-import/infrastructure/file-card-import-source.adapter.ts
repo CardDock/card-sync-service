@@ -32,7 +32,10 @@ export class FileCardImportSourceAdapter implements CardImportSourcePort {
     'https://db.ygoprodeck.com/api/v7/cardinfo.php';
 
   async download(): Promise<CardSnapshot> {
-    const response = await fetch(this.sourceUrl);
+    const requestUrl = new URL(this.sourceUrl);
+    requestUrl.searchParams.set('misc', 'yes');
+
+    const response = await fetch(requestUrl);
     if (!response.ok || !response.body) {
       throw new Error(
         `Card source returned ${response.status} ${response.statusText}`,
@@ -44,12 +47,13 @@ export class FileCardImportSourceAdapter implements CardImportSourcePort {
     const id = `cards-${migrationDate.replace(/[:.]/g, '-')}`;
     const temporaryPath = resolve(this.snapshotsDirectory, `.${id}.tmp`);
     const snapshotPath = this.pathFor(id);
+    const sourceUrl = requestUrl.toString();
     let output: ReturnType<typeof createWriteStream> | undefined;
 
     try {
       output = createWriteStream(temporaryPath, { encoding: 'utf8' });
       output.write(
-        `{"migrationDate":${JSON.stringify(migrationDate)},"sourceUrl":${JSON.stringify(this.sourceUrl)},"data":[`,
+        `{"migrationDate":${JSON.stringify(migrationDate)},"sourceUrl":${JSON.stringify(sourceUrl)},"data":[`,
       );
 
       let first = true;
@@ -73,7 +77,7 @@ export class FileCardImportSourceAdapter implements CardImportSourcePort {
       return {
         id,
         migrationDate,
-        sourceUrl: this.sourceUrl,
+        sourceUrl,
         sizeBytes: (await stat(snapshotPath)).size,
       };
     } catch (error) {

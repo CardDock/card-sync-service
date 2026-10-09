@@ -7,7 +7,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:80"
+      "value": "http://localhost:8080"
     },
     {
       "key": "processId",
@@ -24,6 +24,10 @@
     {
       "key": "blueprintId",
       "value": "380475"
+    },
+    {
+      "key": "expansionId",
+      "value": "1"
     }
   ],
   "item": [
@@ -93,6 +97,34 @@
       "response": []
     },
     {
+      "name": "Sincronizar expansiones de CardTrader",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Sincroniza la lista de expansiones de Yu-Gi-Oh! desde CardTrader y las guarda en MongoDB en la coleccion card_trader_expansions.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/expansions/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "expansions", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar expansion por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Busca una expansion de Yu-Gi-Oh! por id dentro de la coleccion MongoDB card_trader_expansions.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/card-sets/expansions/{{expansionId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "card-sets", "expansions", "{{expansionId}}"]
+        }
+      },
+      "response": []
+    },
+    {
       "name": "Consultar sets de carta",
       "request": {
         "method": "GET",
@@ -130,6 +162,146 @@
           "raw": "{{baseUrl}}/api/v1/card-sets/prices/{{blueprintId}}",
           "host": ["{{baseUrl}}"],
           "path": ["api", "v1", "card-sets", "prices", "{{blueprintId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar puntos Genesys",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga la lista oficial de puntos Genesys y la guarda en la coleccion Mongo genesys_points.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/genesys-points/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "genesys-points", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar puntos Genesys por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Recibe el ID local de la carta, resuelve su konami_id y devuelve la cantidad de puntos Genesys. Si no hay coincidencia devuelve 0.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/genesys-points/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "genesys-points", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar cartas prohibidas TCG",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga la regulacion actual de cartas prohibidas del formato TCG y la guarda en la coleccion Mongo forbidden_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/forbidden-cards/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "forbidden-cards", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar limit value de carta prohibida",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Recibe el ID local de la carta, resuelve su konami_id y devuelve el valor de limitacion. Si no esta en la regulacion devuelve 3.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/forbidden-cards/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "forbidden-cards", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar cartas formato Edison",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga las cartas del formato Edison desde YGOPRODeck y guarda solo sus IDs en la coleccion Mongo edison_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/edison/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "edison", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar formato Edison por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Indica si el ID de la carta esta incluido en la lista sincronizada del formato Edison.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/edison/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "edison", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar cartas formato GOAT",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga las cartas del formato GOAT desde YGOPRODeck y guarda solo sus IDs en la coleccion Mongo goat_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/goat/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "goat", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar formato GOAT por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Indica si el ID de la carta esta incluido en la lista sincronizada del formato GOAT.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/goat/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "goat", "{{cardId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Sincronizar cartas formato HAT",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "description": "Descarga las cartas del formato HAT desde YGOPRODeck (rango de fechas tcg 2002-02-28 a 2014-07-08) y guarda solo sus IDs en la coleccion Mongo hat_cards.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/hat/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "hat", "sync"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Consultar formato HAT por carta",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "description": "Indica si el ID de la carta esta incluido en la lista sincronizada del formato HAT.",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/alternative-formats/hat/{{cardId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "alternative-formats", "hat", "{{cardId}}"]
         }
       },
       "response": []

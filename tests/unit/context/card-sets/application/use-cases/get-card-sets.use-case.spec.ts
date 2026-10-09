@@ -18,7 +18,10 @@ describe('GetCardSetsUseCase', () => {
   beforeEach(() => {
     reader = { findById: jest.fn() };
     cacheRepository = { findByCardId: jest.fn(), save: jest.fn() };
-    trader = { findBlueprints: jest.fn() };
+    trader = {
+      findBlueprints: jest.fn(),
+      findExpansions: jest.fn(),
+    };
   });
 
   function createUseCase() {
